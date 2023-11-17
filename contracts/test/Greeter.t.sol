@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.17;
 
-import {Greeter} from "../src/Greeter.sol";
+import {Greeter} from "../Greeter.sol";
 import {Test} from "forge-std/Test.sol";
 
 contract GreeterTest is Test {
