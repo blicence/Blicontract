@@ -1,7 +1,12 @@
 import hre, { ethers } from "hardhat";
+import { deployProxys } from "./test/deployProxies";
 
 async function main() {
-  const signers = await ethers.getSigners();
+
+ await deployProxys();
+  // version 1
+  
+ /*  const signers = await ethers.getSigners();
 
   const Lib = await ethers.getContractFactory("Logic");
   const lib = await Lib.deploy();
@@ -19,16 +24,13 @@ async function main() {
 
   await contract.deployed();
 
-  console.log("Bcontract deployed to:", contract.address);
+  console.log("Bcontract deployed to:", contract.address); */
 
-  // Uncomment if you want to enable the `tenderly` extension
-  // await hre.tenderly.verify({
-  //   name: "Greeter",
-  //   address: contract.address,
-  // });
+  
 }
 
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+ 

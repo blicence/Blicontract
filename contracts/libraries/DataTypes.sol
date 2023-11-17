@@ -2,16 +2,24 @@
 
 pragma solidity 0.8.17;
 
+//
 library DataTypes {
     struct Producer {
-        uint256 ProducerId;
-        address produceraddress;
+        uint256 producerId;
+        address producerAddress;
         string name;
         string description;
         string image;
         string externalLink;
-        Plan[] plans;
+        address cloneAddress;
+        bool exists;
     }
+    struct producerInfo {
+        uint256 producerId;
+        address cloneAddress;
+        bool exists;
+    }
+
     struct Plan {
         uint256 planId; // planId is unique for each plan
         address producer;
@@ -28,14 +36,10 @@ library DataTypes {
         string backgroundColor;
         uint256 price;
         string image;
+        address priceAddress;
+        string priceSymbol;
     }
-    struct CreateProducerData {
-        uint256 _producerId;
-        string _name;
-        string _description;
-        string _image;
-        string _externalLink;
-    }
+    
     struct CreatePlanData {
         string name;
         int96 pricePerSecond;
@@ -43,10 +47,15 @@ library DataTypes {
         PlanInfo info;
     }
     struct CreateCustomerPlan {
+        address customerAdress;
         uint256 planId;
+        uint256 custumerPlanId;
         uint256 producerId;
+        address cloneAddress;
         uint256 price;
-        int256 paid_in;
+        int256 paid_in; // amount of tokens paid in
+        uint256 startTime;
+        uint256 endTime;
     }
 
     enum PlanStatus {
@@ -56,8 +65,9 @@ library DataTypes {
     }
     struct CustomerPlan {
         uint256 planId;
-        uint256 CustumerPlanId;
-        uint256 ProducerId;
+        uint256 custumerPlanId;
+        uint256 producerId;
+        address cloneAddress;
         uint256 price;
         int256 paid_in; // amount of tokens paid in
         uint256 startTime;
@@ -67,4 +77,20 @@ library DataTypes {
         address customer;
         CustomerPlan[] customerPlans;
     }
+    struct URIParams {
+        address cloneAddress;
+        uint256 producerId;
+        string producerName;
+        uint256 planId;
+        string planName;
+        uint256 custumerPlanId;
+        uint256 startTime;
+        uint256 endTime;
+        uint256 price;
+        address priceAddress;
+        string priceSymbol;
+        bool isactive;
+    }
+     
+
 }

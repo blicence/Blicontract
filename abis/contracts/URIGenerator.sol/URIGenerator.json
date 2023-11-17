@@ -1,0 +1,23 @@
+[
+  "event AdminChanged(address,address)",
+  "event BeaconUpgraded(address indexed)",
+  "event Initialized(uint8)",
+  "event OwnershipTransferred(address indexed,address indexed)",
+  "event Paused(address)",
+  "event Unpaused(address)",
+  "event Upgraded(address indexed)",
+  "function constructTokenURI(tuple(address,uint256,string,uint256,string,uint256,uint256,uint256,uint256,address,string,bool)) view returns (string)",
+  "function generateDescription(tuple(address,uint256,string,uint256,string,uint256,uint256,uint256,uint256,address,string,bool)) pure returns (string)",
+  "function generateNFT(tuple(address,uint256,string,uint256,string,uint256,uint256,uint256,uint256,address,string,bool)) view returns (string)",
+  "function generateName(tuple(address,uint256,string,uint256,string,uint256,uint256,uint256,uint256,address,string,bool)) pure returns (string)",
+  "function initialize()",
+  "function owner() view returns (address)",
+  "function pause()",
+  "function paused() view returns (bool)",
+  "function proxiableUUID() view returns (bytes32)",
+  "function renounceOwnership()",
+  "function transferOwnership(address)",
+  "function unpause()",
+  "function upgradeTo(address)",
+  "function upgradeToAndCall(address,bytes) payable"
+]
