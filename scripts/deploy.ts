@@ -1,29 +1,30 @@
 import hre, { ethers } from "hardhat";
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 async function main() {
-  const constructorArgs = ["Hello, Hardhat!"];
-  const contract = await ethers.deployContract("Greeter", constructorArgs);
+  const signers = await ethers.getSigners();
 
-  await contract.waitForDeployment();
-  const contractAddress = await contract.getAddress();
+  const Lib = await ethers.getContractFactory("Logic");
+  const lib = await Lib.deploy();
+  await lib.deployed();
 
-  console.log("Greeter deployed to:", contractAddress);
-
-  await delay(30000); // Wait for 30 seconds before verifying the contract
-
-  await hre.run("verify:verify", {
-    address: contractAddress,
-    constructorArguments: constructorArgs,
+  const contractFactory = await ethers.getContractFactory("Bcontract", {
+    signer: signers[0],
+    libraries: {
+      Logic: lib.address,
+    },
   });
+
+  const contract = await contractFactory.deploy();
+  //const contract = await ethers.deployContract("Bcontract");
+
+  await contract.deployed();
+
+  console.log("Bcontract deployed to:", contract.address);
 
   // Uncomment if you want to enable the `tenderly` extension
   // await hre.tenderly.verify({
   //   name: "Greeter",
-  //   address: contractAddress,
+  //   address: contract.address,
   // });
 }
 

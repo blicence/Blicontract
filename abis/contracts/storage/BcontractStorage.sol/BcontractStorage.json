@@ -1,0 +1,8 @@
+[
+  "function currentCustomer_PLAN_ID() view returns (uint256)",
+  "function currentPLAN_ID() view returns (uint256)",
+  "function currentProducer_ID() view returns (uint256)",
+  "function incrementCustomer_PLAN_ID() returns (uint256)",
+  "function incrementPLAN_ID() returns (uint256)",
+  "function incrementProducer_ID() returns (uint256)"
+]

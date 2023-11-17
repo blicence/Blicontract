@@ -1,0 +1,19 @@
+[
+  "constructor()",
+  "function addCustomerPlan(tuple(uint256,uint256,uint256,int256))",
+  "function addPlan(tuple(string,int96,uint8,tuple(string,string,int256,int256,string,uint256,string)))",
+  "function currentCustomer_PLAN_ID() view returns (uint256)",
+  "function currentPLAN_ID() view returns (uint256)",
+  "function currentProducer_ID() view returns (uint256)",
+  "function getCustomer(address) view returns (tuple(address,tuple(uint256,uint256,uint256,uint256,int256,uint256,uint256)[]))",
+  "function getCustomerPlan(uint256) view returns (tuple(uint256,uint256,uint256,uint256,int256,uint256,uint256)[])",
+  "function getPlan(uint256) view returns (tuple(uint256,address,string,int96,uint8,tuple(string,string,int256,int256,string,uint256,string)))",
+  "function getPlanNftUri(uint256) view returns (string)",
+  "function getProducer(address) view returns (tuple(uint256,address,string,string,string,string,tuple(uint256,address,string,int96,uint8,tuple(string,string,int256,int256,string,uint256,string))[]))",
+  "function getProducerIdToProducer(uint256) view returns (tuple(uint256,address,string,string,string,string,tuple(uint256,address,string,int96,uint8,tuple(string,string,int256,int256,string,uint256,string))[]))",
+  "function getProducers() view returns (tuple(uint256,address,string,string,string,string,tuple(uint256,address,string,int96,uint8,tuple(string,string,int256,int256,string,uint256,string))[])[])",
+  "function incrementCustomer_PLAN_ID() returns (uint256)",
+  "function incrementPLAN_ID() returns (uint256)",
+  "function incrementProducer_ID() returns (uint256)",
+  "function producerCreateOrUpdated(tuple(uint256,string,string,string,string))"
+]
