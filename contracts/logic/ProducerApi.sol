@@ -9,10 +9,12 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Base64} from "./../libraries/Base64.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ISuperfluid, ISuperToken, ISuperfluidToken, ISuperApp, ISuperAgreement, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
-import {SuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
-import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
-import {IConstantFlowAgreementV1} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
+//import {ISuperfluid, ISuperToken, ISuperfluidToken, ISuperApp, ISuperAgreement, SuperAppDefinitions, SuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+//import {ApiSuperAppBaseFlow} from "./../libraries/ApiSuperAppBaseFlow.sol";
+ import {ISuperfluid, ISuperToken, ISuperfluidToken, ISuperApp } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+
+//import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
+//import {IConstantFlowAgreementV1} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 import {DataTypes} from "./../libraries/DataTypes.sol";
 import {IProducerStorage} from "./../interfaces/IProducerStorage.sol";
 import "./../interfaces/IProducerApi.sol";
@@ -22,18 +24,17 @@ contract ProducerApi is
     IProducerApi,
     Initializable,
     OwnableUpgradeable,
-    UUPSUpgradeable,
-    SuperAppBase
+    UUPSUpgradeable
 {
        using SuperTokenV1Library for ISuperToken;
     IProducerStorage public producerStorage;
     /* --- Superfluid --- */
-    using CFAv1Library for CFAv1Library.InitData;
+   /*  using CFAv1Library for CFAv1Library.InitData;
     CFAv1Library.InitData public cfaV1;
     bytes32 public constant CFA_ID =
         keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1");
-    IConstantFlowAgreementV1 cfa;
-    ISuperfluid host;
+    IConstantFlowAgreementV1 cfa; */
+  
     event startedStream(
         address indexed customerAdress,
         address producer 
@@ -58,19 +59,15 @@ contract ProducerApi is
         _;
     }
 
-    function initialize() external initializer onlyProxy {
+    function initialize()  external initializer onlyProxy {
         __Ownable_init();
-    }
-
-    /**
-     * Function required by UUPS proxy pattern
-     */
+    } 
     function _authorizeUpgrade(
         address newImplementation
     ) internal override onlyOwner {}
 
-    function SetSuperInitialize(ISuperfluid _host) external   {
-        assert(address(host) != address(0));
+/*     function SetSuperInitialize(address _host) external   {
+    
         host = ISuperfluid(_host);
         cfa = IConstantFlowAgreementV1(address(host.getAgreementClass(CFA_ID)));
         cfaV1 = CFAv1Library.InitData(host, cfa);
@@ -81,7 +78,7 @@ contract ProducerApi is
 
         host.registerApp(configWord);
     }
-
+ */
     function setProducerStorage(address _producerStorage) external onlyOwner {
         producerStorage = IProducerStorage(_producerStorage);
     }
@@ -129,7 +126,7 @@ contract ProducerApi is
             "flow already exist for this address"
         );    */
    
-                           
+                
    
             ISuperToken(vars.priceAddress).createFlowFrom(vars.customerAdress, vars.cloneAddress,  planInfoApi.flowRate); 
         producerStorage.addCustomerPlan(vars);
@@ -223,7 +220,7 @@ contract ProducerApi is
         address receiver,
         int96 flowRate
     ) internal {
-        cfaV1.createFlow(receiver, ISuperToken(superTokenAddress), flowRate);
+           ISuperToken(superTokenAddress).createFlow(receiver, flowRate);
     }
 
     function deleteFlow(
@@ -231,10 +228,9 @@ contract ProducerApi is
         address sender,
         address receiver
     ) internal {
-        cfaV1.deleteFlow(
+           ISuperToken(superTokenAddress).deleteFlow(
             address(receiver),
-            address(sender),
-            ISuperToken(superTokenAddress)
+            address(sender)
         );
     }
 
@@ -253,9 +249,7 @@ contract ProducerApi is
     ) public view returns (int96) {
         console.log("getFlow         sender   c",sender);
           console.log("getFlow         receiver",receiver);
-        (, int96 flowRate, , ) = cfa.getFlow(
-            ISuperToken(superTokenAddress),
-            sender,
+        (, int96 flowRate, , ) =    ISuperToken(superTokenAddress).getFlowInfo(sender,
             receiver
         );
 
@@ -287,8 +281,8 @@ contract ProducerApi is
             uint256 owedDeposit
         )
     {
-        (lastUpdated, flowRate, deposit, owedDeposit) = cfa.getFlow(
-            ISuperToken(superTokenAddress),
+        (lastUpdated, flowRate, deposit, owedDeposit) =    ISuperToken(superTokenAddress).getFlowInfo(
+         
             sender,
             receiver
         );
@@ -305,6 +299,6 @@ contract ProducerApi is
         ISuperToken superToken,
         address account
     ) public view returns (int96) {
-        return cfa.getNetFlow(superToken, address(account));
+        return    ISuperToken(superToken).getNetFlowRate( address(account));
     }
 }

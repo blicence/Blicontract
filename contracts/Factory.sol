@@ -77,7 +77,7 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
 
     function newBcontract(DataTypes.Producer calldata vars) external {
         require(
-            !producerStorage.exsistProducer(msg.sender),
+            !producerStorage.exsistProducerClone(msg.sender),
             "producer already existing!"
         );
         //Clones the   contract implementation
@@ -120,12 +120,7 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
        @param proAddress the address of the Bcontract
          @return the producerAddressInfo      
 */
-    function getProducerInfo(
-        address proAddress
-    ) public view returns (DataTypes.Producer memory info) {
-        info = producerStorage.getProducer(proAddress);
-        return info;
-    }
+     
 
     function currentPR_ID() public view returns (uint256) {
         return producerStorage.currentPR_ID();
@@ -136,7 +131,5 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
         return producerStorage.currentPR_ID();
     }
 
-    function getClones() external view returns (address[] memory) {
-        return producerStorage.getClones(currentPR_ID());
-    }
+  
 }

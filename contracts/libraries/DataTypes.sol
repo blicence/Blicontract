@@ -40,7 +40,9 @@ library DataTypes {
      
     struct Plan {
         uint256 planId; // planId is unique for each plan
-        address producer; // producer   clone address
+        address cloneAddress; // producer   clone address
+        uint256 producerId;
+
         string name;
         string description; // description of the token
         string externalLink; // link to the token's website
@@ -170,7 +172,7 @@ library DataTypes {
         address priceAddress;
         uint32 startDate; // the date when the plan starts
         uint32 endDate; // the date when the plan ends
-        uint256 remainingQuota; // the monthly quota of the plan
+        uint256 remainingQuota; // user remaining quota
         Status status;
         PlanTypes planType;
     }
@@ -179,4 +181,5 @@ library DataTypes {
         address customer;
         CustomerPlan[] customerPlans;
     } 
+ 
 }

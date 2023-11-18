@@ -17,6 +17,8 @@ contract ProducerStorage is IProducerStorage, Ownable {
     uint private PR_ID; // unique id for each producer
      mapping(address => DataTypes.Producer) internal producers;
     mapping(uint256 => address) public cloneId;
+    // producer address=> clone address
+    mapping(address => address) public producertoCloneAddress;
 
     // producer address=> prPlans
     mapping(address => DataTypes.Plan[]) internal prPlans;
@@ -121,6 +123,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
         );
         _;
     }
+    // call only from producer contract
     modifier onlyRegisteredProducer() {
         require(
             producers[msg.sender].cloneAddress != address(0),
@@ -128,6 +131,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
         );
         _;
     }
+    // call only from producerApi contract
     modifier onlyProdcuerApi() {
         require(
             msg.sender == address(producerApi),
@@ -135,6 +139,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
         );
         _;
     }
+    
     modifier onlyProdcuerNUsage() {
         require(
             msg.sender == address(producerNUsage),
@@ -162,10 +167,16 @@ contract ProducerStorage is IProducerStorage, Ownable {
     }
 
     function exsistProducer(address _cloneAddress) public view returns (bool) {
+
+         console.log("exsistProducer", producers[_cloneAddress].exists);
+        return producers[_cloneAddress].exists;
+    }
+ function exsistProducerClone(address producerAddres) public view returns (bool) {
+
+       address _cloneAddress = producertoCloneAddress[producerAddres];
         console.log("exsistProducer", producers[_cloneAddress].exists);
         return producers[_cloneAddress].exists;
     }
-
     function addProducer(
         DataTypes.Producer calldata vars
     ) external onlyFactory {
@@ -179,6 +190,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
         producer.exists = true;
         producer.producerId = vars.producerId;
         producer.cloneAddress = cloneAddress;
+        producertoCloneAddress[vars.producerAddress] = cloneAddress;
         // producers[cloneAddress] = producer;
         console.log("addProducer n", cloneAddress);
         emit LogProducer(
@@ -202,6 +214,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
         producer.exists = true;
         producer.producerId = vars.producerId;
         producer.cloneAddress = vars.cloneAddress;
+        producertoCloneAddress[vars.producerAddress] = vars.cloneAddress;
         //producers[cloneAddress] = producer;
         console.log("setProducer n", vars.cloneAddress);
         emit LogProducerSet(
@@ -259,6 +272,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
         DataTypes.Plan memory plan = DataTypes.Plan(
             vars.planId,
             cloneAddress,
+            vars.producerId,
             vars.name,
             vars.description,
             vars.externalLink,
@@ -290,6 +304,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
         DataTypes.Plan memory plan = DataTypes.Plan(
             vars.planId,
             cloneAddress,
+            vars.producerId,
             vars.name,
             vars.description,
             vars.externalLink,
@@ -375,6 +390,13 @@ contract ProducerStorage is IProducerStorage, Ownable {
         return producers[cloneAddress];
     }
 
+    function getProducerInfo(
+        address producerAddres
+    ) external view returns (DataTypes.Producer memory) {
+          address _cloneAddress = producertoCloneAddress[producerAddres];
+        
+        return producers[_cloneAddress];
+    }
     function getPlan(
         uint256 _planId
     ) public view returns (DataTypes.Plan memory plan) {
@@ -582,10 +604,11 @@ contract ProducerStorage is IProducerStorage, Ownable {
     }
 
     //
-    function getClones(uint256 id) public view returns (address[] memory) {
+    function getClones() public view returns (address[] memory) {
         // todo index for to much
-        address[] memory data = new address[](id + 1);
-        for (uint256 i = 1; i < id + 1; i++) {
+        uint256 length = currentPR_ID() + 1;
+        address[] memory data = new address[](length);
+        for (uint256 i = 1; i < length ; i++) {
             data[i] = cloneId[i];
         }
         return data;

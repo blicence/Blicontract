@@ -5,9 +5,9 @@ import {DataTypes} from "./../libraries/DataTypes.sol";
 import {IVestingScheduler} from "./IVestingScheduler.sol";
 
 interface IProducerVestingApi {
-    function SetSuperInitialize(
-        address _host,
-         address _vestingScheduler
+    function setSuperInitialize(
+  
+         IVestingScheduler _vestingScheduler
     ) external;
 
     function createVestingSchedule(

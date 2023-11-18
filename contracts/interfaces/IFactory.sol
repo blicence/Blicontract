@@ -20,14 +20,11 @@ interface IFactory {
 
     function newBcontract(DataTypes.Producer calldata vars) external;
 
-    function getProducerInfo(
-        address proAddress
-    ) external view returns (DataTypes.Producer memory info);
+  
 
     function currentPR_ID() external view returns (uint256);
 
     function incrementPR_ID() external returns (uint256);
 
-    function getClones() external view returns (address[] memory);
-}
+ }
 

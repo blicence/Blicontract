@@ -15,7 +15,7 @@ interface IProducerStorage {
     function exsistProducer(
         address _producerAddress
     ) external view returns (bool);
-
+ function exsistProducerClone(address producerAddres) external view returns (bool);
     function addProducer(DataTypes.Producer calldata vars) external;
 
     function setProducer(DataTypes.Producer calldata vars) external;
@@ -35,7 +35,10 @@ interface IProducerStorage {
     function setPlan(DataTypes.Plan calldata vars) external;
 
     function getProducer(
-        address producerOwner
+        address cloneAddress
+    ) external view returns (DataTypes.Producer memory);
+       function getProducerInfo(
+        address producerAddress
     ) external view returns (DataTypes.Producer memory);
 
     function getPlan(
@@ -95,7 +98,7 @@ interface IProducerStorage {
 
     function getCloneId(uint256 _producerId) external view returns (address);
 
-    function getClones(uint256 id) external view returns (address[] memory);
+    function getClones() external view returns (address[] memory);
 
     function incrementPR_ID() external returns (uint256);
 

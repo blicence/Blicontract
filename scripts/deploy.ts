@@ -4,8 +4,8 @@ import { setProxys } from "./v3/setStorage";
 
 async function main() {
 
- //await deployProxys();
- await setProxys();
+  await deployProxys();
+/*  await setProxys(); */
   // version 1
   
  /*  const signers = await ethers.getSigners();
