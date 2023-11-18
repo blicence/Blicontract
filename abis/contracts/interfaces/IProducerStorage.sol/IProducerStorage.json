@@ -1,7 +1,7 @@
 [
   "function SetCloneId(uint256,address)",
-  "function addCustomerPlan(tuple(address,uint256,uint256,uint256,address,uint8,uint8,tuple(uint256,address,uint32,uint32,uint256,uint256))) returns (tuple(uint256,uint8,uint8))",
-  "function addPlan(tuple(uint256,string,string,string,int256,int256,string,string,address,uint32,uint8,uint8,uint256[])) returns (uint256)",
+  "function addCustomerPlan(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8))",
+  "function addPlan(tuple(uint256,address,string,string,string,int256,int256,string,string,address,uint32,uint8,uint8,uint256[])) returns (uint256)",
   "function addPlanInfoApi(tuple(uint256,int96,uint256))",
   "function addPlanInfoNUsage(tuple(uint256,uint32,uint32,uint32))",
   "function addPlanInfoVesting(tuple(uint256,uint32,int96,uint256,bytes))",
@@ -11,11 +11,9 @@
   "function exsitCustomerPlan(uint256,address,address) view returns (bool)",
   "function getCloneId(uint256) view returns (address)",
   "function getClones(uint256) view returns (address[])",
-  "function getCustomer(address) view returns (tuple(address,tuple(address,uint256,uint256,uint256,address,uint8,uint8)[]))",
+  "function getCustomer(address) view returns (tuple(address,tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8)[]))",
+  "function getCustomerPlan(uint256) view returns (tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8))",
   "function getCustomerPlanId(uint256,address,address) pure returns (uint256)",
-  "function getCustomerPlanIdDecode(uint256) pure returns (uint256, address, address)",
-  "function getCustomerPlanInfo(uint256) view returns (tuple(uint256,address,uint32,uint32,uint256,uint256))",
-  "function getParams(uint256) view returns (tuple(uint256,uint8,uint8))",
   "function getPlan(uint256) view returns (tuple(uint256,address,string,string,string,int256,int256,string,string,address,uint32,uint8,uint8,uint256[]))",
   "function getPlanInfoApi(uint256) view returns (tuple(uint256,int96,uint256))",
   "function getPlanInfoNUsage(uint256) view returns (tuple(uint256,uint32,uint32,uint32))",
@@ -24,8 +22,8 @@
   "function getProducer(address) view returns (tuple(uint256,address,string,string,string,string,address,bool))",
   "function incrementPR_ID() returns (uint256)",
   "function setFactory(address,address,address,address)",
-  "function setPlan(tuple(uint256,string,string,string,int256,int256,string,string,address,uint32,uint8,uint8,uint256[]))",
+  "function setPlan(tuple(uint256,address,string,string,string,int256,int256,string,string,address,uint32,uint8,uint8,uint256[]))",
   "function setProducer(tuple(uint256,address,string,string,string,string,address,bool))",
-  "function updateCustomerPlan(tuple(address,uint256,uint256,uint256,address,address,uint8,uint8,tuple(uint256,address,uint32,uint32,uint256,uint256)))",
-  "function useFromQuota(tuple(address,uint256,uint256,uint256,address,address,uint8,uint8,tuple(uint256,address,uint32,uint32,uint256,uint256))) returns (uint256)"
+  "function updateCustomerPlan(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8))",
+  "function useFromQuota(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8)) returns (uint256)"
 ]

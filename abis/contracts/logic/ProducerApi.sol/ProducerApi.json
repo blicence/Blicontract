@@ -4,11 +4,11 @@
   "event Initialized(uint8)",
   "event OwnershipTransferred(address indexed,address indexed)",
   "event Upgraded(address indexed)",
-  "event startedStream(address indexed,address,tuple(uint256,address,uint32,uint32,uint256,uint256))",
-  "event stoppedStream(address indexed,address,tuple(uint256,address,uint32,uint32,uint256,uint256))",
+  "event startedStream(address indexed,address)",
+  "event stoppedStream(address indexed,address)",
   "function CFA_ID() view returns (bytes32)",
   "function SetSuperInitialize(address)",
-  "function addCustomerPlan(tuple(address,uint256,uint256,uint256,address,uint8,uint8,tuple(uint256,address,uint32,uint32,uint256,uint256)))",
+  "function addCustomerPlan(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8))",
   "function afterAgreementCreated(address,address,bytes32,bytes,bytes,bytes) returns (bytes)",
   "function afterAgreementTerminated(address,address,bytes32,bytes,bytes,bytes) returns (bytes)",
   "function afterAgreementUpdated(address,address,bytes32,bytes,bytes,bytes) returns (bytes)",
@@ -26,7 +26,7 @@
   "function renounceOwnership()",
   "function setProducerStorage(address)",
   "function transferOwnership(address)",
-  "function updateCustomerPlan(tuple(address,uint256,uint256,uint256,address,address,uint8,uint8,tuple(uint256,address,uint32,uint32,uint256,uint256)))",
+  "function updateCustomerPlan(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8))",
   "function upgradeTo(address)",
   "function upgradeToAndCall(address,bytes) payable"
 ]

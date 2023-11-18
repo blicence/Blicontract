@@ -62,9 +62,9 @@ export async function deployProxys() {
   await factory.deployed(); 
   console.log("factory deployed to:", factory.address);
  
-  await pstorage.setFactory(factory.address);
+ /*  await pstorage.setFactory(factory.address);
   console.log("pstorage setFactory to:", factory.address);
- 
+  */
   proxyAddresses.FACTORY_PROXY_ADDRESS = factory.address;
   fs.writeFileSync(
     `./${PROXIES_ADDRESSES_FILENAME}`,
