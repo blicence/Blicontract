@@ -5,9 +5,11 @@ import {DataTypes} from "./../libraries/DataTypes.sol";
 
 interface IFactory {
     function initialize(
-        address _uriGeneratorAddress,
-        address _producerLogicAddress, 
-        address _ProducerStorage
+      address _uriGeneratorAddress,
+         address _producerStorageAddress, 
+        address _producerApiAddress,
+        address _producerNUsageAddress,
+        address _producerVestingApiAddress
     ) external;
 
     function getProducerImplementation() external view returns (address);
@@ -28,3 +30,4 @@ interface IFactory {
 
     function getClones() external view returns (address[] memory);
 }
+

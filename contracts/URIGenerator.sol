@@ -9,39 +9,209 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "hardhat/console.sol";
-contract URIGenerator is IURIGenerator ,Initializable, OwnableUpgradeable, PausableUpgradeable, UUPSUpgradeable{
-    
-  
+import {IProducerStorage} from "./interfaces/IProducerStorage.sol";
 
-    function initialize() initializer public {
-       
+contract URIGenerator is
+    IURIGenerator,
+    Initializable,
+    OwnableUpgradeable,
+    PausableUpgradeable,
+    UUPSUpgradeable,
+    ERC1155Upgradeable
+{
+    IProducerStorage public producerStorage;
+
+    error NFT_TransferIsNotAllowed();
+    error NFT_Unauthorized();
+    error NFT_Deprecated(uint256 at);
+
+    function initialize() public initializer {
         __Ownable_init();
         __Pausable_init();
-        __UUPSUpgradeable_init(); 
-
+        __UUPSUpgradeable_init();
+        __ERC1155_init("");
     }
-      function pause() public onlyOwner {
+
+    modifier onlyExistCustumer(
+        uint256 planId,
+        address customerAddress,
+        address cloneAddress
+    ) {
+        require(
+            producerStorage.exsitCustomerPlan(
+                planId,
+                customerAddress,
+                cloneAddress
+            ) == true,
+            "Customer plan not exist"
+        );
+        _;
+    }
+
+    function setProducerStorage(address _producerStorage) external onlyOwner {
+        producerStorage = IProducerStorage(_producerStorage);
+    }
+
+    function pause() public onlyOwner {
         _pause();
     }
 
     function unpause() public onlyOwner {
         _unpause();
     }
-     function _authorizeUpgrade(address newImplementation)
-        internal
-        onlyOwner
-        override
-    {}
+
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyOwner {}
+
+    function mint(
+        DataTypes.CreateCustomerPlan calldata vars
+    )
+        external
+        onlyExistCustumer(vars.planId, vars.customerAdress, vars.cloneAddress)
+    {
+        uint256 custumerPlanId = producerStorage.getCustomerPlanId(
+            vars.planId,
+            vars.customerAdress,
+            vars.cloneAddress
+        );
+        DataTypes.Plan memory plan = producerStorage.getPlan(vars.planId);
+
+        /*     if  (plan.planType == DataTypes.PlanTypes.api) {
+            DataTypes.CustomerPlanInfo memory capi = producerStorage.getCustomerPlanInfo(vars.planId);
+              UriMeta memory uriMeta = UriMeta({
+                custumerPlanId: custumerPlanId,
+                planId: plan.planId,
+                description: plan.description,
+                externalLink: plan.externalLink,
+                totalSupply: plan.totalSupply,
+                currentSupply: plan.currentSupply,
+                backgroundColor: plan.backgroundColor,
+                image: plan.image,
+                priceAddress: plan.priceAddress,
+                startDate: capi.startDate,
+                endDate: capi.endDate,
+                remainingQuota: capi.remainingQuota,
+                planType: plan.planType,
+                status: plan.status     
+          
+        });
+
+        } */
+
+        _mint(
+            vars.customerAdress,
+            vars.custumerPlanId,
+            0,
+            abi.encode(vars.cloneAddress)
+        );
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 id,
+        uint256 amount,
+        bytes memory data
+    ) public pure override {
+        revert NFT_TransferIsNotAllowed();
+    }
+
+    function safeBatchTransferFrom(
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) public pure override {
+        revert NFT_TransferIsNotAllowed();
+    }
+
+    function burn(
+        DataTypes.UpdateCustomerPlan calldata vars
+    )
+        external
+        onlyExistCustumer(vars.planId, vars.customerAdress, vars.cloneAddress)
+    {
+        _burn(vars.customerAdress, vars.custumerPlanId, 0);
+    }
+
+    function uri(
+        uint256 tokenId
+    )
+        public
+        view
+        override(ERC1155Upgradeable, IURIGenerator)
+        returns (string memory)
+    {
+        (
+            uint256 planId,
+            address customeraddress,
+            address producerAddress
+        ) = producerStorage.getCustomerPlanIdDecode(tokenId);
+
+        DataTypes.Plan memory plan = producerStorage.getPlan(planId);
+
+        DataTypes.CustomerPlanInfo memory capi = producerStorage
+            .getCustomerPlanInfo(planId);
+        DataTypes.Producer memory producer = producerStorage.getProducer(
+            customeraddress
+        );
+        UriMeta memory uriMeta = UriMeta({
+            custumerPlanId: tokenId,
+            planId: plan.planId,
+            producerName: producer.name,
+            cloneAddress: producerAddress,
+            description: plan.description,
+            externalLink: plan.externalLink,
+            totalSupply: plan.totalSupply,
+            currentSupply: plan.currentSupply,
+            backgroundColor: plan.backgroundColor,
+            image: plan.image,
+            priceAddress: plan.priceAddress,
+            startDate: capi.startDate,
+            endDate: capi.endDate,
+            remainingQuota: capi.remainingQuota,
+            planType: plan.planType,
+            status: plan.status
+        });
+
+        if (uriMeta.planType == DataTypes.PlanTypes.api) {
+            return constructTokenUriApi(uriMeta);
+        }
+        if (uriMeta.planType == DataTypes.PlanTypes.vestingApi) {
+            return constructTokenUriVestingApi(uriMeta);
+        }
+        if (uriMeta.planType == DataTypes.PlanTypes.nUsage) {
+            return constructTokenUriNUsage(uriMeta);
+        }
+
+        return "";
+    }
+
+    function constructTokenUriApi(
+        UriMeta memory params
+    ) public view returns (string memory) {}
+
+    function constructTokenUriVestingApi(
+        UriMeta memory params
+    ) public view returns (string memory) {}
+
+    function constructTokenUriNUsage(
+        UriMeta memory params
+    ) public view returns (string memory) {}
+
     function constructTokenURI(
-        DataTypes.URIParams memory params
+        UriMeta memory params
     ) public view returns (string memory) {
         string memory svg = generateNFT(params);
 
         /* solhint-disable quotes */
         return
             string(
-           /*      abi.encodePacked(
+                /*      abi.encodePacked(
                     "data:application/json;base64,",
                     Base64.encode(
                         abi.encodePacked(
@@ -61,14 +231,14 @@ contract URIGenerator is IURIGenerator ,Initializable, OwnableUpgradeable, Pausa
     }
 
     function generateName(
-        DataTypes.URIParams memory params
+        UriMeta memory params
     ) public pure returns (string memory) {
         return
             string(
                 abi.encodePacked(
                     params.producerName,
                     "-",
-                    params.producerId,
+                    params.planId,
                     "-",
                     params.custumerPlanId
                 )
@@ -76,7 +246,7 @@ contract URIGenerator is IURIGenerator ,Initializable, OwnableUpgradeable, Pausa
     }
 
     function generateDescription(
-        DataTypes.URIParams memory params
+        UriMeta memory params
     ) public pure returns (string memory) {
         return
             string(
@@ -85,7 +255,7 @@ contract URIGenerator is IURIGenerator ,Initializable, OwnableUpgradeable, Pausa
                     " producerName: ",
                     params.producerName,
                     " ProducerId: ",
-                    params.producerId,
+                    params.planId,
                     " CustumerPlanId: ",
                     params.custumerPlanId,
                     " Producer Contract address: ",
@@ -95,18 +265,17 @@ contract URIGenerator is IURIGenerator ,Initializable, OwnableUpgradeable, Pausa
     }
 
     function generateNFT(
-        DataTypes.URIParams memory params
+        UriMeta memory params
     ) public view returns (string memory) {
+        console.log("Generating producerAddress", params.cloneAddress);
+        console.log("Generating planId", params.planId);
 
-        console.log("Generating producerAddress",params.cloneAddress);
-        console.log("Generating producerId",params.producerId);
-       
-        console.log("Generating producerName",params.producerName);
-        console.log("Generating planId",params.planId);
+        console.log("Generating producerName", params.producerName);
+        console.log("Generating planId", params.planId);
 
-        console.log("Generating custumerPlanId",params.custumerPlanId); 
-        console.log("Generating price",params.price);
-        console.log("Generating priceSymbol",params.priceSymbol);
+        console.log("Generating custumerPlanId", params.custumerPlanId);
+
+        console.log("Generating priceAddress", params.priceAddress);
         uint8 priceDecimals = ERC20(params.priceAddress).decimals();
 
         return
@@ -117,19 +286,19 @@ contract URIGenerator is IURIGenerator ,Initializable, OwnableUpgradeable, Pausa
                     "<g transform='scale(5), translate(25, 18)' fill-opacity='0.15'>",
                     "<path xmlns='http://www.w3.org/2000/svg' d='M69.3577 14.5031H29.7265L39.6312 0H0L19.8156 29L29.7265 14.5031L39.6312 29H19.8156H0L19.8156 58L39.6312 29L49.5421 43.5031L69.3577 14.5031Z' fill='white'/>",
                     "</g>",
-                    _generateHeaderSection(params.producerName), 
-                     _generateAmountsSection(
-                        params.price,
-                        params.priceSymbol,
+                    _generateHeaderSection(params.producerName),
+                    _generateAmountsSection(
+                        params.planId,
+                        params.producerName,
                         priceDecimals
-                    ),  
-                     _generateDateSection(params),  
+                    ),
+                    _generateDateSection(params),
                     "</svg>"
                 )
             );
     }
- 
-// todo  producerName and costumer ıd add
+
+    // todo  producerName and costumer ıd add
     function _generateHeaderSection(
         string memory _priceSymbol
     ) internal pure returns (string memory) {
@@ -166,15 +335,15 @@ contract URIGenerator is IURIGenerator ,Initializable, OwnableUpgradeable, Pausa
     }
 
     function _generateDateSection(
-        DataTypes.URIParams memory params
+        UriMeta memory params
     ) internal pure returns (string memory) {
         return
             string(
                 abi.encodePacked(
                     "<text x='16px' y='236px' font-size='14' letter-spacing='0.01em' fill='#fff' font-family='Helvetica'>START DATE</text>",
-                    _generateTimestampString(params.startTime, 16, 260),
+                    _generateTimestampString(params.startDate, 16, 260),
                     "<text x='200px' y='236px' font-size='14' letter-spacing='0.01em' fill='#fff' font-family='Helvetica'>END DATE</text>",
-                    _generateTimestampString(params.endTime, 200, 260)
+                    _generateTimestampString(params.endDate, 200, 260)
                 )
             );
     }
@@ -449,4 +618,21 @@ contract URIGenerator is IURIGenerator ,Initializable, OwnableUpgradeable, Pausa
     ) internal pure returns (string memory) {
         return toHexString(uint256(uint160(addr)), 20);
     }
+
+    function constructTokenURI(
+        DataTypes.URIParams memory params
+    ) external view override returns (string memory) {}
+
+    function generateName(
+        DataTypes.URIParams memory params
+    ) external pure override returns (string memory) {}
+
+    function generateDescription(
+        DataTypes.URIParams memory params
+    ) external pure override returns (string memory) {}
+
+    function generateNFT(
+        DataTypes.URIParams memory params
+    ) external view override returns (string memory) {}
+ 
 }

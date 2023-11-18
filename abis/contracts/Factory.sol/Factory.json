@@ -9,7 +9,7 @@
   "function getProducerImplementation() view returns (address)",
   "function getProducerInfo(address) view returns (tuple(uint256,address,string,string,string,string,address,bool))",
   "function incrementPR_ID() returns (uint256)",
-  "function initialize(address,address,address)",
+  "function initialize(address,address,address,address,address)",
   "function newBcontract(tuple(uint256,address,string,string,string,string,address,bool))",
   "function owner() view returns (address)",
   "function producerStorage() view returns (address)",

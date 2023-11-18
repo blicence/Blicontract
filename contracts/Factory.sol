@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/proxy/Clones.sol"; 
+import "@openzeppelin/contracts/proxy/Clones.sol";
 import "./Producer.sol";
 import "./DelegateCall.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";
@@ -18,7 +18,9 @@ import {IProducerStorage} from "./interfaces/IProducerStorage.sol";
 contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
     address private uriGeneratorAddress;
     address private producerLogicAddress;
-    // address private producerStorageAddress;
+    address private producerApiAddress;
+    address private producerNUsageAddress;
+    address private producerVestingApiAddress;
     address ProducerImplementation;
 
     IProducerStorage public producerStorage;
@@ -36,14 +38,19 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
 
     function initialize(
         address _uriGeneratorAddress,
-        address _producerLogicAddress,
-        address _producerStorageAddress
+        address _producerStorageAddress,
+        address _producerApiAddress,
+        address _producerNUsageAddress,
+        address _producerVestingApiAddress
     ) external initializer onlyProxy {
         __Ownable_init();
         producerStorage = IProducerStorage(_producerStorageAddress);
         uriGeneratorAddress = _uriGeneratorAddress;
-        producerLogicAddress = _producerLogicAddress;
-        ProducerImplementation = address(new Producer()); 
+        producerApiAddress = _producerApiAddress;
+        producerNUsageAddress = _producerNUsageAddress;
+        producerVestingApiAddress = _producerVestingApiAddress;
+
+        ProducerImplementation = address(new Producer());
     }
 
     /**
@@ -72,22 +79,14 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
         require(
             !producerStorage.exsistProducer(msg.sender),
             "producer already existing!"
-        ); 
+        );
         //Clones the   contract implementation
         address clone = Clones.clone(ProducerImplementation);
         //calls Bcontractv2.initialize
         Producer b = Producer(clone);
         incrementPR_ID();
         producerStorage.SetCloneId(currentPR_ID(), clone);
- 
-        emit BcontractCreated(
-             currentPR_ID(),
-            vars.name,
-            vars.description,
-            vars.image,
-            vars.externalLink,
-            payable(msg.sender)
-        );
+
         DataTypes.Producer memory producer;
         producer.producerId = currentPR_ID();
         producer.cloneAddress = payable(clone);
@@ -102,8 +101,18 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
         b.initialize(
             payable(msg.sender),
             uriGeneratorAddress,
-            producerLogicAddress,
+            producerApiAddress,
+            producerNUsageAddress,
+            producerVestingApiAddress,
             address(producerStorage)
+        );
+        emit BcontractCreated(
+            currentPR_ID(),
+            vars.name,
+            vars.description,
+            vars.image,
+            vars.externalLink,
+            payable(msg.sender)
         );
     }
 

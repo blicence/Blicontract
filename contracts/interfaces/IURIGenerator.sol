@@ -4,6 +4,24 @@ pragma solidity 0.8.17;
  import {DataTypes} from "./../libraries/DataTypes.sol";
 
 interface IURIGenerator {
+  struct  UriMeta{
+        uint256 custumerPlanId;
+        uint256 planId; // planId is unique for each plan
+        string producerName;
+        address cloneAddress;
+        string description; // description of the token
+        string externalLink; // link to the token's website
+        int256 totalSupply; // total number of tokens that can be minted
+        int256 currentSupply; // number of tokens that have been minted
+        string backgroundColor; // background color of the token
+        string image; // image of the token
+        address priceAddress; // address to which payments should be sent
+        uint32 startDate; // the date when the plan starts
+        uint32 endDate; // the date when the plan ends
+        uint256 remainingQuota; // the monthly quota of the plan
+        DataTypes.PlanTypes planType;
+        DataTypes.Status status;
+    }
  
     /**
      * @notice Constructs a URI for a claim NFT, encoding an SVG based on parameters of the claims lot.
@@ -32,4 +50,24 @@ interface IURIGenerator {
      * @return A generated svg for the NFT.
      */
     function generateNFT(DataTypes.URIParams memory params) external view returns (string memory);
+      function uri(
+        uint256 tokenId
+    ) external view returns (string memory);
+
+      function mint(    DataTypes.CreateCustomerPlan calldata vars
+    )  external;
+      function burn(    DataTypes.UpdateCustomerPlan calldata vars
+    )   external;
+   
+   function  constructTokenUriApi(
+        UriMeta memory params
+    ) external view returns (string memory);
+
+
+    function constructTokenUriVestingApi(
+        UriMeta memory params
+    ) external view returns (string memory);
+ function constructTokenUriNUsage(
+       UriMeta memory params
+    ) external view returns (string memory);
 }

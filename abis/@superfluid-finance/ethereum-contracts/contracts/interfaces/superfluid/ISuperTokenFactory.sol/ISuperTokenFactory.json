@@ -1,0 +1,20 @@
+[
+  "error SUPER_TOKEN_FACTORY_ALREADY_EXISTS()",
+  "error SUPER_TOKEN_FACTORY_DOES_NOT_EXIST()",
+  "error SUPER_TOKEN_FACTORY_NON_UPGRADEABLE_IS_DEPRECATED()",
+  "error SUPER_TOKEN_FACTORY_ONLY_HOST()",
+  "error SUPER_TOKEN_FACTORY_UNINITIALIZED()",
+  "error SUPER_TOKEN_FACTORY_ZERO_ADDRESS()",
+  "event CustomSuperTokenCreated(address indexed)",
+  "event SuperTokenCreated(address indexed)",
+  "event SuperTokenLogicCreated(address indexed)",
+  "function computeCanonicalERC20WrapperAddress(address) view returns (address, bool)",
+  "function createCanonicalERC20Wrapper(address) returns (address)",
+  "function createERC20Wrapper(address,uint8,string,string) returns (address)",
+  "function createERC20Wrapper(address,uint8,uint8,string,string) returns (address)",
+  "function getCanonicalERC20Wrapper(address) view returns (address)",
+  "function getHost() view returns (address)",
+  "function getSuperTokenLogic() view returns (address)",
+  "function initialize()",
+  "function initializeCustomSuperToken(address)"
+]

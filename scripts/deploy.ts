@@ -1,5 +1,5 @@
 import hre, { ethers } from "hardhat";
-import { deployProxys } from "./test/deployProxies";
+import { deployProxys } from "./v3/deployProxies";
 
 async function main() {
 
