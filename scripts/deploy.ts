@@ -1,9 +1,11 @@
 import hre, { ethers } from "hardhat";
-import { deployProxys } from "./test/deployProxies";
+import { deployProxys } from "./v3/deployProxies";
+import { setProxys } from "./v3/setStorage";
 
 async function main() {
 
- await deployProxys();
+ //await deployProxys();
+ await setProxys();
   // version 1
   
  /*  const signers = await ethers.getSigners();

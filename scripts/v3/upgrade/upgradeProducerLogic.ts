@@ -1,29 +1,30 @@
-import { Contract } from "ethers";
 import * as fs from "fs";
 import {ethers, upgrades} from "hardhat";
-import {ProxiesAddresses, PROXIES_ADDRESSES_FILENAME} from "../ProxiesAddresses";
+import {ProxiesAddresses, PROXIES_ADDRESSES_FILENAME} from "./../ProxiesAddresses";
  
 
 
  let  proxyAddresses: ProxiesAddresses = {
-    PRODUCER_LOGIC_PROXY_ADDRESS: "",
-    FACTORY_PROXY_ADDRESS: "",
-    URI_GENERATOR_PROXY_ADDRESS: "", 
-    PRODUCER_STORAGE_PROXY_ADDRESS: "",
+  FACTORY_PROXY_ADDRESS: "",
+  URI_GENERATOR_PROXY_ADDRESS: "", 
+  PRODUCER_STORAGE_PROXY_ADDRESS: "",
+  PRODUCER_API_PROXY_ADDRESS: "",
+  PRODUCER_NUSAGE_PROXY_ADDRESS: "",
+  PRODUCER_VESTING_API_PROXY_ADDRESS: ""
   };
 
   function getProxyContractAddress(): string {
     proxyAddresses = JSON.parse(
       fs.readFileSync(`./${PROXIES_ADDRESSES_FILENAME}`).toString()
     );
-    return proxyAddresses.FACTORY_PROXY_ADDRESS;
+    return proxyAddresses.PRODUCER_API_PROXY_ADDRESS;
   }
 
   
 async function main() {
   const [deployer, addr1, addr2] = await ethers.getSigners();
 
-  console.log("Upgrading customernft with the account:", deployer.address);
+  console.log("Upgrading ProducerLogic with the account:", deployer.address);
 
   //upgrade the deployed instance to a new version. The new version can be a different
   // contract (such as producer logic), or you can just modify the existing ProducerLogic contract
@@ -39,18 +40,16 @@ async function main() {
   // (unless there is one already from a previous deployment), and upgrade the existing proxy to the new implementation.
 
   const PROXY_CONTRACT_ADDRESS = getProxyContractAddress();
-  const bcontract = await ethers.getContractFactory("Factory");
+  const prlogic = await ethers.getContractFactory("ProducerLogic");
+/*   await upgrades.deployProxy(  prlogic ,{
+    kind: "uups",
+  })  */
+
+  const deploy =  await upgrades.upgradeProxy( PROXY_CONTRACT_ADDRESS, prlogic ,{
+    kind: "uups",
+  }) 
  
-  const deploy: Contract = await upgrades.upgradeProxy(
-    PROXY_CONTRACT_ADDRESS,
-    bcontract,
-    {unsafeAllow: ["delegatecall"]}
-  );
-
-
-
-
-   proxyAddresses.FACTORY_PROXY_ADDRESS = deploy.address;
+   proxyAddresses.PRODUCER_API_PROXY_ADDRESS = deploy.address;
    fs.writeFileSync(
      `./${PROXIES_ADDRESSES_FILENAME}`,
      JSON.stringify(proxyAddresses)

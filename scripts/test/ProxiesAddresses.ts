@@ -1,8 +1,0 @@
-export interface ProxiesAddresses {
-  PRODUCER_LOGIC_PROXY_ADDRESS: string;
-  FACTORY_PROXY_ADDRESS: string;
-  URI_GENERATOR_PROXY_ADDRESS: string; 
-  PRODUCER_STORAGE_PROXY_ADDRESS: string;
-}
-
-export const PROXIES_ADDRESSES_FILENAME = "reports/PROXIES_ADDRESSES.io";

@@ -23,7 +23,7 @@ export const toBN = (x: any) => ethers.BigNumber.from(x);
 describe("Start", async function () {
 
   it("should run successfully", async function () {
-    const { urigenarator, factory, pstorage, producerApi, producerVestinfApi, producerNusage } = await loadFixture(deployProxysFixture);
+    const { urigenarator, factory, pstorage, producerApi, producerVestingApi, producerNusage } = await loadFixture(deployProxysFixture);
     const { owner, userA, userB, ProducerA, ProducerB, ProducerC } = await loadFixture(userList);
 
     let data1: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p1", description: "d1", image: "i1", externalLink: "e1", cloneAddress: ProducerA.address, exists: true };
@@ -203,9 +203,17 @@ describe("Start", async function () {
       contractsFramework.host, // host argument
       "" 
     );
-    producerVestinfApi.SetSuperInitialize(contractsFramework.host,flowScheduler.address)
 
-
+    const vestingScheduler = await ethers.getContractFactory("VestingScheduler");
+    const vestingScheduler1 = await vestingScheduler.deploy(
+      contractsFramework.host, // host argument
+      "" 
+    );
+    console.log("vestingScheduler1 address",vestingScheduler1.address);
+   producerVestingApi.SetSuperInitialize(vestingScheduler1.address)
+ 
+ console.log(" vestingScheduler1 ddddddddddd",vestingScheduler1.address);
+ 
     const provider = owner11.provider!;
    const chainId = (await provider.getNetwork()).chainId;
    const frameworkClass = await Framework.create({
@@ -315,18 +323,19 @@ let flowOp1 = fDAIx.updateFlowOperatorPermissions({
   permissions: 7,
   flowRateAllowance: "10000000000000000000"
 });
-await flowOp1.exec(userC1);
+//await flowOp1.exec(userC1);
 let flowOp2 = fDAIx.updateFlowOperatorPermissions({
-  flowOperator: flowScheduler.address,
+  flowOperator: vestingScheduler1.address,
   permissions: 7,
   flowRateAllowance: "0"
 });
-let flowOp3 = fDAIx.authorizeFlowOperatorWithFullControl({
-  flowOperator: producerVestinfApi.address,
- 
+let flowOp3 = fDAIx.updateFlowOperatorPermissions({
+  flowOperator: producerVestingApi.address,  
+   permissions: 7,
+  flowRateAllowance: "10000000000000000000" 
 }); 
-await flowOp3.exec(userC1);
- await flowOp2.exec(userC1);  
+//await flowOp3.exec(userC1);
+ //await flowOp2.exec(userC1);  
  
 /*  
 let addcustomerPlansaVesting = await firstClone.connect(userC1).addCustomerPlan(customerPlansvesting);
@@ -359,7 +368,7 @@ let crateplanData3: Plan = {
   custumerPlanIds: [0],
 
 }
-let planInfoVesting1: PlanInfoVesting = { planId: 3, cliffDate: 32, flowRate: 38580246913, startAmount: 3858024691358, ctx: new Uint8Array(1) };
+let planInfoVesting1: PlanInfoVesting = { planId: 3, cliffDate: 1949340308, flowRate: 38580246913, startAmount: 3858024691358, ctx: new Uint8Array(1) };
 
 
  
@@ -375,7 +384,7 @@ console.log("addplanapi1",addplanapi1);
     cloneAddress: firstClone.address,
     priceAddress: fDAIx.address,
     startDate: timestampBefore+ 21 * 30 * 24 * 60 * 60,
-    endDate: timestampBefore+ 122 * 30 * 24 * 60 * 60,
+    endDate: 4001130825,
     remainingQuota: 1,
     status: Status.active,
     planType: PlanTypes.vestingApi

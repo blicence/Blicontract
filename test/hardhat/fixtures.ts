@@ -58,11 +58,11 @@ export async function deployProxysFixture() {
   console.log("producerNusage deployed to:", producerNusage.address);
   proxyAddresses.PRODUCER_NUSAGE_PROXY_ADDRESS = producerNusage.address;
     //************** */
-  const ProducerVestinfApi = await ethers.getContractFactory("ProducerVestingApi");
-  const producerVestinfApi = await upgrades.deployProxy(ProducerVestinfApi, [], { kind: "uups" });
-  await producerVestinfApi.deployed();
-  console.log("producerVestinfApi deployed to:", producerVestinfApi.address);
-  proxyAddresses.PRODUCER_VESTING_API_PROXY_ADDRESS = producerVestinfApi.address;
+  const ProducerVestingApi = await ethers.getContractFactory("ProducerVestingApi");
+  const producerVestingApi = await upgrades.deployProxy(ProducerVestingApi, [], { kind: "uups" });
+  await producerVestingApi.deployed();
+  console.log("producerVestinfApi deployed to:", producerVestingApi.address);
+  proxyAddresses.PRODUCER_VESTING_API_PROXY_ADDRESS = producerVestingApi.address;
 
  
 
@@ -93,7 +93,7 @@ export async function deployProxysFixture() {
   // be called only through proxy
   const factory = await upgrades.deployProxy(
     Factory,
-    [uriGenerator.address,pstorage.address,producerApi.address,producerNusage.address,producerVestinfApi.address],
+    [uriGenerator.address,pstorage.address,producerApi.address,producerNusage.address,producerVestingApi.address],
     {
       initializer: "initialize",
       unsafeAllow: ["delegatecall"],
@@ -106,14 +106,14 @@ export async function deployProxysFixture() {
     factory.address,
     producerApi.address,
     producerNusage.address,
-    producerVestinfApi.address
+    producerVestingApi.address
   );
   console.log("pstorage setFactory to:", factory.address);
   await producerApi.setProducerStorage(pstorage.address);
   console.log("producerApi setProducerStorage to:", pstorage.address);
   await producerNusage.setProducerStorage(pstorage.address);
   console.log("producerNusage setProducerStorage to:", pstorage.address);
-  await producerVestinfApi.setProducerStorage(pstorage.address);
+  await producerVestingApi.setProducerStorage(pstorage.address);
   console.log("producerVestinfApi setProducerStorage to:", pstorage.address);
   await uriGenerator.setProducerStorage(pstorage.address);
   console.log("uriGenerator setProducerStorage to:", pstorage.address);
@@ -126,7 +126,7 @@ export async function deployProxysFixture() {
 
 
 
-  return {   urigenarator: uriGenerator, factory: factory,   pstorage: pstorage, producerApi: producerApi, producerNusage: producerNusage, producerVestinfApi: producerVestinfApi }
+  return {   urigenarator: uriGenerator, factory: factory,   pstorage: pstorage, producerApi: producerApi, producerNusage: producerNusage, producerVestingApi: producerVestingApi }
 }
 
 export async function userList() {
