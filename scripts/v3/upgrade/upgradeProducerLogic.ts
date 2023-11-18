@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import {ethers, upgrades} from "hardhat";
-import {ProxiesAddresses, PROXIES_ADDRESSES_FILENAME} from "./../ProxiesAddresses";
+import {ProxiesAddresses, PROXIES_ADDRESSES_FILENAME} from "../ProxiesAddresses";
  
 
 
