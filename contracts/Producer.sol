@@ -95,7 +95,7 @@ modifier onlyCustomer(address   customerAddress) {
  
     // This function adds a new plan to the contract
     function addPlan(
-        DataTypes.CreatePlanData calldata vars
+        DataTypes.Plan calldata vars
     ) external onlyOwner   returns (uint256 planId) {
         // get the address of the producer adding the plan
 
@@ -126,7 +126,7 @@ modifier onlyCustomer(address   customerAddress) {
 
     // This function updates the plan object stored in the contract
     function setPlan(
-        DataTypes.CreatePlanData calldata vars
+        DataTypes.Plan calldata vars
     ) external onlyOwner {
         producerStorage.setPlan(vars);
     }
@@ -157,8 +157,8 @@ modifier onlyCustomer(address   customerAddress) {
     }
 
     // This function adds a new customer plan to the contract
-    function addCustomerPlan(DataTypes.CreateCustomerPlan memory vars) public    {
-       
+    function addCustomerPlan(DataTypes.CustomerPlan memory vars) public    {
+       console.log("addCustomerPlan wq" ); 
         
         if (vars.planType == DataTypes.PlanTypes.vestingApi) {
             producerVestingApi.addCustomerPlan(vars);
@@ -168,9 +168,12 @@ modifier onlyCustomer(address   customerAddress) {
             // todo add payment to the producer
             DataTypes.PlanInfoNUsage memory pInfoNUsage= producerStorage.getPlanInfoNUsage(vars.planId);
             DataTypes.Plan memory plan= producerStorage.getPlan(vars.planId);
-            require(vars.cInfo.remainingQuota >0, "remainingQuota must be higher than zero!");
-            require(ERC20(address(plan.priceAddress)).balanceOf(msg.sender) >= pInfoNUsage.oneUsagePrice*vars.cInfo.remainingQuota, "Amount must be higher than zero!");
-            SafeTransferLib.safeTransferFrom(ERC20(address(plan.priceAddress)), msg.sender, address(this), pInfoNUsage.oneUsagePrice*vars.cInfo.remainingQuota);
+            require(vars.remainingQuota >0, "remainingQuota must be higher than zero!");
+            require(ERC20(address(plan.priceAddress)).balanceOf(msg.sender) >= pInfoNUsage.oneUsagePrice*vars.remainingQuota, "Amount must be higher than zero!");
+        
+            ERC20(address(plan.priceAddress)).approve(address(this), 1000);
+           /*  ERC20(address(plan.priceAddress)).transferFrom(msg.sender, address(this), pInfoNUsage.oneUsagePrice*vars.remainingQuota); */
+           SafeTransferLib.safeTransferFrom(ERC20(address(plan.priceAddress)), msg.sender, address(this), pInfoNUsage.oneUsagePrice*vars.remainingQuota); 
             producerNUsage.addCustomerPlan(vars);
  
         }
@@ -182,7 +185,7 @@ modifier onlyCustomer(address   customerAddress) {
     }
 
     function updateCustomerPlan(
-        DataTypes.UpdateCustomerPlan calldata vars
+        DataTypes.CustomerPlan calldata vars
     ) public onlyExistCustumer(vars.planId, vars.customerAdress, vars.cloneAddress) onlyCustomer(msg.sender) {
        
             if (vars.planType == DataTypes.PlanTypes.vestingApi) {
@@ -191,9 +194,10 @@ modifier onlyCustomer(address   customerAddress) {
         if (vars.planType == DataTypes.PlanTypes.nUsage) {
             if(vars.status==DataTypes.Status.inactive){
                 // return the remaining quota to the customer 
-                            DataTypes.Plan memory plan= producerStorage.getPlan(vars.planId);
+                 DataTypes.Plan memory plan= producerStorage.getPlan(vars.planId);
+               uint256  custumerPlanId =producerStorage.getCustomerPlanId(vars.planId,msg.sender,vars.cloneAddress);
 
-                 DataTypes.CustomerPlanInfo memory cpnu= producerStorage.getCustomerPlanInfo(vars.planId);
+                   DataTypes.CustomerPlan memory cpnu= producerStorage.getCustomerPlan(custumerPlanId);
                     require(cpnu.remainingQuota >0, "remainingQuota must be higher than zero!");
                     DataTypes.PlanInfoNUsage memory pInfoNUsage= producerStorage.getPlanInfoNUsage(vars.planId);
                 
@@ -209,7 +213,7 @@ modifier onlyCustomer(address   customerAddress) {
         } 
     }
    function useFromQuota(
-        DataTypes.UpdateCustomerPlan calldata vars
+        DataTypes.CustomerPlan calldata vars
     )
         public onlyExistCustumer(vars.planId, vars.customerAdress, vars.cloneAddress) onlyCustomer(msg.sender) 
       

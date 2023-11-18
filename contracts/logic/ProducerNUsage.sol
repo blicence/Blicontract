@@ -51,13 +51,13 @@ contract ProducerNUsage is
     }
 
     function addCustomerPlan(
-        DataTypes.CreateCustomerPlan memory vars
+        DataTypes.CustomerPlan memory vars
     ) external onlyProducer(vars.cloneAddress) {
         producerStorage.addCustomerPlan(vars);
     }
 
     function updateCustomerPlan(
-        DataTypes.UpdateCustomerPlan calldata vars
+        DataTypes.CustomerPlan calldata vars
     )
         external
         onlyProducer(vars.cloneAddress)
@@ -67,7 +67,7 @@ contract ProducerNUsage is
     }
 
     function useFromQuota(
-        DataTypes.UpdateCustomerPlan calldata vars
+        DataTypes.CustomerPlan calldata vars
     )
         external
         onlyProducer(vars.cloneAddress)

@@ -21,7 +21,7 @@ interface IProducerStorage {
     function setProducer(DataTypes.Producer calldata vars) external;
 
     function addPlan(
-        DataTypes.CreatePlanData calldata vars
+        DataTypes.Plan calldata vars
     ) external returns (uint256 planId);
 
     function addPlanInfoApi(DataTypes.PlanInfoApi calldata vars) external;
@@ -32,7 +32,7 @@ interface IProducerStorage {
         DataTypes.PlanInfoVesting calldata vars
     ) external;
 
-    function setPlan(DataTypes.CreatePlanData calldata vars) external;
+    function setPlan(DataTypes.Plan calldata vars) external;
 
     function getProducer(
         address producerOwner
@@ -54,49 +54,35 @@ interface IProducerStorage {
         uint256 _planId
     ) external view returns (DataTypes.PlanInfoVesting memory plan);
 
-    function getCustomerPlanInfo(
-        uint256 _planId
-    ) external view returns (DataTypes.CustomerPlanInfo memory cApi);
+   
 
     function getPlans(
         address producerAddress
     ) external view returns (DataTypes.Plan[] memory);
-
-    function getParams(
-        uint256 tokenId
-    ) external view returns (DataTypes.URIParams memory);
-
+ 
     function getCustomer(
         address customerAddress
     ) external view returns (DataTypes.Customer memory);
-
+ 
+  function getCustomerPlan(uint custumerPlanId ) external view  returns (DataTypes.CustomerPlan memory) ;
     function getCustomerPlanId(
         uint256 planid,
         address customeraddress,
         address producerAddress
     ) external pure returns (uint);
 
-    function getCustomerPlanIdDecode(
-        uint custumerPlanId
-    )
-        external
-        pure
-        returns (
-            uint256 planid,
-            address customeraddress,
-            address producerAddress
-        );
+  
 
     function addCustomerPlan(
-        DataTypes.CreateCustomerPlan calldata vars
-    ) external returns (DataTypes.URIParams memory);
+        DataTypes.CustomerPlan calldata vars
+    ) external  ;
 
     function useFromQuota(
-        DataTypes.UpdateCustomerPlan calldata vars
+        DataTypes.CustomerPlan calldata vars
     ) external returns (uint256);
 
     function updateCustomerPlan(
-        DataTypes.UpdateCustomerPlan calldata vars
+        DataTypes.CustomerPlan calldata vars
     ) external;
 
     function exsitCustomerPlan(

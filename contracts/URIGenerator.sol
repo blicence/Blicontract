@@ -67,16 +67,12 @@ contract URIGenerator is
     ) internal override onlyOwner {}
 
     function mint(
-        DataTypes.CreateCustomerPlan calldata vars
+        DataTypes.CustomerPlan calldata vars
     )
         external
         onlyExistCustumer(vars.planId, vars.customerAdress, vars.cloneAddress)
     {
-        uint256 custumerPlanId = producerStorage.getCustomerPlanId(
-            vars.planId,
-            vars.customerAdress,
-            vars.cloneAddress
-        );
+        
         DataTypes.Plan memory plan = producerStorage.getPlan(vars.planId);
 
         /*     if  (plan.planType == DataTypes.PlanTypes.api) {
@@ -130,7 +126,7 @@ contract URIGenerator is
     }
 
     function burn(
-        DataTypes.UpdateCustomerPlan calldata vars
+        DataTypes.CustomerPlan calldata vars
     )
         external
         onlyExistCustumer(vars.planId, vars.customerAdress, vars.cloneAddress)
@@ -146,24 +142,20 @@ contract URIGenerator is
         override(ERC1155Upgradeable, IURIGenerator)
         returns (string memory)
     {
-        (
-            uint256 planId,
-            address customeraddress,
-            address producerAddress
-        ) = producerStorage.getCustomerPlanIdDecode(tokenId);
+         DataTypes.CustomerPlan memory capi = producerStorage
+            .getCustomerPlan(tokenId);
 
-        DataTypes.Plan memory plan = producerStorage.getPlan(planId);
+        DataTypes.Plan memory plan = producerStorage.getPlan(capi.planId);
 
-        DataTypes.CustomerPlanInfo memory capi = producerStorage
-            .getCustomerPlanInfo(planId);
+        
         DataTypes.Producer memory producer = producerStorage.getProducer(
-            customeraddress
+            capi.customerAdress
         );
         UriMeta memory uriMeta = UriMeta({
             custumerPlanId: tokenId,
             planId: plan.planId,
             producerName: producer.name,
-            cloneAddress: producerAddress,
+            cloneAddress: capi.cloneAddress,
             description: plan.description,
             externalLink: plan.externalLink,
             totalSupply: plan.totalSupply,
@@ -193,15 +185,21 @@ contract URIGenerator is
 
     function constructTokenUriApi(
         UriMeta memory params
-    ) public view returns (string memory) {}
+    ) public view returns (string memory) {
+        return  generateNFT(params);
+    }
 
     function constructTokenUriVestingApi(
         UriMeta memory params
-    ) public view returns (string memory) {}
+    ) public view returns (string memory) {
+        return  generateNFT(params);
+    }
 
     function constructTokenUriNUsage(
         UriMeta memory params
-    ) public view returns (string memory) {}
+    ) public view returns (string memory) {
+        return   generateNFT(params);
+    }
 
     function constructTokenURI(
         UriMeta memory params
@@ -211,7 +209,7 @@ contract URIGenerator is
         /* solhint-disable quotes */
         return
             string(
-                /*      abi.encodePacked(
+                     abi.encodePacked(
                     "data:application/json;base64,",
                     Base64.encode(
                         abi.encodePacked(
@@ -224,8 +222,7 @@ contract URIGenerator is
                             '"}'
                         )
                     )
-                ) */
-                svg
+                )  
             );
         /* solhint-enable quotes */
     }
@@ -619,20 +616,5 @@ contract URIGenerator is
         return toHexString(uint256(uint160(addr)), 20);
     }
 
-    function constructTokenURI(
-        DataTypes.URIParams memory params
-    ) external view override returns (string memory) {}
-
-    function generateName(
-        DataTypes.URIParams memory params
-    ) external pure override returns (string memory) {}
-
-    function generateDescription(
-        DataTypes.URIParams memory params
-    ) external pure override returns (string memory) {}
-
-    function generateNFT(
-        DataTypes.URIParams memory params
-    ) external view override returns (string memory) {}
- 
+     
 }

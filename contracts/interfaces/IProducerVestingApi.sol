@@ -7,8 +7,7 @@ import {IVestingScheduler} from "./IVestingScheduler.sol";
 interface IProducerVestingApi {
     function SetSuperInitialize(
         address _host,
-        address _flowScheduler,
-        address _vestingScheduler
+         address _vestingScheduler
     ) external;
 
     function createVestingSchedule(
@@ -42,10 +41,10 @@ interface IProducerVestingApi {
     ) external returns (bytes memory newCtx);
 
     function addCustomerPlan(
-        DataTypes.CreateCustomerPlan calldata vars
+        DataTypes.CustomerPlan calldata vars
     ) external;
 
     function updateCustomerPlan(
-        DataTypes.UpdateCustomerPlan calldata vars
+        DataTypes.CustomerPlan calldata vars
     ) external;
 }

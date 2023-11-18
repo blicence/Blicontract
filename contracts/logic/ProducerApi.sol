@@ -16,6 +16,7 @@ import {IConstantFlowAgreementV1} from "@superfluid-finance/ethereum-contracts/c
 import {DataTypes} from "./../libraries/DataTypes.sol";
 import {IProducerStorage} from "./../interfaces/IProducerStorage.sol";
 import "./../interfaces/IProducerApi.sol";
+import {SuperTokenV1Library} from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 
 contract ProducerApi is
     IProducerApi,
@@ -24,6 +25,7 @@ contract ProducerApi is
     UUPSUpgradeable,
     SuperAppBase
 {
+       using SuperTokenV1Library for ISuperToken;
     IProducerStorage public producerStorage;
     /* --- Superfluid --- */
     using CFAv1Library for CFAv1Library.InitData;
@@ -34,13 +36,11 @@ contract ProducerApi is
     ISuperfluid host;
     event startedStream(
         address indexed customerAdress,
-        address producer,
-        DataTypes.CustomerPlanInfo api
+        address producer 
     );
     event stoppedStream(
         address indexed customerAdress,
-        address producer,
-        DataTypes.CustomerPlanInfo api
+        address producer 
     );
     modifier onlyExistCustumer(
         uint256 planId,
@@ -69,7 +69,7 @@ contract ProducerApi is
         address newImplementation
     ) internal override onlyOwner {}
 
-    function SetSuperInitialize(ISuperfluid _host) external onlyOwner {
+    function SetSuperInitialize(ISuperfluid _host) external   {
         assert(address(host) != address(0));
         host = ISuperfluid(_host);
         cfa = IConstantFlowAgreementV1(address(host.getAgreementClass(CFA_ID)));
@@ -112,28 +112,28 @@ contract ProducerApi is
      * @notice This function can only be called by the contract owner.
      */
     function addCustomerPlan(
-        DataTypes.CreateCustomerPlan memory vars
+        DataTypes.CustomerPlan memory vars
     ) external onlyProducer(vars.cloneAddress) {
+         DataTypes.PlanInfoApi memory planInfoApi= producerStorage.getPlanInfoApi(vars.planId);
+ 
+        
+     
+         
         // wrap tokens
-        /*      wrapSuperToken(vars.cApi.planInfoApi.priceAddress, address(vars.cApi.superToken), vars.cApi.planInfoApi.perMonthLimit); */
-        require(
+     /*  require(
             getFlow(
-                address(vars.cInfo.superToken),
+                address(vars.priceAddress),
                 address(vars.customerAdress),
-                address(vars.cloneAddress)
+                address(this)
             ) > 0,
             "flow already exist for this address"
-        );
-                            DataTypes.PlanInfoApi memory planInfoApi= producerStorage.getPlanInfoApi(vars.planId);
-
-        // create flow
-        createFlow(
-            address(vars.cInfo.superToken),
-            address(vars.cloneAddress),
-            planInfoApi.flowRate
-        );
+        );    */
+   
+                           
+   
+            ISuperToken(vars.priceAddress).createFlowFrom(vars.customerAdress, vars.cloneAddress,  planInfoApi.flowRate); 
         producerStorage.addCustomerPlan(vars);
-        emit startedStream(vars.cloneAddress, vars.customerAdress, vars.cInfo);
+        emit startedStream(vars.cloneAddress, vars.customerAdress);
     }
 
     /**
@@ -147,7 +147,7 @@ contract ProducerApi is
      * @notice This function can only be called by the contract onlyProducer address.
      */
     function updateCustomerPlan(
-        DataTypes.UpdateCustomerPlan calldata vars
+        DataTypes.CustomerPlan calldata vars
     )
         external
         onlyProducer(vars.cloneAddress)
@@ -155,15 +155,15 @@ contract ProducerApi is
     {
         require(
             getFlow(
-                address(vars.cInfo.superToken),
+                address(vars.priceAddress),
                 address(vars.customerAdress),
-                address(vars.cloneAddress)
+                address(this)
             ) <= 0,
             "flow non exist for this address this token"
         );
 
         deleteFlow(
-            address(vars.cInfo.superToken),
+            address(vars.priceAddress),
             address(vars.cloneAddress),
             address(vars.customerAdress)
         );
@@ -184,13 +184,13 @@ contract ProducerApi is
             // create flow
             createFlow(
                 address(vars.cloneAddress),
-                address(vars.cInfo.superToken),
+                address(vars.priceAddress),
                 planInfoApi.flowRate
             );
             emit startedStream(
                 vars.cloneAddress,
-                vars.customerAdress,
-                vars.cInfo
+                vars.customerAdress
+             
             );
         }
         producerStorage.updateCustomerPlan(vars);
@@ -251,6 +251,8 @@ contract ProducerApi is
         address sender,
         address receiver
     ) public view returns (int96) {
+        console.log("getFlow         sender   c",sender);
+          console.log("getFlow         receiver",receiver);
         (, int96 flowRate, , ) = cfa.getFlow(
             ISuperToken(superTokenAddress),
             sender,

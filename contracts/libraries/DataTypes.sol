@@ -37,6 +37,7 @@ library DataTypes {
      * @param status The status of the plan.
      * @param planType The type of the plan.
      */
+     
     struct Plan {
         uint256 planId; // planId is unique for each plan
         address producer; // producer   clone address
@@ -109,23 +110,6 @@ library DataTypes {
         int96 flowRate; // cost of one token per second (in wei)
         uint256 perMonthLimit; // maximum number of tokens that can be minted in a month
     }
-    /**
-     * @title CustomerPlanInfoApi
-     * @dev This struct represents a customer's API plan information.
-     * @param custumerPlanId The ID of the customer plan.
-     * @param startDate The date when the plan starts.
-     * @param endDate The date when the plan ends.
-     * @param remainingQuota The monthly quota of the plan.
-     * @param planInfoApi The plan's information.
-     */
-    struct CustomerPlanInfo {
-        uint256 custumerPlanId; // the id of the customer plan
-        ISuperToken superToken;
-        uint32 startDate; // the date when the plan starts
-        uint32 endDate; // the date when the plan ends
-        uint256 remainingQuota; // the monthly quota of the plan
-        uint256 planId; // the plan's info
-    }
 
     /**
      * @title PlanInfoVesting
@@ -144,7 +128,7 @@ library DataTypes {
      */
     struct PlanInfoVesting {
         uint256 planId; // planId is unique for each plan
-         uint32 cliffDate;
+        uint32 cliffDate;
         int96 flowRate;
         uint256 startAmount;
         bytes ctx;
@@ -167,102 +151,26 @@ library DataTypes {
      */
     struct PlanInfoNUsage {
         uint256 planId; // planId is unique for each plan
-         uint32 oneUsagePrice;
+        uint32 oneUsagePrice;
         uint32 minUsageLimit;
-        uint32 maxUsagelimit;
+        uint32 maxUsageLimit;
     }
 
-    /**
-     * @title CreatePlanData
-     * @dev This struct represents the data required to create a plan.
-     * @param planId The ID of the plan.
-     * @param name The name of the plan.
-     * @param pricePerSecond The cost of one token per second (in wei).
-     * @param status The status of the plan.
-     * @param planType The type of the plan.
-     * @param planInfoApi The API plan's information.
-     * @param planInfoNUsage The number of usages plan's information.
-     * @param planInfoVesting The vesting plan's information.
-     */
-    struct CreatePlanData {
-        uint256 planId;
-        string name;
-        string description; // description of the token
-        string externalLink; // link to the token's website
-        int256 totalSupply; // total number of tokens that can be minted
-        int256 currentSupply; // number of tokens that have been minted
-        string backgroundColor; // background color of the token
-        string image; // image of the token
-        address priceAddress; // address to which payments should be sent
-        uint32 startDate; // date on which the token sale begins
-        Status status;
-        PlanTypes planType;
-         uint256[] custumerPlanIds;
-    }
+   
+  
 
-    /**
-     * @title CreateCustomerPlan
-     * @dev This struct represents the data required to create a customer plan.
-     * @param customerAdress The address of the customer.
-     * @param planId The ID of the plan.
-     * @param custumerPlanId The ID of the customer plan.
-     * @param producerId The ID of the producer.
-     * @param cloneAddress The address of the clone.
-     * @param planType The type of the plan.
-     * @param cVesting The vesting plan's information.
-     * @param cApi The API plan's information.
-     * @param cNUsage The number of usages plan's information.
-     */
-    struct CreateCustomerPlan {
-        address customerAdress;
-        uint256 planId;
-        uint256 custumerPlanId;
-        uint256 producerId;
-        address cloneAddress;
-        Status status;
-        PlanTypes planType;
-        CustomerPlanInfo cInfo;
-    }
-    /**
-     * @title CreateCustomerPlan
-     * @dev This struct represents the data required to create a customer plan.
-     * @param customerAdress The address of the customer.
-     * @param planId The ID of the plan.
-     * @param custumerPlanId The ID of the customer plan.
-     * @param producerId The ID of the producer.
-     * @param cloneAddress The address of the clone.
-     * @param planType The type of the plan.
-     * @param cVesting The vesting plan's information.
-     * @param cApi The API plan's information.
-     * @param cNUsage The number of usages plan's information.
-     */
-    struct UpdateCustomerPlan {
-        address customerAdress;
-        uint256 planId;
-        uint256 custumerPlanId;
-        uint256 producerId;
-        address cloneAddress;
-        address newCustomerAdress;
-        Status status;
-        PlanTypes planType;
-        CustomerPlanInfo cInfo;
-    }
-    /**
-     * @title CustomerPlan
-     * @dev This struct represents a customer's plan information.
-     * @param customerAdress The address of the customer.
-     * @param planId The ID of the plan.
-     * @param custumerPlanId The ID of the customer plan.
-     * @param producerId The ID of the producer.
-     * @param cloneAddress The address of the clone.
-     * @param planType The type of the plan.
-     */
+   
+
     struct CustomerPlan {
         address customerAdress;
         uint256 planId;
         uint256 custumerPlanId;
         uint256 producerId;
         address cloneAddress;
+        address priceAddress;
+        uint32 startDate; // the date when the plan starts
+        uint32 endDate; // the date when the plan ends
+        uint256 remainingQuota; // the monthly quota of the plan
         Status status;
         PlanTypes planType;
     }
@@ -270,10 +178,5 @@ library DataTypes {
     struct Customer {
         address customer;
         CustomerPlan[] customerPlans;
-    }
-    struct URIParams {
-        uint256 custumerPlanId;
-        PlanTypes planType;
-        Status status;
-    }
+    } 
 }
