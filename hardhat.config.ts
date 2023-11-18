@@ -602,7 +602,7 @@ const config: HardhatUserConfig = {
           : [],
     },
     scrollTestnet: {
-      chainId: 534353,
+      chainId: 534351,
       url: process.env.SCROLL_TESTNET_URL || "",
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
