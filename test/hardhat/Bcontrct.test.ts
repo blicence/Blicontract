@@ -28,8 +28,7 @@ describe("Start", async function () {
 
     let data1: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p1", description: "d1", image: "i1", externalLink: "e1", cloneAddress: ProducerA.address, exists: true };
     let data2: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p2", description: "d2", image: "i2", externalLink: "e1", cloneAddress: ProducerA.address, exists: true }
-    let data3: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p3", description: "d3", image: "i3", externalLink: "e1", cloneAddress: ProducerA.address, exists: true }
-    let cloneAddress: string[3];
+    let data3: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p3", description: "d3", image: "i3", externalLink: "e1", cloneAddress: ProducerA.address, exists: true } 
     let firstClone: any;
     const sadeToken = await SadeTokenFixture();
     let suptoken = await ethers.getContractAt("ISuperToken", sadeToken.address);
@@ -59,7 +58,9 @@ describe("Start", async function () {
     let addProdcuer3 = await factory.connect(ProducerC).newBcontract(data3);
     console.log("2112121",);
 
-    cloneAddress = (await factory.connect(ProducerC).getClones());
+    let prducerId = await pstorage.currentPR_ID();
+ 
+   let cloneAddress  =  (await pstorage.connect(ProducerC).getClones());
     console.log("cloneAddress", cloneAddress);
 
     expect(await (await factory.connect(ProducerC).currentPR_ID())).to.equal((3), "getProducers after add 3 producers");
@@ -98,7 +99,8 @@ describe("Start", async function () {
 
     let crateplanData: Plan = {
       planId: uplanId,
-      producer: firstClone.address,
+      producerId:getProducer.producerId,
+      cloneAddress: firstClone.address,
       name: "name",
       description: "description",
       externalLink: "externalLink",
@@ -149,7 +151,7 @@ describe("Start", async function () {
       customerAdress: ProducerC.address,
       planId: crateplanData.planId,
       custumerPlanId: 0,
-      producerId: 1,
+      producerId: getProducer.producerId,
       cloneAddress: firstClone.address,
       priceAddress: sadeToken.address,
       startDate: timestampBefore,
@@ -196,7 +198,7 @@ describe("Start", async function () {
    const contractsFramework = await sfDeployer.frameworkDeployer.getFramework();
 
    console.log("contractsFramework host sssssssssssss",contractsFramework);
-   producerApi.SetSuperInitialize(contractsFramework.host);
+  // producerApi.setSuperInitialize(contractsFramework.host,true,true,true);
 
     const  flow=await ethers.getContractFactory("FlowScheduler");
     const flowScheduler = await flow.deploy(
@@ -210,7 +212,7 @@ describe("Start", async function () {
       "" 
     );
     console.log("vestingScheduler1 address",vestingScheduler1.address);
-   producerVestingApi.SetSuperInitialize(vestingScheduler1.address)
+   producerVestingApi.setSuperInitialize(vestingScheduler1.address)
  
  console.log(" vestingScheduler1 ddddddddddd",vestingScheduler1.address);
  
@@ -271,7 +273,8 @@ console.log("fDAI",fDAI.address);
 
 let crateplanDatavesting: Plan = {
   planId: 2,
-  producer: firstClone.address,
+  producerId:getProducer.producerId,
+  cloneAddress: firstClone.address,
   name: "name",
   description: "description",
   externalLink: "externalLink",
@@ -301,7 +304,7 @@ let customerPlansvesting: CustomerPlan = {
   customerAdress: userC1.address,
   planId: 2,
   custumerPlanId: 0,
-  producerId: 1,
+  producerId: getProducer.producerId,
   cloneAddress: firstClone.address,
   priceAddress: fDAIx.address,
   startDate: timestampBefore+ 1 * 30 * 24 * 60 * 60,
@@ -353,7 +356,8 @@ console.log("customer c", getcustomer1.customerPlans);  */
 
 let crateplanData3: Plan = {
   planId: 3,
-  producer: firstClone.address,
+  producerId:getProducer.producerId,
+  cloneAddress: firstClone.address,
   name: "name",
   description: "description",
   externalLink: "externalLink",
@@ -380,7 +384,7 @@ console.log("addplanapi1",addplanapi1);
     customerAdress: userC1.address,
     planId: 3,
     custumerPlanId: 0,
-    producerId: 1,
+    producerId: getProducer.producerId,
     cloneAddress: firstClone.address,
     priceAddress: fDAIx.address,
     startDate: timestampBefore+ 21 * 30 * 24 * 60 * 60,

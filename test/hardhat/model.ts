@@ -33,7 +33,8 @@ export interface Producer {
 
 export interface Plan {
   planId: number; // planId is unique for each plan
-  producer: string; // producer clone address
+  producerId: number;
+  cloneAddress: string; // producer clone address
   name: string;
   description: string; // description of the token
   externalLink: string; // link to the token's website

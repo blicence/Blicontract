@@ -1,8 +1,6 @@
 [
   "function currentPR_ID() view returns (uint256)",
-  "function getClones() view returns (address[])",
   "function getProducerImplementation() view returns (address)",
-  "function getProducerInfo(address) view returns (tuple(uint256,address,string,string,string,string,address,bool))",
   "function incrementPR_ID() returns (uint256)",
   "function initialize(address,address,address,address,address)",
   "function newBcontract(tuple(uint256,address,string,string,string,string,address,bool))",
