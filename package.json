@@ -115,7 +115,7 @@
     
     "@superfluid-finance/ethereum-contracts":"1.7.1",
     "@superfluid-finance/metadata": "1.1.10",
-    "@superfluid-finance/sdk-core": "0.4.4",
+    "@superfluid-finance/sdk-core": "0.6.12",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@nomiclabs/hardhat-etherscan": "^3.1.7",
