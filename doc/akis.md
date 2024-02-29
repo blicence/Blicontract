@@ -78,7 +78,7 @@ startamount ise kısaca başlangıç ücretidir.
 
 # N usage Plan Api:
 
-ürün ve hizmetinizin kullanımı için hizmet bedeli oluşturma imkanı sağlar.  Bu hizmetin her kullanımı için bir bedel oluşturmanızı  ve  her plan için bir limit oluşturmanıza imkan sağlar
+It allows you to create a service fee for the usage of your product or service. It enables you to create a fee for each usage of the service and set a limit for each plan.
 
 ![Untitled](akis/Untitled%208.png)
 
