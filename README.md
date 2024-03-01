@@ -5,11 +5,11 @@ en [workflow](doc/workflow.md)
 
  
  
-![factory.svg](Draw/fl.png)
+![fl.png](https://github.com/blicence/Blicontract/blob/main/draw/fl.png?raw=true)
 
  
 
-![factory.svg](Draw/factory.svg)
+![factory.svg](https://github.com/blicence/Blicontract/blob/main/draw/factory.svg?raw=)
  
 tr [iş akışı](doc/akis.md)
 en [workflow](doc/workflow.md)
