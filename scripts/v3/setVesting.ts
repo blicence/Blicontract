@@ -5,10 +5,16 @@ import { deployTestFramework } from "@superfluid-finance/ethereum-contracts/dev-
 export async function setProxys() {
     const [deployer, addr1, addr2] = await ethers.getSigners();
 
+    const data = fs.readFileSync("PROXIES_ADDRESSES.io", "utf-8");
 
+    const proxyAddresses: ProxiesAddresses =  JSON.parse(data);
+
+    const data2 = fs.readFileSync("vestingAddress", "utf-8");
+
+    const superVestingAddres =   data2;
  
-   let producerVestingApiadress ='0x32072a2dB11E06f5E35F683cE9F5B34Ff8E38fFa'
-   let superVestingAddres="0xfdde4079e3b783dad6e6304B54860884Af91093c"
+   let producerVestingApiadress =proxyAddresses.PRODUCER_VESTING_API_PROXY_ADDRESS;
+   
     const producerVestingApi = await ethers.getContractAt("ProducerVestingApi", producerVestingApiadress);
  
  

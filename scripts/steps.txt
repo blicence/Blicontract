@@ -38,7 +38,7 @@ producerStorage    initialize
 
 
 
-deploy:sepolia
-deploy:sepolia:st
-deploy:sepolia:vesting
-deploy:sepolia:setVesting
+yarn deploy:sepolia
+yarn deploy:sepolia:st
+yarn  deploy:sepolia:vesting
+yarn  deploy:sepolia:setVesting

@@ -4,16 +4,10 @@ import { ProxiesAddresses, PROXIES_ADDRESSES_FILENAME } from "./ProxiesAddresses
 import { deployTestFramework } from "@superfluid-finance/ethereum-contracts/dev-scripts/deploy-test-framework";
 export async function setProxys() {
     const [deployer, addr1, addr2] = await ethers.getSigners();
+    const data = fs.readFileSync("PROXIES_ADDRESSES.io", "utf-8");
 
-
-    const proxyAddresses: ProxiesAddresses =   {
-      FACTORY_PROXY_ADDRESS: '0x069dAa294631857aB555e6AEB02D0Ab7EafB9D22',
-      URI_GENERATOR_PROXY_ADDRESS: '0x0c0CDeDF014e71456F275b38Fd00267B5eCf393a',
-      PRODUCER_STORAGE_PROXY_ADDRESS: '0xD1E91b8a9FbB1a1A9c973dD83FCA88d8171497E2',
-      PRODUCER_API_PROXY_ADDRESS: '0x5E95a820efe21AcD8881f87Ca3b1c240c8cD6604',
-      PRODUCER_NUSAGE_PROXY_ADDRESS: '0x26ba913972B40A0a2aDC5a9D2dA712bdc9E73210',
-      PRODUCER_VESTING_API_PROXY_ADDRESS: '0x32072a2dB11E06f5E35F683cE9F5B34Ff8E38fFa'
-    }
+    const proxyAddresses: ProxiesAddresses =  JSON.parse(data);
+    
  
 
     //************** */
