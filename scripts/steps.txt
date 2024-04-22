@@ -35,3 +35,10 @@ producerStorage    initialize
         address _producervestingApi
     )
 
+
+
+
+deploy:sepolia
+deploy:sepolia:st
+deploy:sepolia:vesting
+deploy:sepolia:setVesting

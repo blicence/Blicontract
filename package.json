@@ -99,7 +99,9 @@
     "upgradeProducerLogic": "npx hardhat run  --network localhost scripts/v3/upgrade/upgradeProducerLogic.ts",
     "upgradeCustomerNft": "npx hardhat run  --network localhost scripts/v3/upgrade/upgradeCustomerNft.ts",
     "upgradeBcontractFactory": "npx hardhat run --network localhost scripts/v3/upgrade/upgradeBcontractFactory.ts",
-    "deploy:goerli:st": "npx hardhat run --network goerli scripts/v3/setStorage.ts",
+    "deploy:sepolia:st": "npx hardhat run --network sepolia scripts/v3/setStorage.ts",
+    "deploy:sepolia:vesting": "npx hardhat run --network sepolia scripts/v3/deployVesting.ts",
+    "deploy:sepolia:setVesting": "npx hardhat run --network sepolia scripts/v3/setVesting.ts",
     "deploy:fuji:st": "npx hardhat run --network fuji scripts/v3/setStorage.ts"
 
   },

@@ -7,12 +7,12 @@ export async function setProxys() {
 
 
     const proxyAddresses: ProxiesAddresses =   {
-      FACTORY_PROXY_ADDRESS: '0x5813d5d7560B3850B4Ae15339b1AaC215b67b92B',
-      URI_GENERATOR_PROXY_ADDRESS: '0x0E348Dc81c6B4054697B4729b3D7f8c84737A6f2',
-      PRODUCER_STORAGE_PROXY_ADDRESS: '0x6d2cD3FDCD7a72973b2EdE23503eAE1d5ffad3C9',
-      PRODUCER_API_PROXY_ADDRESS: '0x77b5Cc2bACBD18431119C31607060Ed487fA04a9',
-      PRODUCER_NUSAGE_PROXY_ADDRESS: '0xA79b145244C84936cf11EAa98d4F52efF974D3c0',
-      PRODUCER_VESTING_API_PROXY_ADDRESS: '0xA8282b9f09381E3bfC09B5e050652317Dfa10231'
+      FACTORY_PROXY_ADDRESS: '0x069dAa294631857aB555e6AEB02D0Ab7EafB9D22',
+      URI_GENERATOR_PROXY_ADDRESS: '0x0c0CDeDF014e71456F275b38Fd00267B5eCf393a',
+      PRODUCER_STORAGE_PROXY_ADDRESS: '0xD1E91b8a9FbB1a1A9c973dD83FCA88d8171497E2',
+      PRODUCER_API_PROXY_ADDRESS: '0x5E95a820efe21AcD8881f87Ca3b1c240c8cD6604',
+      PRODUCER_NUSAGE_PROXY_ADDRESS: '0x26ba913972B40A0a2aDC5a9D2dA712bdc9E73210',
+      PRODUCER_VESTING_API_PROXY_ADDRESS: '0x32072a2dB11E06f5E35F683cE9F5B34Ff8E38fFa'
     }
  
 
@@ -61,19 +61,19 @@ export async function setProxys() {
       //**************  
     
     /*   let superflHostAddress = "0x22ff293e14F1EC3A09B137e9e06084AFd63adDF9"
-        let superflHostAddressFuji="0x85Fe79b998509B77BF10A8BD4001D58475D29386";
+    
       let tx5=await producerApi.setSuperInitialize(superflHostAddress,true,true,true,);
       tx5.wait();
       ethers.provider.waitForTransaction(tx5.hash);
       console.log("producerApi SetSuperInitialize to:", superflHostAddress);   */  
-      //**************  
+/*       // **************  
        let superVestingAddres="0xf428308b426D7cD7Ad8eBE549d750f31C8E060Ca"
        let tx6=await producerVestingApi.setSuperInitialize(superVestingAddres);
         tx6.wait();
         ethers.provider.waitForTransaction(tx6.hash);
         console.log("producerVestinfApi SetSuperInitialize to:", superVestingAddres);
-      //**************    
-    
+      // **************    
+     */
 
 
 
