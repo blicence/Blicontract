@@ -1333,10 +1333,10 @@
     auto-bind "^4.0.0"
     node-fetch "^2.6.7"
 
-"@superfluid-finance/metadata@1.1.10":
-  version "1.1.10"
-  resolved "https://registry.npmjs.org/@superfluid-finance/metadata/-/metadata-1.1.10.tgz"
-  integrity sha512-IbcpfB/pOwjl/Vam0d1WXNJaeA0bUW/CkQEZlEhUpL+DQh01d6TnxneEjw3VsT9alqamtycKoi6+2uPHAzyvFA==
+"@superfluid-finance/metadata@1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@superfluid-finance/metadata/-/metadata-1.2.2.tgz#a1fdbee0c80ac849eedcce4bf0a51f124856cbdd"
+  integrity sha512-uyWgGm9Z+IxNTenuzI8S4naCt7oDIdFO8tFfflK/O7pXjEzUqcIdntLRseDYt+IQ/BmfyKiVU+grUYSrHqiwJw==
 
 "@superfluid-finance/metadata@git+https://github.com/superfluid-finance/metadata.git":
   version "1.1.7"
