@@ -31,72 +31,38 @@ describe("Start", async function () {
     let data3: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p3", description: "d3", image: "i3", externalLink: "e1", cloneAddress: ProducerA.address, exists: true } 
     let firstClone: any;
     const sadeToken = await SadeTokenFixture();
-    let suptoken = await ethers.getContractAt("ISuperToken", sadeToken.address);
-
-    let plan1: Plan = { planId: 1, producer: ProducerA.address, name: "name", description: "description", externalLink: "externalLink", totalSupply: 1000, currentSupply: 0, backgroundColor: "1", image: "1", priceAddress: sadeToken.address, startDate: 1, status: Status.inactive, planType: PlanTypes.api, custumerPlanIds: [] };
-
     let planInfoApi1: PlanInfoApi = { planId: 2, flowRate: 3858024691358024, perMonthLimit: 1 };
-
-
-    let planInfoNUsage1: PlanInfoNUsage = { planId: 0, oneUsagePrice: 1, minUsageLimit: 1, maxUsageLimit: 1 }
-
-  
-
-
-
-
 
     await sadeToken.mint(ProducerA.address, 500);
     await sadeToken.mint(ProducerB.address, 500);
     await sadeToken.mint(ProducerC.address, 500);
-
     const ProducerABlance = await sadeToken.balanceOf(ProducerA.address)
-    console.log("ProducerABlance", ProducerABlance);
     expect(ProducerABlance).to.equal(500);
-    let addProdcuer1 = await factory.connect(ProducerA).newBcontract(data1);
-    let addProdcuer2 = await factory.connect(ProducerB).newBcontract(data2);
-    let addProdcuer3 = await factory.connect(ProducerC).newBcontract(data3);
-    console.log("2112121",);
-
-    let prducerId = await pstorage.currentPR_ID();
+    await factory.connect(ProducerA).newBcontract(data1);
+    await factory.connect(ProducerB).newBcontract(data2);
+    await factory.connect(ProducerC).newBcontract(data3);
  
    let cloneAddress  =  (await pstorage.connect(ProducerC).getClones());
-    console.log("cloneAddress", cloneAddress);
 
     expect(await (await factory.connect(ProducerC).currentPR_ID())).to.equal((3), "getProducers after add 3 producers");
     firstClone = await ethers.getContractAt("Producer", cloneAddress[1])
     let name = await firstClone.getProducer().then((z: { name: any; }) => { return z.name })
     let getProducer = await firstClone.getProducer();
     let owner1 = await firstClone.owner();
-    console.log("firstClone", firstClone.address);
-    console.log("firstClone getProducer name ?", getProducer.name);
-    console.log("Producer clone addres", getProducer.cloneAddress);
-    console.log("Producer owner addres", owner1);
-
-    console.log("Producerc", ProducerA.address);
     let firstorage = await ethers.getContractAt("ProducerStorage", pstorage.address)
-    console.log("Producerc", ProducerC.address);
-    let sname = await firstorage.getProducer(firstClone.address).then((z: { name: any; }) => { return z.name })
-    console.log("sname getProducer name ?", sname);
-    console.log("firstClone getProducer name ?", name);
+    await firstorage.getProducer(firstClone.address).then((z: { name: any; }) => { return z.name })
     expect(data1.name).to.equal(name, "firstClone getProducer name ");
 
     let data4: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p4", description: "d4", image: "i4", externalLink: "e4", cloneAddress: firstClone.address, exists: true }
-    let setProducer = await firstClone.connect(ProducerA).setProducer(data4);
+    await firstClone.connect(ProducerA).setProducer(data4);
 
     let setname = await firstorage.getProducer(firstClone.address).then((z: { name: any; }) => { return z.name });
-    console.log("setname", setname);
     expect(data4.name).to.equal(setname, "setProducer name ");
-    let status: Status = Status.inactive;
-    let planTypeApi: PlanTypes = PlanTypes.api;
     const blockNumBefore = await ethers.provider.getBlockNumber();
-
     const blockBefore = await ethers.provider.getBlock(blockNumBefore);
     const timestampBefore = blockBefore.timestamp;
 
     let uplanId = timestampBefore + new Date().valueOf();
-
-
     let crateplanData: Plan = {
       planId: uplanId,
       producerId:getProducer.producerId,
@@ -115,12 +81,8 @@ describe("Start", async function () {
       custumerPlanIds: [0],
 
     }
-
-
-    console.log("createPlanData set producer name ", crateplanData);
     let addPlan = await firstClone.connect(ProducerA).addPlan(crateplanData);
-    //await expect(addPlan).to.emit(firstClone, "LogAddPlan").withArgs(1,ProducerA.address);
-       const receipt = await addPlan.wait();
+        const receipt = await addPlan.wait();
        const event: any = receipt.events.find(
          (e: any) => e.address === firstClone.address,
        );
@@ -163,15 +125,12 @@ describe("Start", async function () {
     }
     await sadeToken.connect(ProducerC).approve(firstClone.address, 1000);
     let addcustomerPlansa = await firstClone.connect(ProducerC).addCustomerPlan(customerPlans);
-    console.log("addcustomerPlansa", addcustomerPlansa);
-    let rx = await addcustomerPlansa.wait();
-    console.log("addcustomerPlansa rx", rx);
+    let rx = await addcustomerPlansa.wait(); 
     let getplans = await firstClone.connect(ProducerA).getPlans();
 
 
     //console.log("getPlans", getplans);
     let balance = await sadeToken.balanceOf(firstClone.address);
-    console.log("balance", balance);
     await expect(firstClone.connect(ProducerB).updateCustomerPlan(customerPlans)).to.be.revertedWith("only customer can call this function");
 
     // get customer 
@@ -326,7 +285,7 @@ let flowOp1 = fDAIx.updateFlowOperatorPermissions({
   permissions: 7,
   flowRateAllowance: "10000000000000000000"
 });
-//await flowOp1.exec(userC1);
+ await flowOp1.exec(userC1);
 let flowOp2 = fDAIx.updateFlowOperatorPermissions({
   flowOperator: vestingScheduler1.address,
   permissions: 7,
@@ -340,7 +299,7 @@ let flowOp3 = fDAIx.updateFlowOperatorPermissions({
 //await flowOp3.exec(userC1);
  //await flowOp2.exec(userC1);  
  
-/*  
+ 
 let addcustomerPlansaVesting = await firstClone.connect(userC1).addCustomerPlan(customerPlansvesting);
 
 
@@ -351,7 +310,7 @@ console.log("getPlans", getplans3);
 
 let getcustomer1 = await firstClone.connect(ProducerA).getCustomer(userC1.address);
 console.log("getcustomer", getcustomer1);
-console.log("customer c", getcustomer1.customerPlans);  */
+console.log("customer c", getcustomer1.customerPlans);  
 
 
 let crateplanData3: Plan = {
