@@ -1,47 +1,47 @@
 
 import { ContractFactory, Wallet } from "ethers";
 import { upgrades, ethers, network } from "hardhat";
- 
+
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
- 
+
 import * as fs from 'fs';
 import { ProxiesAddresses, PROXIES_ADDRESSES_FILENAME } from "../../scripts/v3/ProxiesAddresses";
 
- import {
-    Framework,
-    SuperToken,
-    WrapperSuperToken,
+import {
+  Framework,
+  SuperToken,
+  WrapperSuperToken,
 } from "@superfluid-finance/sdk-core";
- 
- import { deployTestFramework } from "@superfluid-finance/ethereum-contracts/dev-scripts/deploy-test-framework";
+
+import { deployTestFramework } from "@superfluid-finance/ethereum-contracts/dev-scripts/deploy-test-framework";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { Provider } from "@ethersproject/providers";
 import { TestToken } from "../../typechain-types/contracts/fortest/TestToken";
 import TestTokenAbi from "../../artifacts/contracts/fortest/TestToken.sol/TestToken.json";
-   export async function SadeTokenFixture(){
-   
-    const mockerc=await ethers.getContractFactory('MockERC20');
-    console.log("sade token ");
-    const token = await mockerc.deploy();
-    await token.deployed();
-    console.log("mockerc deployed to:", token.address);
-    return  token  ;
-  
+export async function SadeTokenFixture() {
+
+  const mockerc = await ethers.getContractFactory('MockERC20');
+  console.log("sade token ");
+  const token = await mockerc.deploy();
+  await token.deployed();
+  console.log("mockerc deployed to:", token.address);
+  return token;
+
 }
- 
-  
- 
+
+
+
 export async function deployProxysFixture() {
   const [deployer, addr1, addr2] = await ethers.getSigners();
   const proxyAddresses: ProxiesAddresses = {
     FACTORY_PROXY_ADDRESS: "",
-    URI_GENERATOR_PROXY_ADDRESS: "", 
+    URI_GENERATOR_PROXY_ADDRESS: "",
     PRODUCER_STORAGE_PROXY_ADDRESS: "",
     PRODUCER_API_PROXY_ADDRESS: "",
     PRODUCER_NUSAGE_PROXY_ADDRESS: "",
     PRODUCER_VESTING_API_PROXY_ADDRESS: ""
   };
-    
+
   console.log("Deploying contracts with the account:", deployer.address);
 
   //************** */
@@ -57,18 +57,18 @@ export async function deployProxysFixture() {
   await producerNusage.deployed();
   console.log("producerNusage deployed to:", producerNusage.address);
   proxyAddresses.PRODUCER_NUSAGE_PROXY_ADDRESS = producerNusage.address;
-    //************** */
+  //************** */
   const ProducerVestingApi = await ethers.getContractFactory("ProducerVestingApi");
   const producerVestingApi = await upgrades.deployProxy(ProducerVestingApi, [], { kind: "uups" });
   await producerVestingApi.deployed();
   console.log("producerVestinfApi deployed to:", producerVestingApi.address);
   proxyAddresses.PRODUCER_VESTING_API_PROXY_ADDRESS = producerVestingApi.address;
 
- 
+
 
   //************** */
   const UriGenerator = await ethers.getContractFactory("URIGenerator");
-  const uriGenerator = await upgrades.deployProxy(UriGenerator, [], {
+   const   uriGenerator = await upgrades.deployProxy(UriGenerator, [], {
     kind: "uups",
   });
   await uriGenerator.deployed();
@@ -76,12 +76,12 @@ export async function deployProxysFixture() {
   proxyAddresses.URI_GENERATOR_PROXY_ADDRESS = uriGenerator.address;
 
   //************** */
-  
- const Pstorage = await ethers.getContractFactory("ProducerStorage");
- const pstorage =await Pstorage.deploy();
- await pstorage.deployed();
- console.log("pstorage deployed to:", pstorage.address);
- proxyAddresses.PRODUCER_STORAGE_PROXY_ADDRESS = pstorage.address;
+
+  const Pstorage = await ethers.getContractFactory("ProducerStorage");
+  const pstorage = await Pstorage.deploy();
+  await pstorage.deployed();
+  console.log("pstorage deployed to:", pstorage.address);
+  proxyAddresses.PRODUCER_STORAGE_PROXY_ADDRESS = pstorage.address;
 
 
   const Factory = await ethers.getContractFactory("Factory");
@@ -93,15 +93,15 @@ export async function deployProxysFixture() {
   // be called only through proxy
   const factory = await upgrades.deployProxy(
     Factory,
-    [uriGenerator.address,pstorage.address,producerApi.address,producerNusage.address,producerVestingApi.address],
+    [uriGenerator.address, pstorage.address, producerApi.address, producerNusage.address, producerVestingApi.address],
     {
       initializer: "initialize",
       unsafeAllow: ["delegatecall"],
     },
   );
-  await factory.deployed(); 
+  await factory.deployed();
   console.log("factory deployed to:", factory.address);
- 
+
   await pstorage.setFactory(
     factory.address,
     producerApi.address,
@@ -117,7 +117,7 @@ export async function deployProxysFixture() {
   console.log("producerVestinfApi setProducerStorage to:", pstorage.address);
   await uriGenerator.setProducerStorage(pstorage.address);
   console.log("uriGenerator setProducerStorage to:", pstorage.address);
- 
+
   proxyAddresses.FACTORY_PROXY_ADDRESS = factory.address;
   fs.writeFileSync(
     `./${PROXIES_ADDRESSES_FILENAME}`,
@@ -126,7 +126,7 @@ export async function deployProxysFixture() {
 
 
 
-  return {   urigenarator: uriGenerator, factory: factory,   pstorage: pstorage, producerApi: producerApi, producerNusage: producerNusage, producerVestingApi: producerVestingApi }
+  return [ uriGenerator, factory, pstorage, producerApi, producerNusage, producerVestingApi  ]
 }
 
 export async function userList() {
@@ -135,10 +135,11 @@ export async function userList() {
     owner,
     userA,
     userB,
+    userC,
     ProducerA,
     ProducerB,
     ProducerC]: SignerWithAddress[] = await ethers.getSigners();
-  return { owner,userA, userB, ProducerA, ProducerB, ProducerC };
+  return { owner, userA, userB, userC, ProducerA, ProducerB, ProducerC };
 
 }
 
@@ -211,4 +212,3 @@ export async function userList() {
 }
 
  */
- 
