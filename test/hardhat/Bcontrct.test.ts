@@ -41,6 +41,11 @@ let contractsFramework:any;
 let flow:any;
 let flowScheduler:any;
 let vestingScheduler:any;
+let fDAI:any;
+let fDAIx:any;
+let initialAmount:any;
+let sadeToken:any;
+
 
 before(async function () {
   const signers = await ethers.getSigners();
@@ -75,6 +80,43 @@ before(async function () {
     provider: provider as unknown as Provider,
     protocolReleaseVersion: "test",
   });
+  const tokenDeployment = await sfDeployer.frameworkDeployer.deployWrapperSuperToken(
+    "Fake DAI Token",
+    "fDAI",
+    18,
+    ethers.utils.parseEther("100000000").toString()
+  );
+    fDAIx = (await frameworkClass.loadSuperToken(
+    "fDAIx",
+  )) as WrapperSuperToken;
+    fDAI = new ethers.Contract(
+    fDAIx.underlyingToken.address,
+    TestTokenAbi.abi,
+    this.owner,
+  ) as unknown as TestToken;
+  initialAmount =ethers.utils.parseUnits("30000")
+  let ss= await ethers.getSigners();
+  for (let i = 0; i < 7; i++) {
+    const signer = ss[i]!;
+      sadeToken = await SadeTokenFixture();
+    await sadeToken.connect(signer).mint(signer.address, initialAmount, {
+      from: signer.address,
+    });
+    await fDAI.connect(signer).mint(signer.address, initialAmount, {
+      from: signer.address,
+    });
+    await fDAI
+      .connect(signer)
+      .approve(fDAIx.address, initialAmount, {
+        from: signer.address,
+      });
+
+    const upgradeOp = fDAIx.upgrade({
+      amount: initialAmount.toString(),
+    });
+    await upgradeOp.exec(signer);
+  }  
+
 });
 describe("Start", async function () {
  
@@ -89,7 +131,7 @@ describe("Start", async function () {
     let data2: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p2", description: "d2", image: "i2", externalLink: "e1", cloneAddress: ProducerA.address, exists: true }
     let data3: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p3", description: "d3", image: "i3", externalLink: "e1", cloneAddress: ProducerA.address, exists: true }
     let firstClone: any;
-    const sadeToken = await SadeTokenFixture();
+
     let planInfoApi1: PlanInfoApi = { planId: 2, flowRate: 3858024691358024, perMonthLimit: 1 };
 
     await sadeToken.mint(ProducerA.address, 500);
@@ -218,52 +260,7 @@ describe("Start", async function () {
       
     
   
-    console.log("1");
-    const tokenDeployment = await sfDeployer.frameworkDeployer.deployWrapperSuperToken(
-      "Fake DAI Token",
-      "fDAI",
-      18,
-      ethers.utils.parseEther("100000000").toString()
-    );
-    console.log("2");
-    const fDAIx = (await frameworkClass.loadSuperToken(
-      "fDAIx",
-    )) as WrapperSuperToken;
-    const fDAI = new ethers.Contract(
-      fDAIx.underlyingToken.address,
-      TestTokenAbi.abi,
-      this.owner,
-    ) as unknown as TestToken;
-    console.log("3");
-    const initialAmount = ethers.utils.parseUnits("10000");
-    const initialAmount1 = ethers.utils.parseUnits("30000");
-    console.log("4");
-    /* await fDAI.approve(fDAIx.address, ethers.constants.MaxInt256); */
-    let ss= await ethers.getSigners();
-    for (let i = 0; i < 5; i++) {
-      const signer = ss[i]!;
-      await sadeToken.connect(signer).mint(signer.address, initialAmount, {
-        from: signer.address,
-      });
-      await fDAI.connect(signer).mint(signer.address, initialAmount1, {
-        from: signer.address,
-      });
-      await fDAI
-        .connect(signer)
-        .approve(fDAIx.address, initialAmount, {
-          from: signer.address,
-        });
-
-      const upgradeOp = fDAIx.upgrade({
-        amount: initialAmount.toString(),
-      });
-      await upgradeOp.exec(signer);
-    }
-    console.log("5");
-    const balance11 = await fDAI.balanceOf(userC.address);
-    console.log("balance11111111111111111111", balance11);
-    console.log("fDAIx", fDAIx.address);
-    console.log("fDAI", fDAI.address);
+    
 
 
 
@@ -310,11 +307,7 @@ describe("Start", async function () {
       planType: PlanTypes.api
 
     }
-    let balance1 = await fDAI.balanceOf(userC.address);
-    console.log("balance1", balance1);
-    console.log("sender", userC.address);
-    console.log("fDAIx", fDAIx.address);
-    console.log(" firstClone", firstClone.address);
+ 
 
 
     let flowOp1 = fDAIx.updateFlowOperatorPermissions({
