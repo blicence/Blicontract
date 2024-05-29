@@ -45,7 +45,7 @@ let fDAI:any;
 let fDAIx:any;
 let initialAmount:any;
 let sadeToken:any;
-
+let firstClone: any;
 
 before(async function () {
   const signers = await ethers.getSigners();
@@ -116,6 +116,18 @@ before(async function () {
     });
     await upgradeOp.exec(signer);
   }  
+  
+  let data1: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p1", description: "d1", image: "i1", externalLink: "e1", cloneAddress: ProducerA.address, exists: true };
+  let data2: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p2", description: "d2", image: "i2", externalLink: "e1", cloneAddress: ProducerA.address, exists: true }
+  let data3: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p3", description: "d3", image: "i3", externalLink: "e1", cloneAddress: ProducerA.address, exists: true }
+
+  await sadeToken.mint(ProducerA.address, 500);
+  await sadeToken.mint(ProducerB.address, 500);
+  await sadeToken.mint(ProducerC.address, 500);
+  await factory.connect(ProducerA).newBcontract(data1);
+  await factory.connect(ProducerB).newBcontract(data2);
+  await factory.connect(ProducerC).newBcontract(data3);
+ 
 
 });
 describe("Start", async function () {
@@ -127,21 +139,13 @@ describe("Start", async function () {
 
   
 
-    let data1: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p1", description: "d1", image: "i1", externalLink: "e1", cloneAddress: ProducerA.address, exists: true };
-    let data2: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p2", description: "d2", image: "i2", externalLink: "e1", cloneAddress: ProducerA.address, exists: true }
-    let data3: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p3", description: "d3", image: "i3", externalLink: "e1", cloneAddress: ProducerA.address, exists: true }
-    let firstClone: any;
 
-    let planInfoApi1: PlanInfoApi = { planId: 2, flowRate: 3858024691358024, perMonthLimit: 1 };
 
-    await sadeToken.mint(ProducerA.address, 500);
-    await sadeToken.mint(ProducerB.address, 500);
-    await sadeToken.mint(ProducerC.address, 500);
+
+ 
     const ProducerABlance = await sadeToken.balanceOf(ProducerA.address)
     expect(ProducerABlance).to.equal(500);
-    await factory.connect(ProducerA).newBcontract(data1);
-    await factory.connect(ProducerB).newBcontract(data2);
-    await factory.connect(ProducerC).newBcontract(data3);
+  
 
     let cloneAddress = (await pstorage.connect(ProducerC).getClones());
 
@@ -152,7 +156,7 @@ describe("Start", async function () {
     let owner1 = await firstClone.owner();
     let firstorage = await ethers.getContractAt("ProducerStorage", pstorage.address)
     await firstorage.getProducer(firstClone.address).then((z: { name: any; }) => { return z.name })
-    expect(data1.name).to.equal(name, "firstClone getProducer name ");
+    expect("p1").to.equal(name, "firstClone getProducer name ");
 
     let data4: Producer = { producerId: 0, producerAddress: ProducerA.address, name: "p4", description: "d4", image: "i4", externalLink: "e4", cloneAddress: firstClone.address, exists: true }
     await firstClone.connect(ProducerA).setProducer(data4);
@@ -192,15 +196,16 @@ describe("Start", async function () {
       event.data,
       event.topics,
     );
-    console.log("decodedEvent", decodedEvent);
+    
 
     await expect(firstClone.connect(ProducerB).addPlan(crateplanData)).to.be.revertedWith("Ownable: caller is not the owner");
     await expect(firstClone.connect(ProducerA).addPlan(crateplanData)).to.be.revertedWith("plan exsist not add plan");
 
+/* 
+    let getplans2 = await firstClone.connect(ProducerA).getPlans(); */
 
-    let getplans2 = await firstClone.connect(ProducerA).getPlans();
-
-    console.log("getPlans", getplans2);
+  
+    let planInfoApi1: PlanInfoApi = { planId: 2, flowRate: 3858024691358024, perMonthLimit: 1 };
     let addplanapi = await firstClone.connect(ProducerA).addPlanInfoApi(planInfoApi1);
     console.log("ProducerC ad", ProducerA.address);
 
@@ -263,8 +268,8 @@ describe("Start", async function () {
     
 
 
-
-    let crateplanDatavesting: Plan = {
+// add api plan 
+    let crateplanDataApi: Plan = {
       planId: 2,
       producerId: getProducer.producerId,
       cloneAddress: firstClone.address,
@@ -282,18 +287,15 @@ describe("Start", async function () {
       custumerPlanIds: [0],
 
     }
-    console.log("6");
+ 
     let addplanapir = await firstClone.connect(ProducerA).addPlanInfoApi(planInfoApi1);
-    console.log("7");
-    let addPlanvesting = await firstClone.connect(ProducerA).addPlan(crateplanDatavesting);
-    console.log("addPlanvesting", addPlanvesting);
+ 
+    let addPlanvesting = await firstClone.connect(ProducerA).addPlan(crateplanDataApi);
+  
     let waitvesting = await addPlanvesting.wait();
-    console.log("waitvesting", waitvesting);
-    /* let planInfoVesting1Q:PlanInfoVesting={planId:2,cliffDate:1,flowRate:3858024691358024,startAmount:1,ctx:new Uint8Array(1)}; */
-    /* let addplanvesting = await firstClone.connect(ProducerA).addPlanInfoVesting(planInfoVesting1Q); */
-    /* console.log("addplanvesting",addplanvesting);
-    let waitvesting1 = await addplanvesting.wait(); */
-    let customerPlansvesting: CustomerPlan = {
+   
+ 
+    let customerPlansApi: CustomerPlan = {
       customerAdress: userC.address,
       planId: 2,
       custumerPlanId: 0,
@@ -308,29 +310,13 @@ describe("Start", async function () {
 
     }
  
-
-
     let flowOp1 = fDAIx.updateFlowOperatorPermissions({
       flowOperator: producerApi.address,
       permissions: 7,
       flowRateAllowance: "10000000000000000000"
     });
     await flowOp1.exec(userC);
-    let flowOp2 = fDAIx.updateFlowOperatorPermissions({
-      flowOperator: vestingScheduler.address,
-      permissions: 7,
-      flowRateAllowance: "0"
-    });
-    let flowOp3 = fDAIx.updateFlowOperatorPermissions({
-      flowOperator: producerVestingApi.address,
-      permissions: 7,
-      flowRateAllowance: "10000000000000000000"
-    });
-    //await flowOp3.exec(userC1);
-    //await flowOp2.exec(userC1);  
-
-
-    let addcustomerPlansaVesting = await firstClone.connect(userC).addCustomerPlan(customerPlansvesting);
+    let addcustomerPlansaVesting = await firstClone.connect(userC).addCustomerPlan(customerPlansApi);
 
 
     let getplans3 = await firstClone.connect(ProducerA).getPlans();
@@ -343,6 +329,24 @@ describe("Start", async function () {
     console.log("customer c", getcustomer1.customerPlans);
 
 
+    /* 
+    let flowOp2 = fDAIx.updateFlowOperatorPermissions({
+      flowOperator: vestingScheduler.address,
+      permissions: 7,
+      flowRateAllowance: "0"
+    });
+    let flowOp3 = fDAIx.updateFlowOperatorPermissions({
+      flowOperator: producerVestingApi.address,
+      permissions: 7,
+      flowRateAllowance: "10000000000000000000"
+    }); */
+    //await flowOp3.exec(userC1);
+    //await flowOp2.exec(userC1);  
+
+
+  
+
+// add vesting api
     let crateplanData3: Plan = {
       planId: 3,
       producerId: getProducer.producerId,
@@ -394,6 +398,47 @@ describe("Start", async function () {
     let getcustomer4 = await firstClone.connect(ProducerA).getCustomer(userC.address);
     console.log("getcustomer", getcustomer4);
     console.log("customer c", getcustomer4.customerPlans);
+
+
+    // add Nusage api 
+    let crateplanDataNusage: Plan = {
+      planId: 4,
+      producerId: getProducer.producerId,
+      cloneAddress: firstClone.address,
+      name: "name",
+      description: "description",
+      externalLink: "externalLink",
+      totalSupply: 1000,
+      currentSupply: 0,
+      backgroundColor: "1",
+      image: "1",
+      priceAddress: fDAIx.address,
+      startDate: 1,
+      status: Status.active,
+      planType: PlanTypes.nUsage,
+      custumerPlanIds: [0],
+
+    }
+     
+    let addplanNUsage2=await firstClone.connect(ProducerA).addPlan(crateplanDataNusage);
+    let customerPlansNusage: CustomerPlan = {
+      customerAdress: userC.address,
+      planId: 4,
+      custumerPlanId: 0,
+      producerId: getProducer.producerId,
+      cloneAddress: firstClone.address,
+      priceAddress: fDAIx.address,
+      startDate: timestampBefore + 21 * 30 * 24 * 60 * 60,
+      endDate: 4001130825,
+      remainingQuota: 1,
+      status: Status.active,
+      planType: PlanTypes.nUsage
+
+    }
+    let addcustomerPlansNusage = await firstClone.connect(userC).addCustomerPlan(customerPlansNusage);
+    let getcustomerc = await firstClone.connect(ProducerA).getCustomer(userC.address);
+    console.log("customer c", getcustomerc.customerPlans);
+    let getBlanceProducerC= await firstClone.connect(ProducerA);
 
   });
 
