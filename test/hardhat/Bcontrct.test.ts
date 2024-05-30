@@ -46,6 +46,7 @@ let fDAIx:any;
 let initialAmount:any;
 let sadeToken:any;
 let firstClone: any;
+let secondClone:any;
 
 before(async function () {
   const signers = await ethers.getSigners();
@@ -151,8 +152,10 @@ describe("Start", async function () {
 
     expect(await (await factory.connect(ProducerC).currentPR_ID())).to.equal((3), "getProducers after add 3 producers");
     firstClone = await ethers.getContractAt("Producer", cloneAddress[1])
+    secondClone=await ethers.getContractAt("Producer", cloneAddress[2])
     let name = await firstClone.getProducer().then((z: { name: any; }) => { return z.name })
     let getProducer = await firstClone.getProducer();
+    let getProducer2= await secondClone.getProducer();
     let owner1 = await firstClone.owner();
     let firstorage = await ethers.getContractAt("ProducerStorage", pstorage.address)
     await firstorage.getProducer(firstClone.address).then((z: { name: any; }) => { return z.name })
@@ -403,8 +406,8 @@ describe("Start", async function () {
     // add Nusage api 
     let crateplanDataNusage: Plan = {
       planId: 4,
-      producerId: getProducer.producerId,
-      cloneAddress: firstClone.address,
+      producerId: getProducer2.producerId,
+      cloneAddress: secondClone.address,
       name: "name",
       description: "description",
       externalLink: "externalLink",
@@ -420,13 +423,13 @@ describe("Start", async function () {
 
     }
      
-    let addplanNUsage2=await firstClone.connect(ProducerA).addPlan(crateplanDataNusage);
+    let addplanNUsage2=await secondClone.connect(ProducerB).addPlan(crateplanDataNusage);
     let customerPlansNusage: CustomerPlan = {
       customerAdress: userC.address,
       planId: 4,
       custumerPlanId: 0,
-      producerId: getProducer.producerId,
-      cloneAddress: firstClone.address,
+      producerId: getProducer2.producerId,
+      cloneAddress: secondClone.address,
       priceAddress: fDAIx.address,
       startDate: timestampBefore + 21 * 30 * 24 * 60 * 60,
       endDate: 4001130825,
@@ -435,10 +438,10 @@ describe("Start", async function () {
       planType: PlanTypes.nUsage
 
     }
-    let addcustomerPlansNusage = await firstClone.connect(userC).addCustomerPlan(customerPlansNusage);
-    let getcustomerc = await firstClone.connect(ProducerA).getCustomer(userC.address);
-    console.log("customer c", getcustomerc.customerPlans);
-    let getBlanceProducerC= await firstClone.connect(ProducerA);
+    let addcustomerPlansNusage = await secondClone.connect(userC).addCustomerPlan(customerPlansNusage);
+/*     let getcustomerc = await secondClone.connect(ProducerB).getCustomer(userC.address);
+    console.log("customer c", getcustomerc.customerPlans); */
+  
 
   });
 
