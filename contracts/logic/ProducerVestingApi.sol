@@ -11,8 +11,7 @@ import {SuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/app
 import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
 import {IConstantFlowAgreementV1} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 import {DataTypes} from "./../libraries/DataTypes.sol";
-import {Base64} from "./../libraries/Base64.sol";
-import "./../interfaces/IFlowScheduler.sol";
+import {Base64} from "./../libraries/Base64.sol"; 
 import "./../interfaces/IVestingScheduler.sol";
 import "./../interfaces/IProducerVestingApi.sol";
 import {IProducerStorage} from "./../interfaces/IProducerStorage.sol";
@@ -54,10 +53,7 @@ contract ProducerVestingApi is
         address newImplementation
     ) internal override onlyOwner {}
 
-    /*   function setFlowScheduler(address _flowScheduler) external onlyOwner {
-        flowScheduler = IFlowScheduler(_flowScheduler);
-    } */
-
+ 
     function setSuperInitialize(
  
         IVestingScheduler _vestingScheduler

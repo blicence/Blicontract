@@ -38,8 +38,7 @@ let chainId:any;
 let frameworkClass:any;
 let sfDeployer:any;
 let contractsFramework:any;
-let flow:any;
-let flowScheduler:any;
+let flow:any; 
 let vestingScheduler:any;
 let fDAI:any;
 let fDAIx:any;
@@ -63,11 +62,7 @@ before(async function () {
    chainId = (await provider.getNetwork()).chainId;
    sfDeployer = await deployTestFramework();
    contractsFramework = await sfDeployer.frameworkDeployer.getFramework();
-   flow = await ethers.getContractFactory("FlowScheduler");
-   flowScheduler = await flow.deploy(
-    contractsFramework.host, // host argument
-    ""
-  );
+ 
   const vestingS = await ethers.getContractFactory("VestingScheduler");
       vestingScheduler = await vestingS.deploy(
     contractsFramework.host, // host argument
