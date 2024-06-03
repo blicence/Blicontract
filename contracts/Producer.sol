@@ -159,7 +159,7 @@ modifier onlyCustomer(address   customerAddress) {
 
     // This function adds a new customer plan to the contract
     function addCustomerPlan(DataTypes.CustomerPlan memory vars) public    {
-       console.log("addCustomerPlan wq" ); 
+     
         
         if (vars.planType == DataTypes.PlanTypes.vestingApi) {
             producerVestingApi.addCustomerPlan(vars);

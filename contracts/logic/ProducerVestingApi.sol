@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
-
-import "hardhat/console.sol";
+ 
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -84,7 +83,7 @@ contract ProducerVestingApi is
         uint32 endDate,
         bytes memory ctx
     ) public {
-        console.log("CustumerCreateVestingSchedule");
+      
         vestingScheduler.createVestingSchedule(
             superToken,
             receiver,
@@ -116,7 +115,7 @@ contract ProducerVestingApi is
         uint32 endDate,
         bytes memory ctx
     ) public returns (bytes memory newCtx) {
-        console.log("CustumerUpdateVestingSchedule");
+  
 
         newCtx = vestingScheduler.updateVestingSchedule(
             superToken,
@@ -144,7 +143,7 @@ contract ProducerVestingApi is
         DataTypes.PlanInfoVesting memory planInfoVesting = producerStorage
             .getPlanInfoVesting(vars.planId);
 
-        console.log("CustumerAddCustomerPlan", planInfoVesting.startAmount);
+   
    
 
       

@@ -3,7 +3,7 @@
 pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts-upgradeable/utils/StorageSlotUpgradeable.sol";
-import "hardhat/console.sol";
+ 
 
 abstract contract DelegateCall {
     error NotActiveProxyError();
@@ -30,9 +30,7 @@ abstract contract DelegateCall {
      * @dev Returns the current implementation address.
      */
     function _getImplementation() internal view returns (address) {
-        console.log(
-            StorageSlotUpgradeable.getAddressSlot(_IMPLEMENTATION_SLOT).value
-        );
+    
         return
             StorageSlotUpgradeable.getAddressSlot(_IMPLEMENTATION_SLOT).value;
            

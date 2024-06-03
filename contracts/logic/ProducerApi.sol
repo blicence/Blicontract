@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
-
-import "hardhat/console.sol";
+ 
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -247,8 +246,7 @@ contract ProducerApi is
         address sender,
         address receiver
     ) public view returns (int96) {
-        console.log("getFlow         sender   c",sender);
-          console.log("getFlow         receiver",receiver);
+  
         (, int96 flowRate, , ) =    ISuperToken(superTokenAddress).getFlowInfo(sender,
             receiver
         );

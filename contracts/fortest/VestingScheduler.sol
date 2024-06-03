@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: AGPLv3
 // solhint-disable not-rely-on-time
 pragma solidity ^0.8.0;
-import {
-    ISuperfluid, ISuperToken, SuperAppDefinitions
-} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import {ISuperfluid, ISuperToken, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import {IConstantFlowAgreementV1} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
-import { SuperAppBase } from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
-import { CFAv1Library } from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
-   
-import { IVestingScheduler } from "./IVestingScheduler.sol";
-import "hardhat/console.sol";
+import {SuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
+import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
+
+import {IVestingScheduler} from "./IVestingScheduler.sol";
+ 
 
 contract VestingScheduler is IVestingScheduler, SuperAppBase {
-
     using CFAv1Library for CFAv1Library.InitData;
     CFAv1Library.InitData public cfaV1;
     mapping(bytes32 => VestingSchedule) public vestingSchedules; // id = keccak(supertoken, sender, receiver)
@@ -25,21 +22,17 @@ contract VestingScheduler is IVestingScheduler, SuperAppBase {
         cfaV1 = CFAv1Library.InitData(
             host,
             IConstantFlowAgreementV1(
-                address(
-                    host.getAgreementClass(
-                        keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1")
-                    )
-                )
+                address(host.getAgreementClass(keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1")))
             )
         );
         // Superfluid SuperApp registration. This is a dumb SuperApp, only for front-end tx batch calls.
         uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL |
-        SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP |
-        SuperAppDefinitions.AFTER_AGREEMENT_CREATED_NOOP |
-        SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP |
-        SuperAppDefinitions.AFTER_AGREEMENT_UPDATED_NOOP |
-        SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP |
-        SuperAppDefinitions.AFTER_AGREEMENT_TERMINATED_NOOP;
+            SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP |
+            SuperAppDefinitions.AFTER_AGREEMENT_CREATED_NOOP |
+            SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP |
+            SuperAppDefinitions.AFTER_AGREEMENT_UPDATED_NOOP |
+            SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP |
+            SuperAppDefinitions.AFTER_AGREEMENT_TERMINATED_NOOP;
         host.registerAppWithKey(configWord, registrationKey);
     }
 
@@ -54,53 +47,29 @@ contract VestingScheduler is IVestingScheduler, SuperAppBase {
         uint32 endDate,
         bytes memory ctx
     ) external returns (bytes memory newCtx) {
-        console.log("CustumerCreateVestingSchedule vesting contract");
-        console.log("cliffDate",cliffDate);
-        console.log("startDate",startDate);
-        console.log("endDate",endDate);
-
         newCtx = ctx;
         address sender = _getSender(ctx);
-        console.log("CustumerCreateVestingSchedule vesting contract 1");
 
         if (receiver == address(0) || receiver == sender) revert AccountInvalid();
         if (address(superToken) == address(0)) revert ZeroAddress();
         if (flowRate <= 0) revert FlowRateInvalid();
         if (cliffDate != 0 && startDate > cliffDate) revert TimeWindowInvalid();
         if (cliffDate == 0 && cliffAmount != 0) revert CliffInvalid();
-                console.log("CustumerCreateVestingSchedule vesting contract 2");
-
+      
 
         uint32 cliffAndFlowDate = cliffDate == 0 ? startDate : cliffDate;
-        if (cliffAndFlowDate <= block.timestamp ||
+        if (
+            cliffAndFlowDate <= block.timestamp ||
             cliffAndFlowDate >= endDate ||
             cliffAndFlowDate + START_DATE_VALID_AFTER >= endDate - END_DATE_VALID_BEFORE ||
             endDate - cliffAndFlowDate < MIN_VESTING_DURATION
         ) revert TimeWindowInvalid();
-                console.log("CustumerCreateVestingSchedule vesting contract 3");
-
 
         bytes32 hashConfig = keccak256(abi.encodePacked(superToken, sender, receiver));
         if (vestingSchedules[hashConfig].endDate != 0) revert ScheduleAlreadyExists();
-        vestingSchedules[hashConfig] = VestingSchedule(
-            cliffAndFlowDate,
-            endDate,
-            flowRate,
-            cliffAmount
-        );
-                console.log("CustumerCreateVestingSchedule vesting contract4");
+        vestingSchedules[hashConfig] = VestingSchedule(cliffAndFlowDate, endDate, flowRate, cliffAmount);
 
-
-        emit VestingScheduleCreated(
-            superToken,
-            sender,
-            receiver,
-            startDate,
-            cliffDate,
-            flowRate,
-            endDate,
-            cliffAmount
-        );
+        emit VestingScheduleCreated(superToken, sender, receiver, startDate, cliffDate, flowRate, endDate, cliffAmount);
     }
 
     function updateVestingSchedule(
@@ -120,13 +89,7 @@ contract VestingScheduler is IVestingScheduler, SuperAppBase {
         // Only allow an update if 1. vesting exists 2. executeCliffAndFlow() has been called
         if (schedule.cliffAndFlowDate != 0 || schedule.endDate == 0) revert ScheduleNotFlowing();
         vestingSchedules[configHash].endDate = endDate;
-        emit VestingScheduleUpdated(
-            superToken,
-            sender,
-            receiver,
-            schedule.endDate,
-            endDate
-        );
+        emit VestingScheduleUpdated(superToken, sender, receiver, schedule.endDate, endDate);
     }
 
     /// @dev IVestingScheduler.deleteVestingSchedule implementation.
@@ -156,7 +119,8 @@ contract VestingScheduler is IVestingScheduler, SuperAppBase {
         bytes32 configHash = keccak256(abi.encodePacked(superToken, sender, receiver));
         VestingSchedule memory schedule = vestingSchedules[configHash];
 
-        if (schedule.cliffAndFlowDate > block.timestamp ||
+        if (
+            schedule.cliffAndFlowDate > block.timestamp ||
             schedule.cliffAndFlowDate + START_DATE_VALID_AFTER < block.timestamp
         ) revert TimeWindowInvalid();
 
@@ -169,11 +133,7 @@ contract VestingScheduler is IVestingScheduler, SuperAppBase {
 
         // If there's cliff or compensation then transfer that amount.
         if (schedule.cliffAmount != 0 || flowDelayCompensation != 0) {
-            superToken.transferFrom(
-                sender,
-                receiver,
-                schedule.cliffAmount + flowDelayCompensation
-            );
+            superToken.transferFrom(sender, receiver, schedule.cliffAmount + flowDelayCompensation);
         }
 
         // Create a flow according to the vesting schedule configuration.
@@ -197,7 +157,7 @@ contract VestingScheduler is IVestingScheduler, SuperAppBase {
         ISuperToken superToken,
         address sender,
         address receiver
-    ) external returns (bool success){
+    ) external returns (bool success) {
         bytes32 configHash = keccak256(abi.encodePacked(superToken, sender, receiver));
         VestingSchedule memory schedule = vestingSchedules[configHash];
 
@@ -206,19 +166,23 @@ contract VestingScheduler is IVestingScheduler, SuperAppBase {
         // Invalidate configuration straight away -- avoid any chance of re-execution or re-entry.
         delete vestingSchedules[configHash];
         // If vesting is not running, we can't do anything, just emit failing event.
-        if(_isFlowOngoing(superToken, sender, receiver)) {
+        if (_isFlowOngoing(superToken, sender, receiver)) {
             // delete first the stream and unlock deposit amount.
             cfaV1.deleteFlowByOperator(sender, receiver, superToken);
 
-            uint256 earlyEndCompensation = schedule.endDate > block.timestamp ?
-                (schedule.endDate - block.timestamp) * uint96(schedule.flowRate) : 0;
+            uint256 earlyEndCompensation = schedule.endDate > block.timestamp
+                ? (schedule.endDate - block.timestamp) * uint96(schedule.flowRate)
+                : 0;
             bool didCompensationFail;
             if (earlyEndCompensation != 0) {
                 // try-catch this because if the account does not have tokens for earlyEndCompensation
                 // we should delete the flow anyway.
-                try superToken.transferFrom(sender, receiver, earlyEndCompensation)
+                try
+                    superToken.transferFrom(sender, receiver, earlyEndCompensation)
                 // solhint-disable-next-line no-empty-blocks
-                {} catch {
+                {
+
+                } catch {
                     didCompensationFail = true;
                 }
             }
@@ -232,12 +196,7 @@ contract VestingScheduler is IVestingScheduler, SuperAppBase {
                 didCompensationFail
             );
         } else {
-            emit VestingEndFailed(
-                superToken,
-                sender,
-                receiver,
-                schedule.endDate
-            );
+            emit VestingEndFailed(superToken, sender, receiver, schedule.endDate);
         }
 
         return true;
@@ -266,7 +225,7 @@ contract VestingScheduler is IVestingScheduler, SuperAppBase {
 
     /// @dev get flowRate of stream
     function _isFlowOngoing(ISuperToken superToken, address sender, address receiver) internal view returns (bool) {
-        (,int96 flowRate,,) = cfaV1.cfa.getFlow(superToken, sender, receiver);
+        (, int96 flowRate, , ) = cfaV1.cfa.getFlow(superToken, sender, receiver);
         return flowRate != 0;
     }
 }

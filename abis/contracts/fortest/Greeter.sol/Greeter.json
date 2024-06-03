@@ -1,6 +1,0 @@
-[
-  "constructor(string)",
-  "function greet() view returns (string)",
-  "function setGreeting(string)",
-  "function version() view returns (uint256)"
-]

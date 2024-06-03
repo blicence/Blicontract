@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.17;
-
-import "hardhat/console.sol";
+ 
 import {DataTypes} from "./../libraries/DataTypes.sol";
 import {IFactory} from "./../interfaces/IFactory.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -94,8 +93,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
     );
 
     modifier onlyFactory() {
-        console.log("msg.sender", msg.sender);
-        console.log("factory", address(factory));
+     
         require(
             msg.sender == address(factory),
             "Only factory can call this function"
@@ -168,13 +166,13 @@ contract ProducerStorage is IProducerStorage, Ownable {
 
     function exsistProducer(address _cloneAddress) public view returns (bool) {
 
-         console.log("exsistProducer", producers[_cloneAddress].exists);
+         
         return producers[_cloneAddress].exists;
     }
  function exsistProducerClone(address producerAddres) public view returns (bool) {
 
        address _cloneAddress = producertoCloneAddress[producerAddres];
-        console.log("exsistProducer", producers[_cloneAddress].exists);
+       
         return producers[_cloneAddress].exists;
     }
     function addProducer(
@@ -192,7 +190,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
         producer.cloneAddress = cloneAddress;
         producertoCloneAddress[vars.producerAddress] = cloneAddress;
         // producers[cloneAddress] = producer;
-        console.log("addProducer n", cloneAddress);
+   
         emit LogProducer(
             vars.producerAddress,
             vars.name,
@@ -216,7 +214,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
         producer.cloneAddress = vars.cloneAddress;
         producertoCloneAddress[vars.producerAddress] = vars.cloneAddress;
         //producers[cloneAddress] = producer;
-        console.log("setProducer n", vars.cloneAddress);
+       
         emit LogProducerSet(
             vars.producerAddress,
             vars.name,
@@ -287,7 +285,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
             vars.custumerPlanIds
         );
         prPlans[cloneAddress].push(plan);
-        console.log("addPlan2", vars.name);
+        
 
         plans[vars.planId] = plan;
         emit LogAddPlan(vars.planId, cloneAddress, vars.name, vars.planType);
@@ -470,8 +468,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
                 )
             )
         );
-        uint256 startTime = block.timestamp;
-        uint256 endTime = block.timestamp; // todo  endtime is  in the future
+      
         address customerAddress = vars.customerAdress;
         DataTypes.Customer storage customer = customers[customerAddress];
         customer.customer = customerAddress;

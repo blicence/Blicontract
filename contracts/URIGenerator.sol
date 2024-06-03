@@ -9,8 +9,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
-import "hardhat/console.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol"; 
 import {IProducerStorage} from "./interfaces/IProducerStorage.sol";
 
 contract URIGenerator is
@@ -264,15 +263,7 @@ contract URIGenerator is
     function generateNFT(
         UriMeta memory params
     ) public view returns (string memory) {
-        console.log("Generating producerAddress", params.cloneAddress);
-        console.log("Generating planId", params.planId);
-
-        console.log("Generating producerName", params.producerName);
-        console.log("Generating planId", params.planId);
-
-        console.log("Generating custumerPlanId", params.custumerPlanId);
-
-        console.log("Generating priceAddress", params.priceAddress);
+      
         uint8 priceDecimals = ERC20(params.priceAddress).decimals();
 
         return
