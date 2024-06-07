@@ -53,13 +53,8 @@ export async function setProxys() {
       ethers.provider.waitForTransaction(tx4.hash);
       console.log("uriGenerator setProducerStorage to:", pstorage.address);     
       //**************  
-    
-    /*   let superflHostAddress = "0x22ff293e14F1EC3A09B137e9e06084AFd63adDF9"
-    
-      let tx5=await producerApi.setSuperInitialize(superflHostAddress,true,true,true,);
-      tx5.wait();
-      ethers.provider.waitForTransaction(tx5.hash);
-      console.log("producerApi SetSuperInitialize to:", superflHostAddress);   */  
+    // sep
+  
 /*       // **************  
        let superVestingAddres="0xf428308b426D7cD7Ad8eBE549d750f31C8E060Ca"
        let tx6=await producerVestingApi.setSuperInitialize(superVestingAddres);
