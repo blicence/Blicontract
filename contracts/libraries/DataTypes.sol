@@ -153,7 +153,7 @@ library DataTypes {
      */
     struct PlanInfoNUsage {
         uint256 planId; // planId is unique for each plan
-        uint32 oneUsagePrice;
+        uint256 oneUsagePrice;
         uint32 minUsageLimit;
         uint32 maxUsageLimit;
     }
