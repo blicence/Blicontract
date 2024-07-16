@@ -202,9 +202,9 @@ modifier onlyCustomer(address   customerAddress) {
                     require(cpnu.remainingQuota >0, "remainingQuota must be higher than zero!");
                     DataTypes.PlanInfoNUsage memory pInfoNUsage= producerStorage.getPlanInfoNUsage(vars.planId);
                 
-                uint256 amount=(pInfoNUsage.oneUsagePrice*1e18)*cpnu.remainingQuota;
                 
-                  SafeTransferLib.safeTransferFrom(ERC20(address(plan.priceAddress)),address(this),msg.sender , amount);
+                
+                  SafeTransferLib.safeTransferFrom(ERC20(address(plan.priceAddress)),address(this),msg.sender ,  (pInfoNUsage.oneUsagePrice)*cpnu.remainingQuota);
             }
             producerNUsage.updateCustomerPlan(vars);
         }

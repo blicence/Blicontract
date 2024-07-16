@@ -139,14 +139,6 @@ library DataTypes {
     /**
      * @title PlanInfoNUsage
      * @dev This struct represents a plan for number of usages.
-     * @param description A description of the plan.
-     * @param externalLink A link to the plan's website.
-     * @param totalSupply The total number of usages that can be purchased.
-     * @param currentSupply The number of usages that have been purchased.
-     * @param backgroundColor The background color of the plan.
-     * @param image The image of the plan.
-     * @param priceAddress The address to which payments should be sent.
-     * @param startDate The date on which the plan starts.
      * @param oneUsagePrice The cost of one usage (in wei).
      * @param minUsageLimit The minimum number of usages that can be purchased.
      * @param maxUsagelimit The maximum number of usages that can be purchased.
