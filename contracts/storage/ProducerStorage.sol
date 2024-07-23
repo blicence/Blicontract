@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.17;
- 
+
 import {DataTypes} from "./../libraries/DataTypes.sol";
 import {IFactory} from "./../interfaces/IFactory.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -14,7 +14,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
     address public producerVestingApi;
 
     uint private PR_ID; // unique id for each producer
-     mapping(address => DataTypes.Producer) internal producers;
+    mapping(address => DataTypes.Producer) internal producers;
     mapping(uint256 => address) public cloneId;
     // producer address=> clone address
     mapping(address => address) public producertoCloneAddress;
@@ -23,7 +23,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
     mapping(address => DataTypes.Plan[]) internal prPlans;
     mapping(uint256 => DataTypes.Plan) internal plans;
 
-     //plan id to plan info  vesting
+    //plan id to plan info  vesting
     mapping(uint256 => DataTypes.PlanInfoVesting) internal planInfoVesting;
     //plan id to plan info  nusage
     mapping(uint256 => DataTypes.PlanInfoNUsage) internal planInfoNUsage;
@@ -32,9 +32,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
 
     // costumer address   costumer tpes
     mapping(address => DataTypes.Customer) internal customers;
-    mapping(uint256=>DataTypes.CustomerPlan) internal customerPlans;
-
-   
+    mapping(uint256 => DataTypes.CustomerPlan) internal customerPlans;
 
     function setFactory(
         IFactory _factory,
@@ -48,108 +46,47 @@ contract ProducerStorage is IProducerStorage, Ownable {
         producerVestingApi = _producervestingApi;
     }
 
-    event LogProducer(
-        address producerAddress,
-        string name,
-        uint256 producerId,
-        address cloneAddress
-    );
-    event LogProducerSet(
-        address producerAddress,
-        string name,
-        uint256 producerId,
-        address cloneAddress
-    );
-    event LogAddPlan(
-        uint256 planId,
-        address producerAddress,
-        string name,
-        DataTypes.PlanTypes planType
-    );
-    event LogSetPlan(
-        uint256 planId,
-        address producerAddress,
-        string name,
-        DataTypes.PlanTypes planType
-    );
-    event LogAddCustomerPlan(
-        address customerAdress,
-        uint256 planId,
-        uint256 custumerPlanId,
-     
-        address cloneAddress
-    );
-    event loguseFromQuota(
-        uint256 planId,
-        address customerAdress,
-        address cloneAddress,
-        uint256 remainingQuota
-    );
-    event logUpdateCustomerPlan(
-        uint256 planId,
-        address customerAdress,
-        address cloneAddress,
-        DataTypes.Status status
-    );
+    event LogProducer(address producerAddress, string name, uint256 producerId, address cloneAddress);
+    event LogProducerSet(address producerAddress, string name, uint256 producerId, address cloneAddress);
+    event LogAddPlan(uint256 planId, address producerAddress, string name, DataTypes.PlanTypes planType);
+    event LogSetPlan(uint256 planId, address producerAddress, string name, DataTypes.PlanTypes planType);
+    event LogAddCustomerPlan(address customerAdress, uint256 planId, uint256 custumerPlanId, address cloneAddress);
+    event loguseFromQuota(uint256 planId, address customerAdress, address cloneAddress, uint256 remainingQuota);
+    event logUpdateCustomerPlan(uint256 planId, address customerAdress, address cloneAddress, DataTypes.Status status);
 
     modifier onlyFactory() {
-     
-        require(
-            msg.sender == address(factory),
-            "Only factory can call this function"
-        );
+        require(msg.sender == address(factory), "Only factory can call this function");
         _;
     }
     modifier onlyProducer() {
-        require(
-            producers[msg.sender].cloneAddress == msg.sender,
-            "Only producer  can call this function"
-        );
+        require(producers[msg.sender].cloneAddress == msg.sender, "Only producer  can call this function");
         _;
     }
     modifier onlyExistProducer() {
-        require(
-            !exsistProducer(msg.sender),
-            "onlyExistProducer  can call this function"
-        );
+        require(!exsistProducer(msg.sender), "onlyExistProducer  can call this function");
         _;
     }
     modifier onlyNonExistProducer() {
-        require(
-            exsistProducer(msg.sender),
-            "onlyExistProducer  can call this function"
-        );
+        require(exsistProducer(msg.sender), "onlyExistProducer  can call this function");
         _;
     }
     // call only from producer contract
     modifier onlyRegisteredProducer() {
-        require(
-            producers[msg.sender].cloneAddress != address(0),
-            "producer: not registered"
-        );
+        require(producers[msg.sender].cloneAddress != address(0), "producer: not registered");
         _;
     }
     // call only from producerApi contract
     modifier onlyProdcuerApi() {
-        require(
-            msg.sender == address(producerApi),
-            " onlyProdcuerApi can call this function"
-        );
+        require(msg.sender == address(producerApi), " onlyProdcuerApi can call this function");
         _;
     }
-    
+
     modifier onlyProdcuerNUsage() {
-        require(
-            msg.sender == address(producerNUsage),
-            "onlyProdcuerNUsage can call this function"
-        );
+        require(msg.sender == address(producerNUsage), "onlyProdcuerNUsage can call this function");
         _;
     }
     modifier onlyProdcuerVestingApi() {
-        require(
-            msg.sender == address(producerVestingApi),
-            "  onlyProdcuerVestingApi can call this function"
-        );
+        require(msg.sender == address(producerVestingApi), "  onlyProdcuerVestingApi can call this function");
         _;
     }
     modifier onlyExistCustumer(
@@ -157,27 +94,21 @@ contract ProducerStorage is IProducerStorage, Ownable {
         address customerAddress,
         address cloneAddress
     ) {
-        require(
-            exsitCustomerPlan(planId, customerAddress, cloneAddress) == true,
-            "Customer plan not exist"
-        );
+        require(exsitCustomerPlan(planId, customerAddress, cloneAddress) == true, "Customer plan not exist");
         _;
     }
 
     function exsistProducer(address _cloneAddress) public view returns (bool) {
-
-         
         return producers[_cloneAddress].exists;
     }
- function exsistProducerClone(address producerAddres) public view returns (bool) {
 
-       address _cloneAddress = producertoCloneAddress[producerAddres];
-       
+    function exsistProducerClone(address producerAddres) public view returns (bool) {
+        address _cloneAddress = producertoCloneAddress[producerAddres];
+
         return producers[_cloneAddress].exists;
     }
-    function addProducer(
-        DataTypes.Producer calldata vars
-    ) external onlyFactory {
+
+    function addProducer(DataTypes.Producer calldata vars) external onlyFactory {
         DataTypes.Producer storage producer = producers[vars.cloneAddress];
         address cloneAddress = payable(vars.cloneAddress);
         producer.producerAddress = vars.producerAddress;
@@ -190,19 +121,12 @@ contract ProducerStorage is IProducerStorage, Ownable {
         producer.cloneAddress = cloneAddress;
         producertoCloneAddress[vars.producerAddress] = cloneAddress;
         // producers[cloneAddress] = producer;
-   
-        emit LogProducer(
-            vars.producerAddress,
-            vars.name,
-            vars.producerId,
-            cloneAddress
-        );
+
+        emit LogProducer(vars.producerAddress, vars.name, vars.producerId, cloneAddress);
     }
 
-    function setProducer(
-        DataTypes.Producer calldata vars
-    ) external onlyProducer onlyNonExistProducer {
-         DataTypes.Producer storage producer = producers[vars.cloneAddress];
+    function setProducer(DataTypes.Producer calldata vars) external onlyProducer onlyNonExistProducer {
+        DataTypes.Producer storage producer = producers[vars.cloneAddress];
         // address cloneAddress = payable(vars.cloneAddress);
         producer.producerAddress = vars.producerAddress;
         producer.name = vars.name;
@@ -214,29 +138,16 @@ contract ProducerStorage is IProducerStorage, Ownable {
         producer.cloneAddress = vars.cloneAddress;
         producertoCloneAddress[vars.producerAddress] = vars.cloneAddress;
         //producers[cloneAddress] = producer;
-       
-        emit LogProducerSet(
-            vars.producerAddress,
-            vars.name,
-            vars.producerId,
-            vars.cloneAddress
-        );
+
+        emit LogProducerSet(vars.producerAddress, vars.name, vars.producerId, vars.cloneAddress);
     }
 
-    function addPlanInfoApi(
-        DataTypes.PlanInfoApi calldata vars
-    ) external onlyProducer onlyNonExistProducer {
-        DataTypes.PlanInfoApi memory info = DataTypes.PlanInfoApi(
-            vars.planId,
-            vars.flowRate,
-            vars.perMonthLimit
-        );
+    function addPlanInfoApi(DataTypes.PlanInfoApi calldata vars) external onlyProducer onlyNonExistProducer {
+        DataTypes.PlanInfoApi memory info = DataTypes.PlanInfoApi(vars.planId, vars.flowRate, vars.perMonthLimit);
         planInfoApi[vars.planId] = info;
     }
 
-    function addPlanInfoNUsage(
-        DataTypes.PlanInfoNUsage calldata vars
-    ) external onlyProducer onlyNonExistProducer {
+    function addPlanInfoNUsage(DataTypes.PlanInfoNUsage calldata vars) external onlyProducer onlyNonExistProducer {
         DataTypes.PlanInfoNUsage memory info = DataTypes.PlanInfoNUsage(
             vars.planId,
             vars.oneUsagePrice,
@@ -246,11 +157,9 @@ contract ProducerStorage is IProducerStorage, Ownable {
         planInfoNUsage[vars.planId] = info;
     }
 
-    function addPlanInfoVesting(
-        DataTypes.PlanInfoVesting calldata vars
-    ) external onlyProducer onlyNonExistProducer {
+    function addPlanInfoVesting(DataTypes.PlanInfoVesting calldata vars) external onlyProducer onlyNonExistProducer {
         DataTypes.PlanInfoVesting memory info = DataTypes.PlanInfoVesting(
-            vars.planId, 
+            vars.planId,
             vars.cliffDate,
             vars.flowRate,
             vars.startAmount,
@@ -259,14 +168,12 @@ contract ProducerStorage is IProducerStorage, Ownable {
         planInfoVesting[vars.planId] = info;
     }
 
-    function addPlan(
-        DataTypes.Plan calldata vars
-    ) external onlyNonExistProducer returns (uint256 planId) {
+    function addPlan(DataTypes.Plan calldata vars) external onlyNonExistProducer returns (uint256 planId) {
         // get the address of the producer adding the plan
-        require(!(plans[vars.planId].planId==vars.planId),"plan exsist not add plan");
-       
+        require(!(plans[vars.planId].planId == vars.planId), "plan exsist not add plan");
+
         address cloneAddress = msg.sender;
-         // create a new Plan object and store it in the mapping
+        // create a new Plan object and store it in the mapping
         DataTypes.Plan memory plan = DataTypes.Plan(
             vars.planId,
             cloneAddress,
@@ -281,11 +188,10 @@ contract ProducerStorage is IProducerStorage, Ownable {
             vars.priceAddress,
             vars.startDate,
             vars.status,
-            vars.planType ,
+            vars.planType,
             vars.custumerPlanIds
         );
         prPlans[cloneAddress].push(plan);
-        
 
         plans[vars.planId] = plan;
         emit LogAddPlan(vars.planId, cloneAddress, vars.name, vars.planType);
@@ -293,9 +199,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
         return vars.planId;
     }
 
-    function setPlan(
-        DataTypes.Plan calldata vars
-    ) external onlyNonExistProducer {
+    function setPlan(DataTypes.Plan calldata vars) external onlyNonExistProducer {
         // get the address of the producer adding the plan
         address cloneAddress = msg.sender;
         // create a new Plan object and store it in the mapping
@@ -327,9 +231,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
     }
 
     // todo setPlantype only producer
-    function setPlanInfo(
-        DataTypes.Plan calldata vars
-    ) internal onlyNonExistProducer {
+    function setPlanInfo(DataTypes.Plan calldata vars) internal onlyNonExistProducer {
         /*    if (vars.planType == DataTypes.PlanTypes.api) {
             DataTypes.PlanInfoApi memory info = DataTypes.PlanInfoApi(
                 vars.planInfoApi.planId,
@@ -382,93 +284,60 @@ contract ProducerStorage is IProducerStorage, Ownable {
         } */
     }
 
-    function getProducer(
-        address cloneAddress
-    ) external view returns (DataTypes.Producer memory) {
+    function getProducer(address cloneAddress) external view returns (DataTypes.Producer memory) {
         return producers[cloneAddress];
     }
 
-    function getProducerInfo(
-        address producerAddres
-    ) external view returns (DataTypes.Producer memory) {
-          address _cloneAddress = producertoCloneAddress[producerAddres];
-        
+    function getProducerInfo(address producerAddres) external view returns (DataTypes.Producer memory) {
+        address _cloneAddress = producertoCloneAddress[producerAddres];
+
         return producers[_cloneAddress];
     }
-    function getPlan(
-        uint256 _planId
-    ) public view returns (DataTypes.Plan memory plan) {
+
+    function getPlan(uint256 _planId) public view returns (DataTypes.Plan memory plan) {
         return plans[_planId];
     }
 
-    function getPlanInfoApi(
-        uint256 _planId
-    ) public view returns (DataTypes.PlanInfoApi memory pInfoApi) {
+    function getPlanInfoApi(uint256 _planId) public view returns (DataTypes.PlanInfoApi memory pInfoApi) {
         return planInfoApi[_planId];
     }
 
-    function getPlanInfoVesting(
-        uint256 _planId
-    ) public view returns (DataTypes.PlanInfoVesting memory pInfoVesting) {
+    function getPlanInfoVesting(uint256 _planId) public view returns (DataTypes.PlanInfoVesting memory pInfoVesting) {
         return planInfoVesting[_planId];
     }
 
-    function getPlanInfoNUsage(
-        uint256 _planId
-    ) public view returns (DataTypes.PlanInfoNUsage memory pInfoNUsage) {
+    function getPlanInfoNUsage(uint256 _planId) public view returns (DataTypes.PlanInfoNUsage memory pInfoNUsage) {
         return planInfoNUsage[_planId];
     }
- 
+
     function getPlans(
         address cloneAddress // producer clone address
     ) public view returns (DataTypes.Plan[] memory) {
-        DataTypes.Plan[] memory data = new DataTypes.Plan[](
-            prPlans[cloneAddress].length
-        );
+        DataTypes.Plan[] memory data = new DataTypes.Plan[](prPlans[cloneAddress].length);
         data = prPlans[cloneAddress];
-   
+
         return data;
     }
 
-    
-
-    function getCustomer(
-        address customerAddress
-    ) external view returns (DataTypes.Customer memory) {
+    function getCustomer(address customerAddress) external view returns (DataTypes.Customer memory) {
         return customers[customerAddress];
     }
-  function getCustomerPlan(uint custumerPlanId ) public view  returns (DataTypes.CustomerPlan memory)  {
-    return customerPlans[custumerPlanId];
 
-  }
+    function getCustomerPlan(uint custumerPlanId) public view returns (DataTypes.CustomerPlan memory) {
+        return customerPlans[custumerPlanId];
+    }
+
     function getCustomerPlanId(
         uint256 planid,
         address customeraddress,
         address producerAddress
     ) public pure returns (uint) {
-        return
-            uint(
-                keccak256(
-                    abi.encodePacked(planid, customeraddress, producerAddress)
-                )
-            );
+        return uint(keccak256(abi.encodePacked(planid, customeraddress, producerAddress)));
     }
- 
-    
 
-    function addCustomerPlan(
-        DataTypes.CustomerPlan calldata vars
-    ) external   {
-        uint256 customerPlanId = uint(
-            keccak256(
-                abi.encodePacked(
-                    vars.planId,
-                    vars.customerAdress,
-                    vars.cloneAddress
-                )
-            )
-        );
-      
+    function addCustomerPlan(DataTypes.CustomerPlan calldata vars) external {
+        uint256 customerPlanId = uint(keccak256(abi.encodePacked(vars.planId, vars.customerAdress, vars.cloneAddress)));
+
         address customerAddress = vars.customerAdress;
         DataTypes.Customer storage customer = customers[customerAddress];
         customer.customer = customerAddress;
@@ -485,56 +354,30 @@ contract ProducerStorage is IProducerStorage, Ownable {
             vars.status,
             vars.planType
         );
-     
+
         customer.customerPlans.push(customerPlan);
         // plan add customerPlanId;
-        DataTypes.Plan storage plan=plans[vars.planId];
+        DataTypes.Plan storage plan = plans[vars.planId];
         plan.custumerPlanIds.push(customerPlanId);
-        customerPlans[customerPlanId]=customerPlan;
-       
+        customerPlans[customerPlanId] = customerPlan;
 
         // producer plans add customerPlanId
-        
-           for (uint256 i = 0; i < prPlans[vars.cloneAddress].length; i++) {
+
+        for (uint256 i = 0; i < prPlans[vars.cloneAddress].length; i++) {
             if (prPlans[vars.cloneAddress][i].planId == vars.planId) {
-              DataTypes.Plan storage prplan=  prPlans[vars.cloneAddress][i];
-              prplan.custumerPlanIds.push(customerPlanId);
+                DataTypes.Plan storage prplan = prPlans[vars.cloneAddress][i];
+                prplan.custumerPlanIds.push(customerPlanId);
             }
         }
 
-
-    
-   
- 
-        emit LogAddCustomerPlan(
-            vars.customerAdress,
-            vars.planId,
-            customerPlanId, 
-            vars.cloneAddress
-        );
-        
+        emit LogAddCustomerPlan(vars.customerAdress, vars.planId, customerPlanId, vars.cloneAddress);
     }
 
     function useFromQuota(
         DataTypes.CustomerPlan calldata vars
-    )
-        external
-        onlyExistCustumer(vars.planId, vars.customerAdress, vars.cloneAddress)
-        returns (uint256)
-    {
-           uint256 customerPlanId = uint(
-            keccak256(
-                abi.encodePacked(
-                    vars.planId,
-                    vars.customerAdress,
-                    vars.cloneAddress
-                )
-            )
-        ); 
-        require(
-            customerPlans[customerPlanId].remainingQuota >= 1,
-            "Not enough remaining quota!"
-        );
+    ) external onlyExistCustumer(vars.planId, vars.customerAdress, vars.cloneAddress) returns (uint256) {
+        uint256 customerPlanId = uint(keccak256(abi.encodePacked(vars.planId, vars.customerAdress, vars.cloneAddress)));
+        require(customerPlans[customerPlanId].remainingQuota >= 1, "Not enough remaining quota!");
         customerPlans[customerPlanId].remainingQuota -= 1;
         emit loguseFromQuota(
             vars.planId,
@@ -547,28 +390,19 @@ contract ProducerStorage is IProducerStorage, Ownable {
 
     function updateCustomerPlan(
         DataTypes.CustomerPlan calldata vars
-    )
-        external
-        onlyExistCustumer(vars.planId, vars.customerAdress, vars.cloneAddress)
-    {
+    ) external onlyExistCustumer(vars.planId, vars.customerAdress, vars.cloneAddress) {
         if (vars.status == DataTypes.Status.inactive) {
+            customerPlans[vars.custumerPlanId].status = DataTypes.Status.inactive;
             customerPlans[vars.custumerPlanId].remainingQuota = 0;
-               customers[vars.customerAdress]
-            .customerPlans[vars.custumerPlanId]
-            .remainingQuota =0;
-
+            customers[vars.customerAdress].customerPlans[vars.custumerPlanId].remainingQuota = 0;
+        }
+        if (vars.status == DataTypes.Status.active) {
+            customerPlans[vars.custumerPlanId].remainingQuota = vars.remainingQuota;
+            customers[vars.customerAdress].customerPlans[vars.custumerPlanId].remainingQuota = vars.remainingQuota;
         }
 
-   
-        customers[vars.customerAdress]
-            .customerPlans[vars.custumerPlanId]
-            .status = vars.status;
-         emit logUpdateCustomerPlan(
-            vars.planId,
-            vars.customerAdress,
-            vars.cloneAddress,
-            vars.status
-        );
+        customers[vars.customerAdress].customerPlans[vars.custumerPlanId].status = vars.status;
+        emit logUpdateCustomerPlan(vars.planId, vars.customerAdress, vars.cloneAddress, vars.status);
     }
 
     function exsitCustomerPlan(
@@ -576,12 +410,8 @@ contract ProducerStorage is IProducerStorage, Ownable {
         address customerAddress,
         address cloneAddress
     ) public view returns (bool) {
-        uint256 customerPlanId = getCustomerPlanId(
-            planId,
-            customerAddress,
-            cloneAddress
-        );
-//todo check if customerPlanId is in plan.custumerPlanIds
+        uint256 customerPlanId = getCustomerPlanId(planId, customerAddress, cloneAddress);
+        //todo check if customerPlanId is in plan.custumerPlanIds
         if (customerPlans[customerPlanId].custumerPlanId == customerPlanId) {
             return true;
         } else {
@@ -589,10 +419,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
         }
     }
 
-    function SetCloneId(
-        uint256 _producerId,
-        address _cloneAddress
-    ) external onlyFactory {
+    function SetCloneId(uint256 _producerId, address _cloneAddress) external onlyFactory {
         cloneId[_producerId] = _cloneAddress;
     }
 
@@ -605,7 +432,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
         // todo index for to much
         uint256 length = currentPR_ID() + 1;
         address[] memory data = new address[](length);
-        for (uint256 i = 1; i < length ; i++) {
+        for (uint256 i = 1; i < length; i++) {
             data[i] = cloneId[i];
         }
         return data;
@@ -619,8 +446,4 @@ contract ProducerStorage is IProducerStorage, Ownable {
         PR_ID++;
         return PR_ID;
     }
-
-    
-
-  
 }
