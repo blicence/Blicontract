@@ -102,7 +102,9 @@
     "deploy:sepolia:st": "npx hardhat run --network sepolia scripts/v3/setStorage.ts",
     "deploy:sepolia:vesting": "npx hardhat run --network sepolia scripts/v3/deployVesting.ts",
     "deploy:sepolia:setVesting": "npx hardhat run --network sepolia scripts/v3/setVesting.ts",
-    "deploy:fuji:st": "npx hardhat run --network fuji scripts/v3/setStorage.ts"
+    "deploy:fuji:st": "npx hardhat run --network fuji scripts/v3/setStorage.ts",
+    "deploy:fuji:vesting": "npx hardhat run --network fuji scripts/v3/deployVesting.ts",
+    "deploy:fuji:setVesting": "npx hardhat run --network fuji scripts/v3/setVesting.ts"
 
   },
   "devDependencies": {

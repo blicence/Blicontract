@@ -42,3 +42,9 @@ yarn deploy:sepolia
 yarn deploy:sepolia:st
 yarn  deploy:sepolia:vesting
 yarn  deploy:sepolia:setVesting
+
+
+yarn deploy:fuji
+yarn deploy:fuji:st
+yarn  deploy:fuji:vesting
+yarn  deploy:fuji:setVesting

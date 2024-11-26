@@ -4,7 +4,7 @@ import { ethers } from "hardhat";
 
 export async function deployVesting() {
  const registrationKey = "";
- const host="0x109412E3C84f0539b43d39dB691B08c90f58dC7c"
+ const host="0x85Fe79b998509B77BF10A8BD4001D58475D29386"
  let vestingAddress="" 
 
   const [deployer, addr1, addr2] = await ethers.getSigners();
