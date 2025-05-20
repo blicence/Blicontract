@@ -99,7 +99,7 @@ contract URIGenerator is
         _mint(
             vars.customerAdress,
             vars.custumerPlanId,
-            0,
+            1,
             abi.encode(vars.cloneAddress)
         );
     }
@@ -130,7 +130,7 @@ contract URIGenerator is
         external
         onlyExistCustumer(vars.planId, vars.customerAdress, vars.cloneAddress)
     {
-        _burn(vars.customerAdress, vars.custumerPlanId, 0);
+        _burn(vars.customerAdress, vars.custumerPlanId, 1);
     }
 
     function uri(
@@ -148,7 +148,7 @@ contract URIGenerator is
 
         
         DataTypes.Producer memory producer = producerStorage.getProducer(
-            capi.customerAdress
+            capi.cloneAddress
         );
         UriMeta memory uriMeta = UriMeta({
             custumerPlanId: tokenId,

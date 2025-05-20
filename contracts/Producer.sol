@@ -172,9 +172,8 @@ modifier onlyCustomer(address   customerAddress) {
             require(vars.remainingQuota >0, "remainingQuota must be higher than zero!");
             require(ERC20(address(plan.priceAddress)).balanceOf(msg.sender) >= pInfoNUsage.oneUsagePrice*vars.remainingQuota, "Amount must be higher than zero!");
         
-            ERC20(address(plan.priceAddress)).approve(address(this), pInfoNUsage.oneUsagePrice*vars.remainingQuota);
            /*  ERC20(address(plan.priceAddress)).transferFrom(msg.sender, address(this), pInfoNUsage.oneUsagePrice*vars.remainingQuota); */
-           SafeTransferLib.safeTransferFrom(ERC20(address(plan.priceAddress)), msg.sender, address(this), pInfoNUsage.oneUsagePrice*vars.remainingQuota); 
+           SafeTransferLib.safeTransferFrom(ERC20(address(plan.priceAddress)), msg.sender, address(this), pInfoNUsage.oneUsagePrice*vars.remainingQuota);
             producerNUsage.addCustomerPlan(vars);
  
         }
