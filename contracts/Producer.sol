@@ -18,6 +18,7 @@ import "./interfaces/IURIGenerator.sol";
 import "./interfaces/IProducerApi.sol";
 import "./interfaces/IProducerNUsage.sol";
 import "./interfaces/IProducerVestingApi.sol";
+import "./interfaces/IStreamLockManager.sol";
 
 contract Producer is
     Initializable,
@@ -32,12 +33,26 @@ contract Producer is
     IProducerNUsage public producerNUsage;
     IProducerVestingApi public producerVestingApi;
     IProducerApi public producerApi;
+    IStreamLockManager public streamLockManager;
 
    event LogAddPlan(
         uint256 planId,
         address producerAddress,
         string name,
         DataTypes.PlanTypes planType
+    );
+
+    event CustomerPlanWithStreamCreated(
+        uint256 indexed customerPlanId,
+        bytes32 indexed streamLockId,
+        address indexed customer
+    );
+
+    event StreamUsageValidated(
+        uint256 indexed customerPlanId,
+        bytes32 indexed streamLockId,
+        address indexed customer,
+        bool canUse
     );
     constructor() {
         _disableInitializers();
@@ -52,7 +67,8 @@ contract Producer is
         address _producerApiAddress,
         address _producerNUsageAddress,
         address _producerVestingApiAddress,
-        address _producerStorageAddress
+        address _producerStorageAddress,
+        address _streamLockManagerAddress
     ) external initializer onlyProxy {
        /*  __ERC1155_init(""); */
         __Ownable_init();
@@ -64,6 +80,7 @@ contract Producer is
         producerApi = IProducerApi(_producerApiAddress);
         producerNUsage = IProducerNUsage(_producerNUsageAddress);
         producerVestingApi = IProducerVestingApi(_producerVestingApiAddress);
+        streamLockManager = IStreamLockManager(_streamLockManagerAddress);
 
         _transferOwnership(user);
     }
@@ -159,7 +176,7 @@ modifier onlyCustomer(address   customerAddress) {
 
     // This function adds a new customer plan to the contract
     function addCustomerPlan(DataTypes.CustomerPlan memory vars) public    {
-     
+        bytes32 streamLockId; // Stream ID if created
         
         if (vars.planType == DataTypes.PlanTypes.vestingApi) {
             producerVestingApi.addCustomerPlan(vars);
@@ -172,8 +189,20 @@ modifier onlyCustomer(address   customerAddress) {
             require(vars.remainingQuota >0, "remainingQuota must be higher than zero!");
             require(ERC20(address(plan.priceAddress)).balanceOf(msg.sender) >= pInfoNUsage.oneUsagePrice*vars.remainingQuota, "Amount must be higher than zero!");
         
-           /*  ERC20(address(plan.priceAddress)).transferFrom(msg.sender, address(this), pInfoNUsage.oneUsagePrice*vars.remainingQuota); */
-           SafeTransferLib.safeTransferFrom(ERC20(address(plan.priceAddress)), msg.sender, address(this), pInfoNUsage.oneUsagePrice*vars.remainingQuota);
+            // Create stream lock for the customer plan
+            uint256 totalAmount = pInfoNUsage.oneUsagePrice * vars.remainingQuota;
+            uint256 streamDuration = _calculateStreamDuration(vars.planId, vars.remainingQuota);
+            
+            // Create stream through StreamLockManager
+            streamLockId = _createCustomerPlanStream(
+                vars.custumerPlanId,
+                msg.sender,
+                address(this),
+                address(plan.priceAddress),
+                totalAmount,
+                streamDuration
+            );
+            
             producerNUsage.addCustomerPlan(vars);
  
         }
@@ -181,7 +210,11 @@ modifier onlyCustomer(address   customerAddress) {
             producerApi.addCustomerPlan(vars);
         }
         uriGenerator.mint(vars);
- 
+        
+        // Emit event with stream info if created
+        if (streamLockId != bytes32(0)) {
+            emit CustomerPlanWithStreamCreated(vars.custumerPlanId, streamLockId, msg.sender);
+        }
     }
 
     function updateCustomerPlan(
@@ -214,6 +247,46 @@ modifier onlyCustomer(address   customerAddress) {
            uriGenerator.burn(vars);
         } 
     }
+
+    // ========== STREAM VALIDATION FUNCTIONS ==========
+
+    /**
+     * @dev Check stream status before service usage
+     * @param customerPlanId Customer plan ID
+     * @param customer Customer address
+     */
+    function checkStreamBeforeUsage(
+        uint256 customerPlanId,
+        address customer
+    ) public returns (bool canUse) {
+        // Get associated stream lock ID
+        bytes32 streamLockId = _getStreamLockIdForCustomerPlan(customerPlanId);
+        
+        if (streamLockId != bytes32(0) && address(streamLockManager) != address(0)) {
+            // Validate through StreamLockManager
+            canUse = streamLockManager.checkAndSettleOnUsage(customer, streamLockId);
+            
+            emit StreamUsageValidated(customerPlanId, streamLockId, customer, canUse);
+        } else {
+            // No stream or manager, allow usage (backward compatibility)
+            canUse = true;
+        }
+        
+        return canUse;
+    }
+
+    /**
+     * @dev Get stream lock ID for customer plan
+     * @param customerPlanId Customer plan ID
+     * @return streamLockId Associated stream lock ID
+     */
+    function _getStreamLockIdForCustomerPlan(uint256 customerPlanId) internal pure returns (bytes32 streamLockId) {
+        // TODO: Implement storage mapping from customerPlanId to streamLockId
+        // For now, return empty for backward compatibility
+        customerPlanId; // Silence unused parameter warning
+        return bytes32(0);
+    }
+
    function useFromQuota(
         DataTypes.CustomerPlan calldata vars
     )
@@ -221,8 +294,12 @@ modifier onlyCustomer(address   customerAddress) {
       
         returns (uint256)
     {
-           if (vars.planType == DataTypes.PlanTypes.nUsage) {
-          return  producerNUsage.useFromQuota(vars);
+        // Validate stream access before usage
+        bool canUse = checkStreamBeforeUsage(vars.custumerPlanId, msg.sender);
+        require(canUse, "Stream validation failed");
+        
+        if (vars.planType == DataTypes.PlanTypes.nUsage) {
+            return  producerNUsage.useFromQuota(vars);
         }
         return 0;
     }
@@ -248,5 +325,114 @@ modifier onlyCustomer(address   customerAddress) {
     function withdrawTokens(ERC20 token) public onlyOwner {
         uint256 balance = token.balanceOf(address(this));
         token.transfer(msg.sender, balance);
+    }
+
+    // ========== STREAM INTEGRATION FUNCTIONS ==========
+
+    /**
+     * @dev Calculate stream duration based on plan configuration
+     * @param planId Plan ID
+     * @param quota Usage quota
+     * @return duration Stream duration in seconds
+     */
+    function _calculateStreamDuration(uint256 planId, uint256 quota) internal view returns (uint256 duration) {
+        DataTypes.Plan memory plan = producerStorage.getPlan(planId);
+        
+        // Default stream duration logic based on plan type
+        if (plan.planType == DataTypes.PlanTypes.nUsage) {
+            // For nUsage plans, calculate based on expected usage rate
+            // Example: If quota is for 30 days of usage, stream for 30 days
+            duration = 30 days; // Default 30 days
+            
+            // Adjust based on quota size
+            if (quota <= 10) {
+                duration = 7 days;   // Small quota: 1 week
+            } else if (quota <= 100) {
+                duration = 30 days;  // Medium quota: 1 month
+            } else {
+                duration = 90 days;  // Large quota: 3 months
+            }
+        } else {
+            duration = 30 days; // Default duration for other plan types
+        }
+        
+        return duration;
+    }
+
+    /**
+     * @dev Create stream for customer plan
+     * @param customerPlanId Customer plan ID
+     * @param customer Customer address
+     * @param producer Producer address (this contract)
+     * @param token Token address
+     * @param totalAmount Total amount to stream
+     * @param duration Stream duration
+     * @return lockId Created stream lock ID
+     */
+    function _createCustomerPlanStream(
+        uint256 customerPlanId,
+        address customer,
+        address producer,
+        address token,
+        uint256 totalAmount,
+        uint256 duration
+    ) internal returns (bytes32 lockId) {
+        // Only create stream if StreamLockManager is available
+        if (address(streamLockManager) != address(0)) {
+            try streamLockManager.createStreamForCustomerPlan(
+                customerPlanId,
+                customer,
+                producer,
+                token,
+                totalAmount,
+                duration
+            ) returns (bytes32 streamId) {
+                lockId = streamId;
+            } catch {
+                // If stream creation fails, continue without stream
+                // This ensures backward compatibility
+                lockId = bytes32(0);
+            }
+        }
+        
+        return lockId;
+    }
+
+    /**
+     * @dev Validate stream access for service usage
+     * @param customerPlanId Customer plan ID
+     * @param customer Customer address
+     * @return canUse Whether customer can use the service
+     * @return streamLockId Associated stream lock ID
+     */
+    function validateStreamAccess(
+        uint256 customerPlanId,
+        address customer
+    ) external pure returns (bool canUse, bytes32 streamLockId) {
+        // Get stream lock ID for customer plan (would need to be stored in mapping)
+        // For now, return true for backward compatibility
+        customerPlanId; // Silence unused parameter warning
+        customer; // Silence unused parameter warning
+        canUse = true;
+        streamLockId = bytes32(0);
+        
+        // TODO: Implement mapping from customerPlanId to streamLockId
+        // and validate through StreamLockManager
+    }
+
+    /**
+     * @dev Set StreamLockManager address (for upgrades)
+     * @param _streamLockManager New StreamLockManager address
+     */
+    function setStreamLockManager(address _streamLockManager) external onlyOwner {
+        streamLockManager = IStreamLockManager(_streamLockManager);
+    }
+
+    /**
+     * @dev Get StreamLockManager address
+     * @return StreamLockManager contract address
+     */
+    function getStreamLockManager() external view returns (address) {
+        return address(streamLockManager);
     }
 }

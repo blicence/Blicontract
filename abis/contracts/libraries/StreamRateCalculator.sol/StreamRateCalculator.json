@@ -1,0 +1,7 @@
+[
+  "error InvalidAmount()",
+  "error InvalidDuration()",
+  "error InvalidRecipient()",
+  "error InvalidToken()",
+  "error StreamRateTooLow()"
+]

@@ -12,6 +12,7 @@ import "./DelegateCall.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {IFactory} from "./interfaces/IFactory.sol";
 import {IProducerStorage} from "./interfaces/IProducerStorage.sol";
+import {IStreamLockManager} from "./interfaces/IStreamLockManager.sol";
 
 // todo research  Clones.sol or ClonesUpgradeable
 
@@ -24,6 +25,7 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
     address ProducerImplementation;
 
     IProducerStorage public producerStorage;
+    IStreamLockManager public streamLockManager;
 
     // @notice Event triggered when a new Bcontract is created
     // @param  "uint256 _producerId,  string _name, string _description, string _image,  string _externalLink,  address owner"
@@ -41,10 +43,12 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
         address _producerStorageAddress,
         address _producerApiAddress,
         address _producerNUsageAddress,
-        address _producerVestingApiAddress
+        address _producerVestingApiAddress,
+        address _streamLockManagerAddress
     ) external initializer onlyProxy {
         __Ownable_init();
         producerStorage = IProducerStorage(_producerStorageAddress);
+        streamLockManager = IStreamLockManager(_streamLockManagerAddress);
         uriGeneratorAddress = _uriGeneratorAddress;
         producerApiAddress = _producerApiAddress;
         producerNUsageAddress = _producerNUsageAddress;
@@ -104,7 +108,8 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
             producerApiAddress,
             producerNUsageAddress,
             producerVestingApiAddress,
-            address(producerStorage)
+            address(producerStorage),
+            address(streamLockManager)
         );
         emit BcontractCreated(
             currentPR_ID(),

@@ -1,0 +1,14 @@
+[
+  "error InsufficientBalance()",
+  "error InsufficientUnlockedBalance()",
+  "error InvalidAmount()",
+  "error InvalidToken()",
+  "event BalanceDeposited(address indexed,address indexed,uint256)",
+  "event BalanceLocked(address indexed,address indexed,uint256)",
+  "event BalanceUnlocked(address indexed,address indexed,uint256)",
+  "event BalanceWithdrawn(address indexed,address indexed,uint256)",
+  "function getBalanceSummary(address,address) view returns (uint256, uint256, uint256)",
+  "function getLockedBalance(address,address) view returns (uint256)",
+  "function getTotalBalance(address,address) view returns (uint256)",
+  "function getUnlockedBalance(address,address) view returns (uint256)"
+]
