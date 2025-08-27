@@ -6,6 +6,7 @@ import "@nomicfoundation/hardhat-ledger";
 import "@nomicfoundation/hardhat-foundry";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@nomicfoundation/hardhat-ignition-ethers";
+import "@openzeppelin/hardhat-upgrades";
 import "@typechain/hardhat";
 
 import "xdeployer";
