@@ -1,12 +1,31 @@
 {
   "compilerOptions": {
-    "target": "es2020",
+    "target": "es2024",
     "module": "commonjs",
+    "allowJs": true,
     "strict": true,
     "esModuleInterop": true,
     "outDir": "dist",
-    "declaration": true
+    "declaration": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
   },
-  "include": ["./scripts", "./test", "./typechain-types"],
-  "files": ["./hardhat.config.ts"]
+  "include": [
+    "./scripts/**/*.js",
+    "./scripts/**/*.ts",
+    "./deploy/**/*.js",
+    "./deploy/**/*.ts",
+    "./test/**/*.js",
+    "./test/**/*.ts",
+    "./typechain-types/**/*.ts"
+  ],
+  "files": [
+    "hardhat.config.ts",
+    "deploy-args.ts",
+    "eslint.config.js",
+    "arguments.js",
+    ".solcover.js",
+    "slippy.config.js"
+  ]
 }
