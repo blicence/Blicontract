@@ -1,4 +1,0 @@
-[
-  "function agreementType() view returns (bytes32)",
-  "function realtimeBalanceOf(address,address,uint256) view returns (int256, uint256, uint256)"
-]

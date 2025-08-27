@@ -1,13 +1,80 @@
-// SPDX-License-Identifier: AGPLv3
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/// @title Abstract Storage Contract to pad the first 32 slots of storage
-/// @author Superfluid
-/// @dev MUST be the FIRST contract inherited to pad the first 32 slots. The slots are padded to
-/// ensure the implementation contract (SuperToken.sol) does not override any auxiliary state
-/// variables. For more info see `./docs/StorageLayout.md`.
-abstract contract SuperTokenStorage {
-    uint256[32] internal _storagePaddings;
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
+/**
+ * @title StreamToken
+ * @dev A simple ERC20 wrapper for streaming tokens, replacing Superfluid SuperTokens
+ * @notice This token is used in our custom streaming system
+ */
+contract StreamToken is ERC20, Ownable {
+    
+    IERC20 public immutable underlyingToken;
+    
+    event TokensWrapped(address indexed account, uint256 amount);
+    event TokensUnwrapped(address indexed account, uint256 amount);
+    
+    error InsufficientBalance();
+    error TransferFailed();
+    
+    constructor(
+        address _underlyingToken,
+        string memory _name,
+        string memory _symbol
+    ) ERC20(_name, _symbol) Ownable(msg.sender) {
+        underlyingToken = IERC20(_underlyingToken);
+    }
+    
+    /**
+     * @dev Wrap underlying tokens to get stream tokens
+     * @param amount Amount of underlying tokens to wrap
+     */
+    function wrap(uint256 amount) external {
+        if (amount == 0) revert InsufficientBalance();
+        
+        // Transfer underlying tokens from user to this contract
+        bool success = underlyingToken.transferFrom(msg.sender, address(this), amount);
+        if (!success) revert TransferFailed();
+        
+        // Mint equivalent stream tokens to user
+        _mint(msg.sender, amount);
+        
+        emit TokensWrapped(msg.sender, amount);
+    }
+    
+    /**
+     * @dev Unwrap stream tokens to get underlying tokens back
+     * @param amount Amount of stream tokens to unwrap
+     */
+    function unwrap(uint256 amount) external {
+        if (balanceOf(msg.sender) < amount) revert InsufficientBalance();
+        
+        // Burn stream tokens from user
+        _burn(msg.sender, amount);
+        
+        // Transfer underlying tokens back to user
+        bool success = underlyingToken.transfer(msg.sender, amount);
+        if (!success) revert TransferFailed();
+        
+        emit TokensUnwrapped(msg.sender, amount);
+    }
+    
+    /**
+     * @dev Get the underlying token address
+     */
+    function getUnderlyingToken() external view returns (address) {
+        return address(underlyingToken);
+    }
+    
+    /**
+     * @dev Get decimals from underlying token
+     */
+    function decimals() public view virtual override returns (uint8) {
+        return ERC20(address(underlyingToken)).decimals();
+    }
 }
 
 import {Proxy} from "@openzeppelin/contracts/proxy/Proxy.sol";

@@ -1,7 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
-import "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperToken.sol";
 
 //
 library DataTypes {
@@ -109,7 +107,7 @@ library DataTypes {
      */
     struct PlanInfoApi {
         uint256 planId; // planId is unique for each plan
-        int96 flowRate; // cost of one token per second (in wei)
+        uint256 flowRate; // cost of one token per second (in wei)
         uint256 perMonthLimit; // maximum number of tokens that can be minted in a month
     }
 
@@ -131,7 +129,7 @@ library DataTypes {
     struct PlanInfoVesting {
         uint256 planId; // planId is unique for each plan
         uint32 cliffDate;
-        int96 flowRate;
+        uint256 flowRate;
         uint256 startAmount;
         bytes ctx;
     }

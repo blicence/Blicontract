@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
  
-
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ISuperfluid, ISuperToken, ISuperfluidToken, ISuperApp, ISuperAgreement, FlowOperatorDefinitions, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
-import {SuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
-import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
-import {IConstantFlowAgreementV1} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 import {DataTypes} from "./../libraries/DataTypes.sol";
 import {Base64} from "./../libraries/Base64.sol"; 
 import "./../interfaces/IVestingScheduler.sol";
 import "./../interfaces/IProducerVestingApi.sol";
 import {IProducerStorage} from "./../interfaces/IProducerStorage.sol";
+import {IStreamLockManager} from "./../interfaces/IStreamLockManager.sol";
 
 contract ProducerVestingApi is
     IProducerVestingApi,
@@ -23,8 +19,9 @@ contract ProducerVestingApi is
     UUPSUpgradeable
 {
    
-     IVestingScheduler private vestingScheduler;
+    IVestingScheduler private vestingScheduler;
     IProducerStorage public producerStorage;
+    IStreamLockManager public streamLockManager;
 
     function initialize() external initializer onlyProxy {
         __Ownable_init();
@@ -55,36 +52,45 @@ contract ProducerVestingApi is
 
  
     function setSuperInitialize(
- 
-        IVestingScheduler _vestingScheduler
+        IVestingScheduler _vestingScheduler,
+        IStreamLockManager _streamLockManager
     ) external onlyOwner {
-      
-         vestingScheduler = IVestingScheduler(_vestingScheduler);
-      
+        vestingScheduler = IVestingScheduler(_vestingScheduler);
+        streamLockManager = IStreamLockManager(_streamLockManager);
     }
 
     function setProducerStorage(address _producerStorage) external onlyOwner {
         producerStorage = IProducerStorage(_producerStorage);
     }
 
-    // vestingScheduler imlementation
-    // This function adds avesting schedule to the contract
+    // Stream-based vesting implementation
+    // This function creates a vesting schedule using our own streaming system
     function createVestingSchedule(
-        ISuperToken superToken,
+        address token,
         address receiver,
         uint32 startDate,
         uint32 cliffDate,
-        int96 flowRate,
+        uint256 flowRate,
         uint256 startAmount,
         uint32 endDate,
         bytes memory ctx
     ) public {
-      
-        vestingScheduler.createVestingSchedule(
-            superToken,
+        // Use our own streaming system instead of Superfluid
+        streamLockManager.createStream(
+            token,
             receiver,
             startDate,
-           cliffDate,
+            endDate,
+            flowRate,
+            startAmount
+        );
+        
+        // Also create in vesting scheduler for tracking
+        vestingScheduler.createVestingSchedule(
+            token,
+            receiver,
+            startDate,
+            cliffDate,
             flowRate,
             startAmount,
             endDate,
@@ -93,28 +99,30 @@ contract ProducerVestingApi is
     }
 
     function getVestingSchedule(
-        ISuperToken superToken,
+        address token,
         address account,
         address receiver
     ) public view returns (IVestingScheduler.VestingSchedule memory) {
         return
             vestingScheduler.getVestingSchedule(
-                address(superToken),
+                token,
                 account,
                 receiver
             );
     }
 
     function updateVestingSchedule(
-        ISuperToken superToken,
+        address token,
         address receiver,
         uint32 endDate,
         bytes memory ctx
     ) public returns (bytes memory newCtx) {
-  
-
+        // Update our stream system
+        streamLockManager.updateStream(token, receiver, endDate);
+        
+        // Update vesting scheduler
         newCtx = vestingScheduler.updateVestingSchedule(
-            superToken,
+            token,
             receiver,
             endDate,
             ctx
@@ -122,12 +130,16 @@ contract ProducerVestingApi is
     }
 
     function deleteVestingSchedule(
-        ISuperToken superToken,
+        address token,
         address receiver,
         bytes memory ctx
     ) public returns (bytes memory newCtx) {
+        // Delete from our stream system
+        streamLockManager.deleteStream(token, receiver);
+        
+        // Delete from vesting scheduler
         newCtx = vestingScheduler.deleteVestingSchedule(
-            superToken,
+            token,
             receiver,
             ctx
         );
@@ -139,13 +151,8 @@ contract ProducerVestingApi is
         DataTypes.PlanInfoVesting memory planInfoVesting = producerStorage
             .getPlanInfoVesting(vars.planId);
 
-   
-   
-
-      
-
-          createVestingSchedule(
-              ISuperToken(vars.priceAddress),
+        createVestingSchedule(
+            vars.priceAddress,
             vars.cloneAddress,
             vars.startDate,
             planInfoVesting.cliffDate,
@@ -155,7 +162,7 @@ contract ProducerVestingApi is
             ""
         );  
 
-       producerStorage.addCustomerPlan(vars);
+        producerStorage.addCustomerPlan(vars);
     }
 
     function updateCustomerPlan(
@@ -166,14 +173,14 @@ contract ProducerVestingApi is
         OnlyRightProducer(vars.producerId, vars.cloneAddress)
     {
         deleteVestingSchedule(
-            ISuperToken(vars.priceAddress),
+            vars.priceAddress,
             vars.cloneAddress,
             ""
         );
 
         if (vars.status == DataTypes.Status.active) {
             updateVestingSchedule(
-                ISuperToken(vars.priceAddress),
+                vars.priceAddress,
                 vars.cloneAddress,
                 vars.endDate,
                 ""
@@ -182,75 +189,23 @@ contract ProducerVestingApi is
         producerStorage.updateCustomerPlan(vars);
     }
 
-    function wrapSuperToken(
+    function transferTokens(
         address token,
-        address superTokenAddress,
-        uint amountToWrap
+        address to,
+        uint256 amount
     ) internal {
-        // approving to transfer tokens from this to superTokenAddress
-        IERC20(token).approve(superTokenAddress, amountToWrap);
-
-        // wrapping and sent to this contract
-        ISuperToken(superTokenAddress).upgrade(amountToWrap);
+        // Direct ERC20 transfer instead of SuperToken wrapping
+        IERC20(token).transfer(to, amount);
     }
 
-    function unwrapSuperToken(
-        address superTokenAddress,
-        uint amountToUnwrap
+    function transferTokensFrom(
+        address token,
+        address from,
+        address to,
+        uint256 amount
     ) internal {
-        // unwrapping
-        ISuperToken(superTokenAddress).downgrade(amountToUnwrap);
+        // Direct ERC20 transferFrom instead of SuperToken operations
+        IERC20(token).transferFrom(from, to, amount);
     }
 
-    /**
-     * @param _flowSuperToken Super token address
-     * @param _flowOperator The permission grantee address
-     *//* 
-    function _grantFlowOperatorPermissions(
-        address _flowSuperToken,
-        address _flowOperator
-    ) internal {
-        host.callAgreement(
-            cfa,
-            abi.encodeCall(
-                cfa.updateFlowOperatorPermissions,
-                (
-                    ISuperToken(_flowSuperToken),
-                    _flowOperator,
-                    7, // bitmask representation of delete
-                    0, // flow rate allowance
-                    new bytes(0) // ctx
-                )
-            ),
-            "0x"
-        );
-    } */
-
-    /*     uint32 immutable START_DATE = uint32(block.timestamp + 1);
-    uint32 immutable CLIFF_DATE = uint32(block.timestamp + 10 days);
-    int96 constant FLOW_RATE = 1000000000;
-    uint256 constant CLIFF_TRANSFER_AMOUNT = 1 ether;
-    uint32 immutable END_DATE = uint32(block.timestamp + 20 days);
-    bytes constant EMPTY_CTX = "";
-    uint256 internal _expectedTotalSupply = 0; */
-/* 
-    function _setACL_AUTHORIZE_FULL_CONTROL(
-        address superToken,
-        int96 flowRate
-    ) private {
-        host.callAgreement(
-            cfa,
-            abi.encodeCall(
-                cfa.updateFlowOperatorPermissions,
-                (
-                    ISuperToken(superToken),
-                    address(vestingScheduler),
-                    FlowOperatorDefinitions.AUTHORIZE_FULL_CONTROL,
-                    flowRate,
-                    new bytes(0)
-                )
-            ),
-            new bytes(0)
-        );
-    } */
 }
