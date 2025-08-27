@@ -1,9 +1,0 @@
-[
-  "function addCustomerPlan(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8))",
-  "function createVestingSchedule(address,address,uint32,uint32,int96,uint256,uint32,bytes)",
-  "function deleteVestingSchedule(address,address,bytes) returns (bytes)",
-  "function getVestingSchedule(address,address,address) view returns (tuple(uint32,uint32,int96,uint256))",
-  "function setSuperInitialize(address)",
-  "function updateCustomerPlan(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8))",
-  "function updateVestingSchedule(address,address,uint32,bytes) returns (bytes)"
-]

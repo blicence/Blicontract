@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
 
 import {DataTypes} from "./../libraries/DataTypes.sol";
 import {IFactory} from "./../interfaces/IFactory.sol";
@@ -12,6 +12,8 @@ contract ProducerStorage is IProducerStorage, Ownable {
     address public producerApi;
     address public producerNUsage;
     address public producerVestingApi;
+
+    constructor(address initialOwner) Ownable(initialOwner) {}
 
     uint private PR_ID; // unique id for each producer
     mapping(address => DataTypes.Producer) internal producers;

@@ -33,8 +33,8 @@
     "coverage:forge": "forge coverage --report summary --out forge-artifacts --lcov-version 2.3.1",
     "coverage:forge:report": "forge coverage --report lcov --out forge-artifacts --lcov-version 2.3.1 && lcov --branch-coverage --remove lcov.info \"test/*\" \"script/*\" \"node_modules/*\" --output-file lcov.info --ignore-errors unused,unused && genhtml lcov.info --branch-coverage --output-dir coverage",
     "test:hh": "npx hardhat test",
-    "test:forge": "forge test -vvv --root . -C contracts/src --match-path \"contracts/test/*\" --out forge-artifacts",
-    "compile": "npx hardhat compile && forge build --root . -C contracts/src --optimize --out forge-artifacts",
+    "test:forge": "forge test -vvv --out forge-artifacts",
+    "compile": "npx hardhat compile && forge build --optimize --out forge-artifacts",
     "size": "npx hardhat size-contracts",
     "xdeploy": "npx hardhat xdeploy",
     "abi": "npx hardhat export-abi",
@@ -235,7 +235,6 @@
     "@nomicfoundation/hardhat-network-helpers": "^1.1.0",
     "@nomicfoundation/hardhat-verify": "^2.1.1",
     "@nomicfoundation/ignition-core": "^0.15.13",
-    "@openzeppelin/contracts": "^5.4.0",
     "@slippy-lint/slippy": "^0.0.12",
     "@tenderly/hardhat-tenderly": "^2.5.2",
     "@typechain/ethers-v6": "^0.5.1",
@@ -273,5 +272,9 @@
       "usb",
       "utf-8-validate"
     ]
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "@openzeppelin/contracts-upgradeable": "^5.4.0"
   }
 }

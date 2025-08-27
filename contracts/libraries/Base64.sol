@@ -2,7 +2,7 @@
 // OpenZeppelin Contracts (last updated v4.7.0) (utils/Base64.sol)
  
 
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
 
 
 /**

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.17;
+pragma solidity 0.8.30;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -46,7 +46,7 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
         address _producerVestingApiAddress,
         address _streamLockManagerAddress
     ) external initializer onlyProxy {
-        __Ownable_init();
+        __Ownable_init(msg.sender);
         producerStorage = IProducerStorage(_producerStorageAddress);
         streamLockManager = IStreamLockManager(_streamLockManagerAddress);
         uriGeneratorAddress = _uriGeneratorAddress;
@@ -70,7 +70,7 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
     function setProducerImplementation(
         address _ProducerImplementationAddress
     ) external onlyOwner onlyProxy {
-        require(Address.isContract(_ProducerImplementationAddress));
+        require(_ProducerImplementationAddress.code.length > 0, "Not a contract");
         ProducerImplementation = _ProducerImplementationAddress;
     }
 
@@ -105,9 +105,7 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
         b.initialize(
             payable(msg.sender),
             uriGeneratorAddress,
-            producerApiAddress,
             producerNUsageAddress,
-            producerVestingApiAddress,
             address(producerStorage),
             address(streamLockManager)
         );

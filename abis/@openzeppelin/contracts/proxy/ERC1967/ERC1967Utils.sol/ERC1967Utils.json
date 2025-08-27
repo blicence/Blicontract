@@ -1,0 +1,6 @@
+[
+  "error ERC1967InvalidAdmin(address)",
+  "error ERC1967InvalidBeacon(address)",
+  "error ERC1967InvalidImplementation(address)",
+  "error ERC1967NonPayable()"
+]

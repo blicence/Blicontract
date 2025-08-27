@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
 
-import "@openzeppelin/contracts-upgradeable/utils/StorageSlotUpgradeable.sol";
+import "@openzeppelin/contracts/utils/StorageSlot.sol";
  
 
 abstract contract DelegateCall {
@@ -32,7 +32,7 @@ abstract contract DelegateCall {
     function _getImplementation() internal view returns (address) {
     
         return
-            StorageSlotUpgradeable.getAddressSlot(_IMPLEMENTATION_SLOT).value;
+            StorageSlot.getAddressSlot(_IMPLEMENTATION_SLOT).value;
            
     }
 

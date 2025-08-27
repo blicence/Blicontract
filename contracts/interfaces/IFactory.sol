@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
 import {DataTypes} from "./../libraries/DataTypes.sol";
 
 interface IFactory {
     function initialize(
-      address _uriGeneratorAddress,
-         address _producerStorageAddress, 
+        address _uriGeneratorAddress,
+        address _producerStorageAddress,
         address _producerApiAddress,
         address _producerNUsageAddress,
-        address _producerVestingApiAddress
+        address _producerVestingApiAddress,
+        address _streamLockManagerAddress
     ) external;
 
     function getProducerImplementation() external view returns (address);

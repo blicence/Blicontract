@@ -1,4 +1,6 @@
 [
-  "event Initialized(uint8)",
+  "error InvalidInitialization()",
+  "error NotInitializing()",
+  "event Initialized(uint64)",
   "function supportsInterface(bytes4) view returns (bool)"
 ]

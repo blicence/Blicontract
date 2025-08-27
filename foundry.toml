@@ -1,7 +1,7 @@
 ## defaults for all profiles
 [profile.default]
 src = 'contracts'                                         # the source directory
-test = 'contracts/test'                                       # the test directory
+test = 'test'                                             # the test directory
 out = 'forge-artifacts'                                       # the output directory (for artifacts)
 libs = ['contracts/lib']                                      # a list of library directories
 remappings = []                                               # a list of remappings
@@ -10,7 +10,7 @@ cache = true                                                  # whether to cache
 cache_path = 'cache'                                          # where the cache is stored if enabled
 force = true                                              # the evm version (by hardfork name)
 gas_reports = ['*']                                           # list of contracts to report gas of
-solc_version = '0.8.17'                                       # override for the solc version (setting this ignores `auto_detect_solc`)
+solc_version = '0.8.30'                                       # override for the solc version (setting this ignores `auto_detect_solc`)
 auto_detect_solc = true                                       # enable auto-detection of the appropriate solc version to use
 offline = false                                               # offline mode, if enabled, network access (downloading solc) is disallowed
 optimizer = true                                              # enable or disable the solc optimizer

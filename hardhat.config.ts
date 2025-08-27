@@ -67,20 +67,16 @@ task(
 
 const config: HardhatUserConfig = {
   paths: {
-    sources: "./contracts/src",
+    sources: "./contracts",
   },
   solidity: {
-    // Only use Solidity default versions `>=0.8.25` for EVM networks that support the new `cancun` opcodes:
-    // https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/cancun.md
-    // Only use Solidity default versions `>=0.8.20` for EVM networks that support the opcode `PUSH0`
-    // Otherwise, use the versions `<=0.8.19`
     version: "0.8.30",
     settings: {
       optimizer: {
         enabled: true,
         runs: 999_999,
       },
-      evmVersion: "paris", // Prevent using the `PUSH0` and `cancun` opcodes
+      evmVersion: "cancun", // En son EVM version
     },
   },
   zksolc: {

@@ -1,0 +1,11 @@
+[
+  "error NotAcceptedToken()",
+  "error NotImplemented()",
+  "error UnauthorizedCaller()",
+  "function STREAM_TYPE() view returns (bytes32)",
+  "function initializeStreaming(bool,bool,bool)",
+  "function isAcceptedToken(address) view returns (bool)",
+  "function streamCreatedCallback(address,address,uint256,uint256) returns (bool)",
+  "function streamDeletedCallback(address,address,address,uint256,uint256) returns (bool)",
+  "function streamUpdatedCallback(address,address,uint256,uint256,uint256) returns (bool)"
+]

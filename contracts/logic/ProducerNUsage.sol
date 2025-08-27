@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
  
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -19,7 +19,7 @@ contract ProducerNUsage is
     IProducerStorage public producerStorage;
 
     function initialize() external initializer onlyProxy {
-        __Ownable_init();
+        __Ownable_init(msg.sender);
     }
 
     /**

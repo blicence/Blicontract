@@ -1,9 +1,15 @@
 [
-  "event AdminChanged(address,address)",
-  "event BeaconUpgraded(address indexed)",
-  "event Initialized(uint8)",
+  "error AddressEmptyCode(address)",
+  "error ERC1967InvalidImplementation(address)",
+  "error ERC1967NonPayable()",
+  "error FailedCall()",
+  "error InvalidInitialization()",
+  "error NotInitializing()",
+  "error UUPSUnauthorizedCallContext()",
+  "error UUPSUnsupportedProxiableUUID(bytes32)",
+  "event Initialized(uint64)",
   "event Upgraded(address indexed)",
+  "function UPGRADE_INTERFACE_VERSION() view returns (string)",
   "function proxiableUUID() view returns (bytes32)",
-  "function upgradeTo(address)",
   "function upgradeToAndCall(address,bytes) payable"
 ]

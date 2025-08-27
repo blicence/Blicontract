@@ -1,5 +1,9 @@
 [
-  "event Initialized(uint8)",
+  "error InvalidInitialization()",
+  "error NotInitializing()",
+  "error OwnableInvalidOwner(address)",
+  "error OwnableUnauthorizedAccount(address)",
+  "event Initialized(uint64)",
   "event OwnershipTransferred(address indexed,address indexed)",
   "function owner() view returns (address)",
   "function renounceOwnership()",

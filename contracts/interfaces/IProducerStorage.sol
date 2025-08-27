@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.17;
+pragma solidity 0.8.30;
 
 import {DataTypes} from "./../libraries/DataTypes.sol";
 import {IFactory} from "./../interfaces/IFactory.sol";

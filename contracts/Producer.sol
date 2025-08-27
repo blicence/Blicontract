@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity 0.8.17;
+pragma solidity 0.8.30;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 /* import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol"; */
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
  
 import {SafeTransferLib} from "./libraries/SafeTransferLib.sol";
 import {ERC20} from "./libraries/ERC20.sol";
@@ -15,15 +14,13 @@ import "./DelegateCall.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";
 import "./storage/ProducerStorage.sol";
 import "./interfaces/IURIGenerator.sol";
-import "./interfaces/IProducerApi.sol";
 import "./interfaces/IProducerNUsage.sol";
-import "./interfaces/IProducerVestingApi.sol";
 import "./interfaces/IStreamLockManager.sol";
 
 contract Producer is
     Initializable,
     OwnableUpgradeable,
-    ReentrancyGuard,
+    ReentrancyGuardUpgradeable,
     DelegateCall,
     PausableUpgradeable/* ,
     ERC1155Upgradeable */
@@ -31,8 +28,6 @@ contract Producer is
     IURIGenerator public uriGenerator;
     IProducerStorage public producerStorage;
     IProducerNUsage public producerNUsage;
-    IProducerVestingApi public producerVestingApi;
-    IProducerApi public producerApi;
     IStreamLockManager public streamLockManager;
 
    event LogAddPlan(
@@ -64,22 +59,19 @@ contract Producer is
     function initialize(
         address payable user,
         address _uriGeneratorAddress,
-        address _producerApiAddress,
         address _producerNUsageAddress,
-        address _producerVestingApiAddress,
         address _producerStorageAddress,
         address _streamLockManagerAddress
     ) external initializer onlyProxy {
        /*  __ERC1155_init(""); */
-        __Ownable_init();
+        __Ownable_init(user);
         __Pausable_init();
+        __ReentrancyGuard_init();
 
         uriGenerator = IURIGenerator(_uriGeneratorAddress);
 
         producerStorage = IProducerStorage(_producerStorageAddress);
-        producerApi = IProducerApi(_producerApiAddress);
         producerNUsage = IProducerNUsage(_producerNUsageAddress);
-        producerVestingApi = IProducerVestingApi(_producerVestingApiAddress);
         streamLockManager = IStreamLockManager(_streamLockManagerAddress);
 
         _transferOwnership(user);
@@ -178,9 +170,6 @@ modifier onlyCustomer(address   customerAddress) {
     function addCustomerPlan(DataTypes.CustomerPlan memory vars) public    {
         bytes32 streamLockId; // Stream ID if created
         
-        if (vars.planType == DataTypes.PlanTypes.vestingApi) {
-            producerVestingApi.addCustomerPlan(vars);
-        }
         if (vars.planType == DataTypes.PlanTypes.nUsage) {
             
             // todo add payment to the producer
@@ -206,9 +195,6 @@ modifier onlyCustomer(address   customerAddress) {
             producerNUsage.addCustomerPlan(vars);
  
         }
-        if (vars.planType == DataTypes.PlanTypes.api) {
-            producerApi.addCustomerPlan(vars);
-        }
         uriGenerator.mint(vars);
         
         // Emit event with stream info if created
@@ -221,9 +207,6 @@ modifier onlyCustomer(address   customerAddress) {
         DataTypes.CustomerPlan calldata vars
     ) public onlyExistCustumer(vars.planId, vars.customerAdress, vars.cloneAddress) onlyCustomer(msg.sender) {
        
-            if (vars.planType == DataTypes.PlanTypes.vestingApi) {
-            producerVestingApi.updateCustomerPlan(vars);
-        }
         if (vars.planType == DataTypes.PlanTypes.nUsage) {
             if(vars.status==DataTypes.Status.inactive){
                 // return the remaining quota to the customer 
@@ -239,9 +222,6 @@ modifier onlyCustomer(address   customerAddress) {
                   SafeTransferLib.safeTransferFrom(ERC20(address(plan.priceAddress)),address(this),msg.sender ,  (pInfoNUsage.oneUsagePrice)*cpnu.remainingQuota);
             }
             producerNUsage.updateCustomerPlan(vars);
-        }
-        if (vars.planType == DataTypes.PlanTypes.api) {
-            producerApi.updateCustomerPlan(vars);
         }
         if (vars.status == DataTypes.Status.inactive) {
            uriGenerator.burn(vars);
