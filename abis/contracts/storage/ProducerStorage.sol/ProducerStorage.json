@@ -1,7 +1,13 @@
 [
   "constructor(address)",
+  "error CustomerPlanNotExist()",
+  "error InsufficientQuota()",
+  "error OnlyFactory()",
+  "error OnlyNonExistingProducer()",
+  "error OnlyProducer()",
   "error OwnableInvalidOwner(address)",
   "error OwnableUnauthorizedAccount(address)",
+  "error PlanAlreadyExists()",
   "event LogAddCustomerPlan(address,uint256,uint256,address)",
   "event LogAddPlan(uint256,address,string,uint8)",
   "event LogProducer(address,string,uint256,address)",

@@ -17,21 +17,21 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
     const [deployer, _gymOwner, _customer] = await ethers.getSigners();
     gymOwner = _gymOwner;
     customer = _customer;
-    deployerAddress = deployer.address;
+    deployerAddress = deployer.target;
 
     // Deploy test token (USDC mock)
     const TestTokenFactory = await ethers.getContractFactory("TestToken");
-    usdcToken = await TestTokenFactory.deploy("USDC", "USDC", 6);
-    await usdcToken.deployed();
+    usdcToken = await TestTokenFactory.deploy("USDC", "USDC", 6, ethers.parseUnits("1000000", 6));
+    await usdcToken.waitForDeployment();
 
     // Deploy Factory and dependencies
     const FactoryContract = await ethers.getContractFactory("Factory");
     factory = await FactoryContract.deploy();
-    await factory.deployed();
+    await factory.waitForDeployment();
 
     const URIGeneratorContract = await ethers.getContractFactory("URIGenerator");
     uriGenerator = await URIGeneratorContract.deploy();
-    await uriGenerator.deployed();
+    await uriGenerator.waitForDeployment();
 
     // Initialize Factory (simplified - actual initialization needs all addresses)
     // await factory.initialize(...);
@@ -41,7 +41,7 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
     it("Spor salonu sisteme başarıyla kayıt olur", async function () {
       const gymProducerData: DataTypes.Producer = {
         producerId: 0,
-        producerAddress: gymOwner.address,
+        producerAddress: gymOwner.target,
         name: "FitCenter Gym",
         description: "Modern spor salonu hizmetleri",
         image: "https://example.com/gym_logo.png",
@@ -68,7 +68,7 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
       // Önce gym producer'ını oluştur
       const gymProducerData: DataTypes.Producer = {
         producerId: 0,
-        producerAddress: gymOwner.address,
+        producerAddress: gymOwner.target,
         name: "FitCenter Gym",
         description: "Modern spor salonu hizmetleri",
         image: "https://example.com/gym_logo.png",
@@ -87,7 +87,7 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
     it("Aylık abonelik planı başarıyla oluşturulur", async function () {
       const monthlyPlan: DataTypes.Plan = {
         planId: 0,
-        cloneAddress: gymProducer.address,
+        cloneAddress: gymProducer.target,
         producerId: 1,
         name: "Aylık Üyelik",
         description: "Tüm ekipmanlara erişim",
@@ -96,7 +96,7 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
         currentSupply: 0,
         backgroundColor: "#FF6B6B",
         image: "monthly_plan.png",
-        priceAddress: usdcToken.address,
+        priceAddress: usdcToken.target,
         startDate: Math.floor(Date.now() / 1000),
         status: 1, // active
         planType: 0, // api
@@ -123,7 +123,7 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
       // Setup: Producer ve Plan oluştur
       const gymProducerData: DataTypes.Producer = {
         producerId: 0,
-        producerAddress: gymOwner.address,
+        producerAddress: gymOwner.target,
         name: "FitCenter Gym",
         description: "Modern spor salonu hizmetleri",
         image: "https://example.com/gym_logo.png",
@@ -139,7 +139,7 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
 
       const monthlyPlan: DataTypes.Plan = {
         planId: 0,
-        cloneAddress: gymProducer.address,
+        cloneAddress: gymProducer.target,
         producerId: 1,
         name: "Aylık Üyelik",
         description: "Tüm ekipmanlara erişim",
@@ -148,7 +148,7 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
         currentSupply: 0,
         backgroundColor: "#FF6B6B",
         image: "monthly_plan.png",
-        priceAddress: usdcToken.address,
+        priceAddress: usdcToken.target,
         startDate: Math.floor(Date.now() / 1000),
         status: 1, // active
         planType: 0, // api
@@ -160,23 +160,23 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
       planId = 1;
 
       // Müşteriye USDC ver
-      await usdcToken.mint(customer.address, ethers.utils.parseUnits("100", 6)); // 100 USDC
+      await usdcToken.mint(customer.target, ethers.parseUnits("100", 6)); // 100 USDC
     });
 
     it("Müşteri başarıyla aylık plana abone olur", async function () {
       // USDC onayı ver
       await usdcToken.connect(customer).approve(
-        gymProducer.address, 
-        ethers.utils.parseUnits("10", 6) // 10 USDC
+        gymProducer.target, 
+        ethers.parseUnits("10", 6) // 10 USDC
       );
 
       const customerPlan: DataTypes.CustomerPlan = {
-        customerAdress: customer.address,
+        customerAdress: customer.target,
         planId: planId,
         custumerPlanId: 0,
         producerId: 1,
-        cloneAddress: gymProducer.address,
-        priceAddress: usdcToken.address,
+        cloneAddress: gymProducer.target,
+        priceAddress: usdcToken.target,
         startDate: Math.floor(Date.now() / 1000),
         endDate: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60, // 30 gün
         remainingQuota: 0,
@@ -184,36 +184,36 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
         planType: 0 // api
       };
 
-      const initialBalance = await usdcToken.balanceOf(customer.address);
+      const initialBalance = await usdcToken.balanceOf(customer.target);
       
       const tx = await gymProducer.connect(customer).addCustomerPlan(customerPlan);
       await tx.wait();
 
       // Ödemenin yapıldığını kontrol et
-      const finalBalance = await usdcToken.balanceOf(customer.address);
-      expect(initialBalance.sub(finalBalance)).to.equal(ethers.utils.parseUnits("10", 6));
+      const finalBalance = await usdcToken.balanceOf(customer.target);
+      expect(initialBalance - finalBalance).to.equal(ethers.parseUnits("10", 6));
 
       // NFT'nin basıldığını kontrol et (URIGenerator ile)
-      // const nftBalance = await uriGenerator.balanceOf(customer.address, 1);
+      // const nftBalance = await uriGenerator.balanceOf(customer.target, 1);
       // expect(nftBalance).to.equal(1);
 
       // Müşteri planının kaydedildiğini kontrol et
-      const savedCustomer = await gymProducer.getCustomer(customer.address);
-      expect(savedCustomer.customer).to.equal(customer.address);
+      const savedCustomer = await gymProducer.getCustomer(customer.target);
+      expect(savedCustomer.customer).to.equal(customer.target);
     });
 
     it("Yetersiz bakiye ile abonelik başarısız olur", async function () {
       // Müşterinin bakiyesini sıfırla
-      const balance = await usdcToken.balanceOf(customer.address);
+      const balance = await usdcToken.balanceOf(customer.target);
       await usdcToken.connect(customer).transfer(deployerAddress, balance);
 
       const customerPlan: DataTypes.CustomerPlan = {
-        customerAdress: customer.address,
+        customerAdress: customer.target,
         planId: planId,
         custumerPlanId: 0,
         producerId: 1,
-        cloneAddress: gymProducer.address,
-        priceAddress: usdcToken.address,
+        cloneAddress: gymProducer.target,
+        priceAddress: usdcToken.target,
         startDate: Math.floor(Date.now() / 1000),
         endDate: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
         remainingQuota: 0,
@@ -228,12 +228,12 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
 
     it("Onay verilmemiş durumda abonelik başarısız olur", async function () {
       const customerPlan: DataTypes.CustomerPlan = {
-        customerAdress: customer.address,
+        customerAdress: customer.target,
         planId: planId,
         custumerPlanId: 0,
         producerId: 1,
-        cloneAddress: gymProducer.address,
-        priceAddress: usdcToken.address,
+        cloneAddress: gymProducer.target,
+        priceAddress: usdcToken.target,
         startDate: Math.floor(Date.now() / 1000),
         endDate: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
         remainingQuota: 0,
@@ -263,7 +263,7 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
     it("Producer oluşturma gas kullanımı kabul edilebilir seviyede", async function () {
       const gymProducerData: DataTypes.Producer = {
         producerId: 0,
-        producerAddress: gymOwner.address,
+        producerAddress: gymOwner.target,
         name: "FitCenter Gym",
         description: "Modern spor salonu hizmetleri",
         image: "https://example.com/gym_logo.png",

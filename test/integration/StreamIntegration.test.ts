@@ -16,7 +16,7 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
     let user: Signer;
     let producer: Signer;
 
-    const MIN_STREAM_AMOUNT = ethers.utils.parseEther("0.001");
+    const MIN_STREAM_AMOUNT = ethers.parseEther("0.001");
     const MIN_STREAM_DURATION = 3600; // 1 hour
     const MAX_STREAM_DURATION = 365 * 24 * 3600; // 1 year
 
@@ -29,9 +29,9 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
             "Test Token",
             "TEST",
             18,
-            ethers.utils.parseEther("1000000")
+            ethers.parseEther("1000000")
         );
-        await testToken.deployed();
+        await testToken.waitForDeployment();
 
         // Deploy StreamLockManager first
         const StreamLockManager = await ethers.getContractFactory("StreamLockManager");
@@ -45,13 +45,13 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
             ],
             { initializer: "initialize" }
         );
-        await streamLockManager.deployed();
+        await streamLockManager.waitForDeployment();
 
         // Note: Full integration would require deploying all dependent contracts
         // (ProducerStorage, URIGenerator, ProducerApi, etc.)
         // For now, this serves as a template for complete integration tests
         
-        console.log("StreamLockManager deployed at:", streamLockManager.address);
+        console.log("StreamLockManager deployed at:", streamLockManager.target);
     });
 
     describe("StreamLockManager Standalone", function () {
@@ -61,18 +61,18 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
         });
 
         it("Should create stream locks", async function () {
-            const streamAmount = ethers.utils.parseEther("10");
+            const streamAmount = ethers.parseEther("10");
             const duration = 7200; // 2 hours
 
             // Transfer tokens to user
             await testToken.transfer(await user.getAddress(), streamAmount);
             
             // Approve and create stream
-            await testToken.connect(user).approve(streamLockManager.address, streamAmount);
+            await testToken.connect(user).approve(streamLockManager.target, streamAmount);
             
             const tx = await streamLockManager.connect(user).createStreamLock(
                 await producer.getAddress(),
-                testToken.address,
+                testToken.target,
                 streamAmount,
                 duration
             );
@@ -96,7 +96,7 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
 
     describe("Balance Management", function () {
         it("Should track locked and unlocked balances correctly", async function () {
-            const streamAmount = ethers.utils.parseEther("10");
+            const streamAmount = ethers.parseEther("10");
             const duration = 7200;
 
             // Transfer tokens to user
@@ -105,15 +105,15 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
             // Check initial balances
             const initialUnlocked = await streamLockManager.getUnlockedBalance(
                 await user.getAddress(), 
-                testToken.address
+                testToken.target
             );
             expect(initialUnlocked).to.equal(0);
 
             // Create stream lock
-            await testToken.connect(user).approve(streamLockManager.address, streamAmount);
+            await testToken.connect(user).approve(streamLockManager.target, streamAmount);
             await streamLockManager.connect(user).createStreamLock(
                 await producer.getAddress(),
-                testToken.address,
+                testToken.target,
                 streamAmount,
                 duration
             );
@@ -121,15 +121,15 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
             // Check balances after lock creation
             const totalBalance = await streamLockManager.getTotalBalance(
                 await user.getAddress(), 
-                testToken.address
+                testToken.target
             );
             const lockedBalance = await streamLockManager.getLockedBalance(
                 await user.getAddress(), 
-                testToken.address
+                testToken.target
             );
             const unlockedBalance = await streamLockManager.getUnlockedBalance(
                 await user.getAddress(), 
-                testToken.address
+                testToken.target
             );
 
             expect(totalBalance).to.equal(streamAmount);
@@ -142,15 +142,15 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
         let lockId: string;
 
         beforeEach(async function () {
-            const streamAmount = ethers.utils.parseEther("10");
+            const streamAmount = ethers.parseEther("10");
             const duration = 7200;
 
             await testToken.transfer(await user.getAddress(), streamAmount);
-            await testToken.connect(user).approve(streamLockManager.address, streamAmount);
+            await testToken.connect(user).approve(streamLockManager.target, streamAmount);
             
             const tx = await streamLockManager.connect(user).createStreamLock(
                 await producer.getAddress(),
-                testToken.address,
+                testToken.target,
                 streamAmount,
                 duration
             );
@@ -163,7 +163,7 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
         it("Should calculate accrued amounts over time", async function () {
             // Initially, accrued amount should be 0 or very small
             const initialAccrued = await streamLockManager.calculateAccruedAmount(lockId);
-            expect(initialAccrued).to.be.lt(ethers.utils.parseEther("0.1"));
+            expect(initialAccrued).to.be.lt(ethers.parseEther("0.1"));
 
             // Fast forward time and check accrued amount increases
             await ethers.provider.send("evm_increaseTime", [1800]); // 30 minutes
@@ -171,7 +171,7 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
 
             const accruedAfterTime = await streamLockManager.calculateAccruedAmount(lockId);
             expect(accruedAfterTime).to.be.gt(initialAccrued);
-            expect(accruedAfterTime).to.be.lt(ethers.utils.parseEther("10")); // Less than total
+            expect(accruedAfterTime).to.be.lt(ethers.parseEther("10")); // Less than total
         });
 
         it("Should allow stream cancellation by owner", async function () {
@@ -196,15 +196,15 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
 
     describe("Producer Integration", function () {
         it("Should track incoming streams for producers", async function () {
-            const streamAmount = ethers.utils.parseEther("5");
+            const streamAmount = ethers.parseEther("5");
             const duration = 3600;
 
             await testToken.transfer(await user.getAddress(), streamAmount);
-            await testToken.connect(user).approve(streamLockManager.address, streamAmount);
+            await testToken.connect(user).approve(streamLockManager.target, streamAmount);
             
             await streamLockManager.connect(user).createStreamLock(
                 await producer.getAddress(),
-                testToken.address,
+                testToken.target,
                 streamAmount,
                 duration
             );
@@ -217,16 +217,16 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
         });
 
         it("Should allow batch claiming by producers", async function () {
-            const streamAmount = ethers.utils.parseEther("5");
+            const streamAmount = ethers.parseEther("5");
             const duration = 3600; // 1 hour
 
             // Create stream
             await testToken.transfer(await user.getAddress(), streamAmount);
-            await testToken.connect(user).approve(streamLockManager.address, streamAmount);
+            await testToken.connect(user).approve(streamLockManager.target, streamAmount);
             
             await streamLockManager.connect(user).createStreamLock(
                 await producer.getAddress(),
-                testToken.address,
+                testToken.target,
                 streamAmount,
                 duration
             );
@@ -253,15 +253,15 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
             await expect(
                 streamLockManager.connect(user).createStreamLock(
                     await producer.getAddress(),
-                    testToken.address,
-                    ethers.utils.parseEther("1"),
+                    testToken.target,
+                    ethers.parseEther("1"),
                     3600
                 )
             ).to.be.revertedWith("Pausable: paused");
         });
 
         it("Should allow owner to update stream parameters", async function () {
-            const newMinAmount = ethers.utils.parseEther("0.01");
+            const newMinAmount = ethers.parseEther("0.01");
             const newMinDuration = 7200;
             const newMaxDuration = 30 * 24 * 3600;
 
@@ -294,15 +294,15 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
         let lockId: string;
 
         beforeEach(async function () {
-            const streamAmount = ethers.utils.parseEther("10");
+            const streamAmount = ethers.parseEther("10");
             const duration = 7200;
 
             await testToken.transfer(await user.getAddress(), streamAmount);
-            await testToken.connect(user).approve(streamLockManager.address, streamAmount);
+            await testToken.connect(user).approve(streamLockManager.target, streamAmount);
             
             const tx = await streamLockManager.connect(user).createStreamLock(
                 await producer.getAddress(),
-                testToken.address,
+                testToken.target,
                 streamAmount,
                 duration
             );
@@ -318,10 +318,10 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
             await streamLockManager.connect(user).emergencyWithdraw(lockId);
 
             const finalUserBalance = await testToken.balanceOf(await user.getAddress());
-            const userReceived = finalUserBalance.sub(initialUserBalance);
+            const userReceived = finalUserBalance - initialUserBalance;
 
             // User should get back the full amount
-            expect(userReceived).to.equal(ethers.utils.parseEther("10"));
+            expect(userReceived).to.equal(ethers.parseEther("10"));
 
             // Stream should be inactive
             const status = await streamLockManager.getStreamStatus(lockId);

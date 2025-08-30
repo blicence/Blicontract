@@ -2,13 +2,14 @@
 
 pragma solidity 0.8.30;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "./Producer.sol";
-import "./DelegateCall.sol";
+// import "./DelegateCall.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {IFactory} from "./interfaces/IFactory.sol";
 import {IProducerStorage} from "./interfaces/IProducerStorage.sol";
@@ -17,7 +18,7 @@ import {FactoryErrors} from "./errors/FactoryErrors.sol";
 
 // todo research  Clones.sol or ClonesUpgradeable
 
-contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
+contract Factory is Initializable, OwnableUpgradeable, UUPSUpgradeable, IFactory {
     address private uriGeneratorAddress;
     address private producerLogicAddress;
     address private producerApiAddress;
@@ -132,5 +133,8 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
         return producerStorage.currentPR_ID();
     }
 
-  
+    /**
+     * @dev Authorize contract upgrades (UUPS pattern)
+     */
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }

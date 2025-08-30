@@ -16,28 +16,28 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
     const [deployer, _educator, _student] = await ethers.getSigners();
     educator = _educator;
     student = _student;
-    deployerAddress = deployer.address;
+    deployerAddress = deployer.target;
 
     // Deploy test token (USDC mock)
     const TestTokenFactory = await ethers.getContractFactory("TestToken");
-    usdcToken = await TestTokenFactory.deploy("USDC", "USDC", 6);
-    await usdcToken.deployed();
+    usdcToken = await TestTokenFactory.deploy("USDC", "USDC", 6, ethers.parseUnits("1000000", 6));
+    await usdcToken.waitForDeployment();
 
     // Deploy Factory and dependencies
     const FactoryContract = await ethers.getContractFactory("Factory");
     factory = await FactoryContract.deploy();
-    await factory.deployed();
+    await factory.waitForDeployment();
 
     const URIGeneratorContract = await ethers.getContractFactory("URIGenerator");
     uriGenerator = await URIGeneratorContract.deploy();
-    await uriGenerator.deployed();
+    await uriGenerator.waitForDeployment();
   });
 
   describe("Test Senaryosu 4.1: Eğitim Sağlayıcısı Kaydı", function () {
     it("Online eğitim platformu sisteme kaydolur", async function () {
       const educationProducerData = {
         producerId: 0,
-        producerAddress: educator.address,
+        producerAddress: educator.target,
         name: "TechAcademy Online",
         description: "Yazılım geliştirme eğitimleri",
         image: "https://example.com/academy_logo.png",
@@ -62,7 +62,7 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
       // Eğitim sağlayıcısını oluştur
       const educationProducerData = {
         producerId: 0,
-        producerAddress: educator.address,
+        producerAddress: educator.target,
         name: "TechAcademy Online",
         description: "Yazılım geliştirme eğitimleri",
         image: "https://example.com/academy_logo.png",
@@ -83,7 +83,7 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
 
       const coursePlan = {
         planId: 0,
-        cloneAddress: educationProducer.address,
+        cloneAddress: educationProducer.target,
         producerId: 1,
         name: "Blockchain Development Kursu",
         description: "6 haftalık yoğun blockchain eğitimi",
@@ -92,7 +92,7 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
         currentSupply: 0,
         backgroundColor: "#4CAF50",
         image: "blockchain_course.png",
-        priceAddress: usdcToken.address,
+        priceAddress: usdcToken.target,
         startDate: courseStartTime,
         status: 1, // active
         planType: 2, // vestingApi
@@ -108,8 +108,8 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
       const courseInfo = {
         planId: 1,
         cliffDate: courseStartTime, // Kurs başlangıç tarihi
-        flowRate: ethers.utils.parseEther("0.01"), // 0.01 token per second
-        startAmount: ethers.utils.parseEther("100"), // İlk ödeme 100 token
+        flowRate: ethers.parseEther("0.01"), // 0.01 token per second
+        startAmount: ethers.parseEther("100"), // İlk ödeme 100 token
         ctx: "0x" // Additional context data
       };
 
@@ -127,7 +127,7 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
 
       const coursePlan = {
         planId: 0,
-        cloneAddress: educationProducer.address,
+        cloneAddress: educationProducer.target,
         producerId: 1,
         name: "Geçmiş Kurs",
         description: "Geçmiş tarihli test kursu",
@@ -136,7 +136,7 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
         currentSupply: 0,
         backgroundColor: "#FF5722",
         image: "past_course.png",
-        priceAddress: usdcToken.address,
+        priceAddress: usdcToken.target,
         startDate: pastTime,
         status: 1,
         planType: 2,
@@ -157,7 +157,7 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
       // Setup: Eğitim sağlayıcısı ve kurs planı
       const educationProducerData = {
         producerId: 0,
-        producerAddress: educator.address,
+        producerAddress: educator.target,
         name: "TechAcademy Online",
         description: "Yazılım geliştirme eğitimleri",
         image: "https://example.com/academy_logo.png",
@@ -176,7 +176,7 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
 
       const coursePlan = {
         planId: 0,
-        cloneAddress: educationProducer.address,
+        cloneAddress: educationProducer.target,
         producerId: 1,
         name: "Blockchain Development Kursu",
         description: "6 haftalık yoğun blockchain eğitimi",
@@ -185,7 +185,7 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
         currentSupply: 0,
         backgroundColor: "#4CAF50",
         image: "blockchain_course.png",
-        priceAddress: usdcToken.address,
+        priceAddress: usdcToken.target,
         startDate: courseStartTime,
         status: 1,
         planType: 2,
@@ -198,29 +198,29 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
       const courseInfo = {
         planId: planId,
         cliffDate: courseStartTime,
-        flowRate: ethers.utils.parseEther("0.01"),
-        startAmount: ethers.utils.parseEther("100"),
+        flowRate: ethers.parseEther("0.01"),
+        startAmount: ethers.parseEther("100"),
         ctx: "0x"
       };
 
       await educationProducer.connect(educator).addPlanInfoVesting(courseInfo);
 
       // Öğrenciye USDC ver
-      await usdcToken.mint(student.address, ethers.utils.parseUnits("1000", 6));
+      await usdcToken.mint(student.target, ethers.parseUnits("1000", 6));
     });
 
     it("Öğrenci erken kayıt yapar", async function () {
-      const totalCoursePrice = ethers.utils.parseUnits("500", 6); // 500 USDC
+      const totalCoursePrice = ethers.parseUnits("500", 6); // 500 USDC
       
-      await usdcToken.connect(student).approve(educationProducer.address, totalCoursePrice);
+      await usdcToken.connect(student).approve(educationProducer.target, totalCoursePrice);
 
       const studentPlan = {
-        customerAdress: student.address,
+        customerAdress: student.target,
         planId: planId,
         custumerPlanId: 0,
         producerId: 1,
-        cloneAddress: educationProducer.address,
-        priceAddress: usdcToken.address,
+        cloneAddress: educationProducer.target,
+        priceAddress: usdcToken.target,
         startDate: courseStartTime,
         endDate: courseStartTime + 6 * 7 * 24 * 60 * 60, // 6 hafta
         remainingQuota: 0, // VestingApi için kullanılmaz
@@ -228,33 +228,33 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
         planType: 2 // vestingApi
       };
 
-      const initialBalance = await usdcToken.balanceOf(student.address);
+      const initialBalance = await usdcToken.balanceOf(student.target);
       
       const tx = await educationProducer.connect(student).addCustomerPlan(studentPlan);
       await tx.wait();
 
       // İlk ödemenin yapıldığını kontrol et (start amount)
-      const finalBalance = await usdcToken.balanceOf(student.address);
-      const paidAmount = initialBalance.sub(finalBalance);
-      expect(paidAmount).to.equal(ethers.utils.parseUnits("100", 6)); // Start amount
+      const finalBalance = await usdcToken.balanceOf(student.target);
+      const paidAmount = initialBalance - finalBalance;
+      expect(paidAmount).to.equal(ethers.parseUnits("100", 6)); // Start amount
 
       // Öğrenci planının kaydedildiğini kontrol et
-      const savedCustomer = await educationProducer.getCustomer(student.address);
-      expect(savedCustomer.customer).to.equal(student.address);
+      const savedCustomer = await educationProducer.getCustomer(student.target);
+      expect(savedCustomer.customer).to.equal(student.target);
     });
 
     it("Kurs başlamadan önce erişim sağlanamaz", async function () {
       // Erken kayıt yap
-      const totalCoursePrice = ethers.utils.parseUnits("500", 6);
-      await usdcToken.connect(student).approve(educationProducer.address, totalCoursePrice);
+      const totalCoursePrice = ethers.parseUnits("500", 6);
+      await usdcToken.connect(student).approve(educationProducer.target, totalCoursePrice);
 
       const studentPlan = {
-        customerAdress: student.address,
+        customerAdress: student.target,
         planId: planId,
         custumerPlanId: 0,
         producerId: 1,
-        cloneAddress: educationProducer.address,
-        priceAddress: usdcToken.address,
+        cloneAddress: educationProducer.target,
+        priceAddress: usdcToken.target,
         startDate: courseStartTime,
         endDate: courseStartTime + 6 * 7 * 24 * 60 * 60,
         remainingQuota: 0,
@@ -272,16 +272,16 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
 
     it("Cliff tarihinden sonra vesting başlar", async function () {
       // Erken kayıt yap
-      const totalCoursePrice = ethers.utils.parseUnits("500", 6);
-      await usdcToken.connect(student).approve(educationProducer.address, totalCoursePrice);
+      const totalCoursePrice = ethers.parseUnits("500", 6);
+      await usdcToken.connect(student).approve(educationProducer.target, totalCoursePrice);
 
       const studentPlan = {
-        customerAdress: student.address,
+        customerAdress: student.target,
         planId: planId,
         custumerPlanId: 0,
         producerId: 1,
-        cloneAddress: educationProducer.address,
-        priceAddress: usdcToken.address,
+        cloneAddress: educationProducer.target,
+        priceAddress: usdcToken.target,
         startDate: courseStartTime,
         endDate: courseStartTime + 6 * 7 * 24 * 60 * 60,
         remainingQuota: 0,
@@ -310,7 +310,7 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
       // Setup kodu (önceki testlerden)
       const educationProducerData = {
         producerId: 0,
-        producerAddress: educator.address,
+        producerAddress: educator.target,
         name: "TechAcademy Online",
         description: "Yazılım geliştirme eğitimleri",
         image: "https://example.com/academy_logo.png",

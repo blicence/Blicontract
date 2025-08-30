@@ -22,6 +22,8 @@ contract URIGenerator is
 {
     IProducerStorage public producerStorage;
 
+    bytes16 internal constant ALPHABET = "0123456789abcdef";
+
     error NFT_TransferIsNotAllowed();
     error NFT_Unauthorized();
     error NFT_Deprecated(uint256 at);
@@ -583,8 +585,6 @@ contract URIGenerator is
         }
         return string(buffer);
     }
-
-    bytes16 internal constant ALPHABET = "0123456789abcdef";
 
     function toHexString(
         uint256 value,

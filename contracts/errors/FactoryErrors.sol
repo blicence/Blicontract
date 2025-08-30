@@ -11,4 +11,10 @@ library FactoryErrors {
     
     /// @dev Producer already exists
     error ProducerAlreadyExists();
+
+    /// @dev Invalid amount
+    error InvalidAmount();
+
+    /// @dev Invalid token
+    error InvalidToken();
 }

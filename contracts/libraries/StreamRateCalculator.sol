@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.30;
 
+import {FactoryErrors} from "../errors/FactoryErrors.sol";
+
 /**
  * @title StreamRateCalculator
  * @dev Library for calculating stream rates and time-based amounts
@@ -12,7 +14,6 @@ library StreamRateCalculator {
     uint256 constant MAX_DURATION = 365 days;  // Maximum 1 year
 
     error InvalidDuration();
-    error InvalidAmount();
     error StreamRateTooLow();
 
     /**
@@ -26,7 +27,7 @@ library StreamRateCalculator {
         uint256 duration
     ) internal pure returns (uint256 streamRate) {
         if (duration == 0) revert InvalidDuration();
-        if (totalAmount < MIN_STREAM_AMOUNT) revert InvalidAmount();
+        if (totalAmount < MIN_STREAM_AMOUNT) revert FactoryErrors.InvalidAmount();
         if (duration < MIN_DURATION || duration > MAX_DURATION) revert InvalidDuration();
         
         // Use precision for more accurate calculation
@@ -92,10 +93,10 @@ library StreamRateCalculator {
         address recipient,
         address token
     ) internal pure {
-        if (totalAmount < MIN_STREAM_AMOUNT) revert InvalidAmount();
+        if (totalAmount < MIN_STREAM_AMOUNT) revert FactoryErrors.InvalidAmount();
         if (duration < MIN_DURATION || duration > MAX_DURATION) revert InvalidDuration();
         if (recipient == address(0)) revert InvalidRecipient();
-        if (token == address(0)) revert InvalidToken();
+        if (token == address(0)) revert FactoryErrors.InvalidToken();
     }
 
     /**

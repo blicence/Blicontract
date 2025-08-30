@@ -1,0 +1,6 @@
+[
+  "error InvalidAmount()",
+  "error InvalidToken()",
+  "error NotAContract()",
+  "error ProducerAlreadyExists()"
+]

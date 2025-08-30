@@ -3,6 +3,7 @@ pragma solidity 0.8.30;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {FactoryErrors} from "../errors/FactoryErrors.sol";
 
 /**
  * @title VirtualBalance
@@ -27,8 +28,6 @@ abstract contract VirtualBalance {
     // Custom errors
     error InsufficientBalance();
     error InsufficientUnlockedBalance();
-    error InvalidAmount();
-    error InvalidToken();
 
     /**
      * @dev Get user's unlocked (available) balance for a token
@@ -69,8 +68,8 @@ abstract contract VirtualBalance {
      * @param amount Amount to deposit
      */
     function _depositBalance(address user, address token, uint256 amount) internal {
-        if (amount == 0) revert InvalidAmount();
-        if (token == address(0)) revert InvalidToken();
+        if (amount == 0) revert FactoryErrors.InvalidAmount();
+        if (token == address(0)) revert FactoryErrors.InvalidToken();
 
         IERC20(token).safeTransferFrom(user, address(this), amount);
         actualBalance[user][token] += amount;
@@ -85,7 +84,7 @@ abstract contract VirtualBalance {
      * @param amount Amount to lock
      */
     function _lockBalance(address user, address token, uint256 amount) internal {
-        if (amount == 0) revert InvalidAmount();
+        if (amount == 0) revert FactoryErrors.InvalidAmount();
         
         uint256 unlocked = getUnlockedBalance(user, token);
         if (unlocked < amount) revert InsufficientUnlockedBalance();
@@ -102,7 +101,7 @@ abstract contract VirtualBalance {
      * @param amount Amount to unlock
      */
     function _unlockBalance(address user, address token, uint256 amount) internal {
-        if (amount == 0) revert InvalidAmount();
+        if (amount == 0) revert FactoryErrors.InvalidAmount();
         
         uint256 locked = lockedBalance[user][token];
         if (locked < amount) revert InsufficientBalance();
@@ -127,8 +126,8 @@ abstract contract VirtualBalance {
         uint256 amount,
         bool fromLocked
     ) internal {
-        if (amount == 0) revert InvalidAmount();
-        if (recipient == address(0)) revert InvalidToken();
+        if (amount == 0) revert FactoryErrors.InvalidAmount();
+        if (recipient == address(0)) revert FactoryErrors.InvalidToken();
 
         uint256 userBalance = actualBalance[user][token];
         if (userBalance < amount) revert InsufficientBalance();
@@ -153,7 +152,7 @@ abstract contract VirtualBalance {
      * @param amount Amount to withdraw
      */
     function _withdrawBalance(address user, address token, uint256 amount) internal {
-        if (amount == 0) revert InvalidAmount();
+        if (amount == 0) revert FactoryErrors.InvalidAmount();
         
         uint256 unlocked = getUnlockedBalance(user, token);
         if (unlocked < amount) revert InsufficientUnlockedBalance();

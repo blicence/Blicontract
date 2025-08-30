@@ -16,28 +16,28 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
     const [deployer, _cafeOwner, _customer] = await ethers.getSigners();
     cafeOwner = _cafeOwner;
     customer = _customer;
-    deployerAddress = deployer.address;
+    deployerAddress = deployer.target;
 
     // Deploy test token (USDC mock)
     const TestTokenFactory = await ethers.getContractFactory("TestToken");
-    usdcToken = await TestTokenFactory.deploy("USDC", "USDC", 6);
-    await usdcToken.deployed();
+    usdcToken = await TestTokenFactory.deploy("USDC", "USDC", 6, ethers.parseUnits("1000000", 6));
+    await usdcToken.waitForDeployment();
 
     // Deploy Factory and dependencies
     const FactoryContract = await ethers.getContractFactory("Factory");
     factory = await FactoryContract.deploy();
-    await factory.deployed();
+    await factory.waitForDeployment();
 
     const URIGeneratorContract = await ethers.getContractFactory("URIGenerator");
     uriGenerator = await URIGeneratorContract.deploy();
-    await uriGenerator.deployed();
+    await uriGenerator.waitForDeployment();
   });
 
   describe("Test Senaryosu 3.1: Kafeterya Kaydı ve Plan Oluşturma", function () {
     it("Kafeterya sisteme kaydolur ve sadakat kartı planı oluşturur", async function () {
       const cafeProducerData = {
         producerId: 0,
-        producerAddress: cafeOwner.address,
+        producerAddress: cafeOwner.target,
         name: "Aroma Cafe",
         description: "Özel kahve deneyimi",
         image: "https://example.com/cafe_logo.png",
@@ -59,7 +59,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
       // 15 kahveli sadakat kartı planı oluştur
       const coffeeCardPlan = {
         planId: 0,
-        cloneAddress: cafeProducer.address,
+        cloneAddress: cafeProducer.target,
         producerId: 1,
         name: "15 Kahve Sadakat Kartı",
         description: "15 kahve al, %20 indirim kazan",
@@ -68,7 +68,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
         currentSupply: 0,
         backgroundColor: "#8B4513",
         image: "coffee_card.png",
-        priceAddress: usdcToken.address,
+        priceAddress: usdcToken.target,
         startDate: Math.floor(Date.now() / 1000),
         status: 1, // active
         planType: 1, // nUsage
@@ -83,7 +83,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
       // NUsage plan bilgilerini ekle
       const coffeeCardInfo = {
         planId: 1,
-        oneUsagePrice: ethers.utils.parseUnits("5", 6), // 5 USDC per coffee
+        oneUsagePrice: ethers.parseUnits("5", 6), // 5 USDC per coffee
         minUsageLimit: 15,
         maxUsageLimit: 15
       };
@@ -104,7 +104,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
       // Setup: Kafeterya ve plan oluştur
       const cafeProducerData = {
         producerId: 0,
-        producerAddress: cafeOwner.address,
+        producerAddress: cafeOwner.target,
         name: "Aroma Cafe",
         description: "Özel kahve deneyimi",
         image: "https://example.com/cafe_logo.png",
@@ -120,7 +120,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
 
       const coffeeCardPlan = {
         planId: 0,
-        cloneAddress: cafeProducer.address,
+        cloneAddress: cafeProducer.target,
         producerId: 1,
         name: "15 Kahve Sadakat Kartı",
         description: "15 kahve al, %20 indirim kazan",
@@ -129,7 +129,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
         currentSupply: 0,
         backgroundColor: "#8B4513",
         image: "coffee_card.png",
-        priceAddress: usdcToken.address,
+        priceAddress: usdcToken.target,
         startDate: Math.floor(Date.now() / 1000),
         status: 1,
         planType: 1, // nUsage
@@ -141,7 +141,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
 
       const coffeeCardInfo = {
         planId: planId,
-        oneUsagePrice: ethers.utils.parseUnits("5", 6),
+        oneUsagePrice: ethers.parseUnits("5", 6),
         minUsageLimit: 15,
         maxUsageLimit: 15
       };
@@ -149,22 +149,22 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
       await cafeProducer.connect(cafeOwner).addPlanInfoNUsage(coffeeCardInfo);
 
       // Müşteriye USDC ver
-      await usdcToken.mint(customer.address, ethers.utils.parseUnits("100", 6));
+      await usdcToken.mint(customer.target, ethers.parseUnits("100", 6));
     });
 
     it("Müşteri 15'lik kahve kartı satın alır", async function () {
       // İndirimli fiyat: 15 * 5 USDC * 0.8 = 60 USDC
-      const totalPrice = ethers.utils.parseUnits("60", 6);
+      const totalPrice = ethers.parseUnits("60", 6);
       
-      await usdcToken.connect(customer).approve(cafeProducer.address, totalPrice);
+      await usdcToken.connect(customer).approve(cafeProducer.target, totalPrice);
 
       const customerPlan = {
-        customerAdress: customer.address,
+        customerAdress: customer.target,
         planId: planId,
         custumerPlanId: 0,
         producerId: 1,
-        cloneAddress: cafeProducer.address,
-        priceAddress: usdcToken.address,
+        cloneAddress: cafeProducer.target,
+        priceAddress: usdcToken.target,
         startDate: Math.floor(Date.now() / 1000),
         endDate: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60, // 1 yıl
         remainingQuota: 15, // 15 kullanım hakkı
@@ -172,24 +172,24 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
         planType: 1 // nUsage
       };
 
-      const initialBalance = await usdcToken.balanceOf(customer.address);
+      const initialBalance = await usdcToken.balanceOf(customer.target);
       
       const tx = await cafeProducer.connect(customer).addCustomerPlan(customerPlan);
       await tx.wait();
 
       // Ödemenin yapıldığını kontrol et
-      const finalBalance = await usdcToken.balanceOf(customer.address);
-      expect(initialBalance.sub(finalBalance)).to.equal(totalPrice);
+      const finalBalance = await usdcToken.balanceOf(customer.target);
+      expect(initialBalance - finalBalance).to.equal(totalPrice);
 
       // Müşteri planının kaydedildiğini ve kota bilgisinin doğru olduğunu kontrol et
-      const savedCustomer = await cafeProducer.getCustomer(customer.address);
-      expect(savedCustomer.customer).to.equal(customer.address);
+      const savedCustomer = await cafeProducer.getCustomer(customer.target);
+      expect(savedCustomer.customer).to.equal(customer.target);
     });
 
     it("Minimum limit altında satın alma başarısız olur", async function () {
       const coffeeCardInfo = {
         planId: planId,
-        oneUsagePrice: ethers.utils.parseUnits("5", 6),
+        oneUsagePrice: ethers.parseUnits("5", 6),
         minUsageLimit: 10, // Minimum 10
         maxUsageLimit: 15
       };
@@ -198,12 +198,12 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
       await cafeProducer.connect(cafeOwner).addPlanInfoNUsage(coffeeCardInfo);
 
       const customerPlan = {
-        customerAdress: customer.address,
+        customerAdress: customer.target,
         planId: planId,
         custumerPlanId: 0,
         producerId: 1,
-        cloneAddress: cafeProducer.address,
-        priceAddress: usdcToken.address,
+        cloneAddress: cafeProducer.target,
+        priceAddress: usdcToken.target,
         startDate: Math.floor(Date.now() / 1000),
         endDate: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
         remainingQuota: 5, // Minimum altında
@@ -225,7 +225,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
       // Setup: Kafeterya, plan ve müşteri kartı oluştur
       const cafeProducerData = {
         producerId: 0,
-        producerAddress: cafeOwner.address,
+        producerAddress: cafeOwner.target,
         name: "Aroma Cafe",
         description: "Özel kahve deneyimi",
         image: "https://example.com/cafe_logo.png",
@@ -241,7 +241,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
 
       const coffeeCardPlan = {
         planId: 0,
-        cloneAddress: cafeProducer.address,
+        cloneAddress: cafeProducer.target,
         producerId: 1,
         name: "15 Kahve Sadakat Kartı",
         description: "15 kahve al, %20 indirim kazan",
@@ -250,7 +250,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
         currentSupply: 0,
         backgroundColor: "#8B4513",
         image: "coffee_card.png",
-        priceAddress: usdcToken.address,
+        priceAddress: usdcToken.target,
         startDate: Math.floor(Date.now() / 1000),
         status: 1,
         planType: 1,
@@ -262,7 +262,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
 
       const coffeeCardInfo = {
         planId: planId,
-        oneUsagePrice: ethers.utils.parseUnits("5", 6),
+        oneUsagePrice: ethers.parseUnits("5", 6),
         minUsageLimit: 15,
         maxUsageLimit: 15
       };
@@ -270,19 +270,19 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
       await cafeProducer.connect(cafeOwner).addPlanInfoNUsage(coffeeCardInfo);
 
       // Müşteri kartı satın alır
-      await usdcToken.mint(customer.address, ethers.utils.parseUnits("100", 6));
+      await usdcToken.mint(customer.target, ethers.parseUnits("100", 6));
       await usdcToken.connect(customer).approve(
-        cafeProducer.address, 
-        ethers.utils.parseUnits("60", 6)
+        cafeProducer.target, 
+        ethers.parseUnits("60", 6)
       );
 
       customerPlan = {
-        customerAdress: customer.address,
+        customerAdress: customer.target,
         planId: planId,
         custumerPlanId: 0,
         producerId: 1,
-        cloneAddress: cafeProducer.address,
-        priceAddress: usdcToken.address,
+        cloneAddress: cafeProducer.target,
+        priceAddress: usdcToken.target,
         startDate: Math.floor(Date.now() / 1000),
         endDate: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
         remainingQuota: 15,
@@ -330,7 +330,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
       // Setup kodu (önceki testlerden)
       const cafeProducerData = {
         producerId: 0,
-        producerAddress: cafeOwner.address,
+        producerAddress: cafeOwner.target,
         name: "Aroma Cafe",
         description: "Özel kahve deneyimi",
         image: "https://example.com/cafe_logo.png",
@@ -354,17 +354,17 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
         await cafeProducer.connect(customer).useFromQuota(customerPlan);
       }
 
-      const initialBalance = await usdcToken.balanceOf(customer.address);
+      const initialBalance = await usdcToken.balanceOf(customer.target);
 
       // Planı pasif yap (iptal et)
       customerPlan.status = 0; // inactive
       await cafeProducer.connect(customer).updateCustomerPlan(customerPlan);
 
-      const finalBalance = await usdcToken.balanceOf(customer.address);
+      const finalBalance = await usdcToken.balanceOf(customer.target);
       
       // 10 kahve değerinde iade alınmalı (10 * 5 USDC * 0.8 = 40 USDC)
-      const expectedRefund = ethers.utils.parseUnits("40", 6);
-      expect(finalBalance.sub(initialBalance)).to.equal(expectedRefund);
+      const expectedRefund = ethers.parseUnits("40", 6);
+      expect(finalBalance - initialBalance).to.equal(expectedRefund);
     });
   });
 

@@ -57,7 +57,7 @@ export async function deployProxysFixture() {
     CUSTOMER_NFT_PROXY_ADDRESS: "",
     BCONTRACT_FACTORY_PROXY_ADDRESS: ""
   };
-  console.log("Deploying contracts with the account:", deployer.address);
+  console.log("Deploying contracts with the account:", deployer.target);
 
 
 
@@ -66,16 +66,16 @@ export async function deployProxysFixture() {
     kind: "uups",
   });
   await producerLogic.deployed();
-  console.log("producerLogic deployed to:", producerLogic.address);
-  proxyAddresses.PRODUCER_LOGIC_PROXY_ADDRESS = producerLogic.address;
+  console.log("producerLogic deployed to:", producerLogic.target);
+  proxyAddresses.PRODUCER_LOGIC_PROXY_ADDRESS = producerLogic.target;
   
   const CustomerNftUpgradeable = await ethers.getContractFactory("CustomerNftUpgradeable");
   const customerNft = await upgrades.deployProxy(CustomerNftUpgradeable, [], {
     kind: "uups",
   });
   await customerNft.deployed();
-  console.log("CustomerNftUpgradeable deployed to:", customerNft.address);
-  proxyAddresses.CUSTOMER_NFT_PROXY_ADDRESS = customerNft.address;
+  console.log("CustomerNftUpgradeable deployed to:", customerNft.target);
+  proxyAddresses.CUSTOMER_NFT_PROXY_ADDRESS = customerNft.target;
 
 
 
@@ -84,7 +84,7 @@ export async function deployProxysFixture() {
 
   const bcontractFactory = await upgrades.deployProxy(
     BcontractFactory,
-    [customerNft.address, producerLogic.address],
+    [customerNft.target, producerLogic.target],
     {
       initializer: "initialize",
       unsafeAllow: ["delegatecall"],
@@ -92,7 +92,7 @@ export async function deployProxysFixture() {
   );
   await bcontractFactory.deployed();
 
-  proxyAddresses.BCONTRACT_FACTORY_PROXY_ADDRESS = bcontractFactory.address;
+  proxyAddresses.BCONTRACT_FACTORY_PROXY_ADDRESS = bcontractFactory.target;
   fs.writeFileSync(
     `./${PROXIES_ADDRESSES_FILENAME}`,
     JSON.stringify(proxyAddresses)

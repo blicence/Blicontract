@@ -1,0 +1,14 @@
+[
+  "error CustomerPlanNotExist()",
+  "error InsufficientQuota()",
+  "error OnlyExistingProducer()",
+  "error OnlyFactory()",
+  "error OnlyNonExistingProducer()",
+  "error OnlyProducer()",
+  "error OnlyProducerApi()",
+  "error OnlyProducerNUsage()",
+  "error OnlyProducerVestingApi()",
+  "error OnlyRegisteredProducer()",
+  "error PlanAlreadyExists()",
+  "error ProducerNotRegistered()"
+]

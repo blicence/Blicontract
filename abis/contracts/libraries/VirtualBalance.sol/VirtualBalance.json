@@ -1,8 +1,6 @@
 [
   "error InsufficientBalance()",
   "error InsufficientUnlockedBalance()",
-  "error InvalidAmount()",
-  "error InvalidToken()",
   "event BalanceDeposited(address indexed,address indexed,uint256)",
   "event BalanceLocked(address indexed,address indexed,uint256)",
   "event BalanceUnlocked(address indexed,address indexed,uint256)",
