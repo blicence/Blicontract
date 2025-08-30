@@ -13,6 +13,7 @@ import {DataTypes} from "./libraries/DataTypes.sol";
 import {IFactory} from "./interfaces/IFactory.sol";
 import {IProducerStorage} from "./interfaces/IProducerStorage.sol";
 import {IStreamLockManager} from "./interfaces/IStreamLockManager.sol";
+import {FactoryErrors} from "./errors/FactoryErrors.sol";
 
 // todo research  Clones.sol or ClonesUpgradeable
 
@@ -70,7 +71,7 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
     function setProducerImplementation(
         address _ProducerImplementationAddress
     ) external onlyOwner onlyProxy {
-        require(_ProducerImplementationAddress.code.length > 0, "Not a contract");
+        if (_ProducerImplementationAddress.code.length == 0) revert FactoryErrors.NotAContract();
         ProducerImplementation = _ProducerImplementationAddress;
     }
 
@@ -80,10 +81,7 @@ contract Factory is Initializable, OwnableUpgradeable, DelegateCall, IFactory {
      */
 
     function newBcontract(DataTypes.Producer calldata vars) external {
-        require(
-            !producerStorage.exsistProducerClone(msg.sender),
-            "producer already existing!"
-        );
+        if (producerStorage.exsistProducerClone(msg.sender)) revert FactoryErrors.ProducerAlreadyExists();
         //Clones the   contract implementation
         address clone = Clones.clone(ProducerImplementation);
         //calls Bcontractv2.initialize

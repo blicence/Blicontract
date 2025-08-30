@@ -1,0 +1,9 @@
+[
+  "event OperatorSet(address indexed,address indexed,bool)",
+  "event RedeemRequest(address indexed,address indexed,uint256 indexed,address,uint256)",
+  "function claimableRedeemRequest(uint256,address) view returns (uint256)",
+  "function isOperator(address,address) view returns (bool)",
+  "function pendingRedeemRequest(uint256,address) view returns (uint256)",
+  "function requestRedeem(uint256,address,address) returns (uint256)",
+  "function setOperator(address,bool) returns (bool)"
+]

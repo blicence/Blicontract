@@ -1,0 +1,5 @@
+[
+  "event VaultUpdate(address indexed,address)",
+  "function supportsInterface(bytes4) view returns (bool)",
+  "function vault(address) view returns (address)"
+]

@@ -1,0 +1,14 @@
+[
+  "event Approval(address indexed,address indexed,uint256 indexed,uint256)",
+  "event OperatorSet(address indexed,address indexed,bool)",
+  "event Transfer(address,address indexed,address indexed,uint256 indexed,uint256)",
+  "function allowance(address,address,uint256) view returns (uint256)",
+  "function approve(address,uint256,uint256) returns (bool)",
+  "function balanceOf(address,uint256) view returns (uint256)",
+  "function isOperator(address,address) view returns (bool)",
+  "function setOperator(address,bool) returns (bool)",
+  "function supportsInterface(bytes4) view returns (bool)",
+  "function totalSupply(uint256) view returns (uint256)",
+  "function transfer(address,uint256,uint256) returns (bool)",
+  "function transferFrom(address,address,uint256,uint256) returns (bool)"
+]

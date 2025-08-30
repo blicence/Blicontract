@@ -1,0 +1,6 @@
+[
+  "function exposed_bound(uint256,uint256,uint256) pure returns (uint256)",
+  "function exposed_bound(int256,int256,int256) pure returns (int256)",
+  "function exposed_bytesToUint(bytes) pure returns (uint256)",
+  "function exposed_getTokenBalances(address,address[]) returns (uint256[])"
+]

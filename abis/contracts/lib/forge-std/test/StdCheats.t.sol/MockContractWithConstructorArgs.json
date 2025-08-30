@@ -1,0 +1,6 @@
+[
+  "constructor(uint256,bool,bytes20) payable",
+  "function x() view returns (uint256)",
+  "function y() view returns (bool)",
+  "function z() view returns (bytes20)"
+]

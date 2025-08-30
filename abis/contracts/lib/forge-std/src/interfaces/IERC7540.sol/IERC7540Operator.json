@@ -1,0 +1,5 @@
+[
+  "event OperatorSet(address indexed,address indexed,bool)",
+  "function isOperator(address,address) view returns (bool)",
+  "function setOperator(address,bool) returns (bool)"
+]

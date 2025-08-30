@@ -6,6 +6,7 @@ import {DataTypes} from "./../libraries/DataTypes.sol";
 import {IFactory} from "./../interfaces/IFactory.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./../interfaces/IProducerStorage.sol";
+import {ProducerStorageErrors} from "./../errors/ProducerStorageErrors.sol";
 
 contract ProducerStorage is IProducerStorage, Ownable {
     IFactory factory;
@@ -57,38 +58,38 @@ contract ProducerStorage is IProducerStorage, Ownable {
     event logUpdateCustomerPlan(uint256 planId, address customerAdress, address cloneAddress, DataTypes.Status status);
 
     modifier onlyFactory() {
-        require(msg.sender == address(factory), "Only factory can call this function");
+        if (msg.sender != address(factory)) revert ProducerStorageErrors.OnlyFactory();
         _;
     }
     modifier onlyProducer() {
-        require(producers[msg.sender].cloneAddress == msg.sender, "Only producer  can call this function");
+        if (producers[msg.sender].cloneAddress != msg.sender) revert ProducerStorageErrors.OnlyProducer();
         _;
     }
     modifier onlyExistProducer() {
-        require(!exsistProducer(msg.sender), "onlyExistProducer  can call this function");
+        if (exsistProducer(msg.sender)) revert ProducerStorageErrors.OnlyExistingProducer();
         _;
     }
     modifier onlyNonExistProducer() {
-        require(exsistProducer(msg.sender), "onlyExistProducer  can call this function");
+        if (!exsistProducer(msg.sender)) revert ProducerStorageErrors.OnlyNonExistingProducer();
         _;
     }
     // call only from producer contract
     modifier onlyRegisteredProducer() {
-        require(producers[msg.sender].cloneAddress != address(0), "producer: not registered");
+        if (producers[msg.sender].cloneAddress == address(0)) revert ProducerStorageErrors.OnlyRegisteredProducer();
         _;
     }
     // call only from producerApi contract
     modifier onlyProdcuerApi() {
-        require(msg.sender == address(producerApi), " onlyProdcuerApi can call this function");
+        if (msg.sender != address(producerApi)) revert ProducerStorageErrors.OnlyProducerApi();
         _;
     }
 
     modifier onlyProdcuerNUsage() {
-        require(msg.sender == address(producerNUsage), "onlyProdcuerNUsage can call this function");
+        if (msg.sender != address(producerNUsage)) revert ProducerStorageErrors.OnlyProducerNUsage();
         _;
     }
     modifier onlyProdcuerVestingApi() {
-        require(msg.sender == address(producerVestingApi), "  onlyProdcuerVestingApi can call this function");
+        if (msg.sender != address(producerVestingApi)) revert ProducerStorageErrors.OnlyProducerVestingApi();
         _;
     }
     modifier onlyExistCustumer(
@@ -96,7 +97,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
         address customerAddress,
         address cloneAddress
     ) {
-        require(exsitCustomerPlan(planId, customerAddress, cloneAddress) == true, "Customer plan not exist");
+        if (!exsitCustomerPlan(planId, customerAddress, cloneAddress)) revert ProducerStorageErrors.CustomerPlanNotExist();
         _;
     }
 
@@ -172,7 +173,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
 
     function addPlan(DataTypes.Plan calldata vars) external onlyNonExistProducer returns (uint256 planId) {
         // get the address of the producer adding the plan
-        require(!(plans[vars.planId].planId == vars.planId), "plan exsist not add plan");
+        if (plans[vars.planId].planId == vars.planId) revert ProducerStorageErrors.PlanAlreadyExists();
 
         address cloneAddress = msg.sender;
         // create a new Plan object and store it in the mapping
@@ -379,7 +380,7 @@ contract ProducerStorage is IProducerStorage, Ownable {
         DataTypes.CustomerPlan calldata vars
     ) external onlyExistCustumer(vars.planId, vars.customerAdress, vars.cloneAddress) returns (uint256) {
         uint256 customerPlanId = uint(keccak256(abi.encodePacked(vars.planId, vars.customerAdress, vars.cloneAddress)));
-        require(customerPlans[customerPlanId].remainingQuota >= 1, "Not enough remaining quota!");
+        if (customerPlans[customerPlanId].remainingQuota < 1) revert ProducerStorageErrors.InsufficientQuota();
         customerPlans[customerPlanId].remainingQuota -= 1;
         emit loguseFromQuota(
             vars.planId,

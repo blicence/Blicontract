@@ -1,0 +1,5 @@
+[
+  "constructor() payable",
+  "function balanceOf(address) view returns (uint256)",
+  "function ownerOf(uint256) view returns (address)"
+]

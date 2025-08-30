@@ -1,0 +1,4 @@
+[
+  "function isBlackListed(address) view returns (bool)",
+  "function setBlacklisted(address,bool)"
+]

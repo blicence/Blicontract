@@ -1,0 +1,12 @@
+[
+  "function excludeArtifacts() view returns (string[])",
+  "function excludeContracts() view returns (address[])",
+  "function excludeSelectors() view returns (tuple(address,bytes4[])[])",
+  "function excludeSenders() view returns (address[])",
+  "function targetArtifactSelectors() view returns (tuple(string,bytes4[])[])",
+  "function targetArtifacts() view returns (string[])",
+  "function targetContracts() view returns (address[])",
+  "function targetInterfaces() view returns (tuple(address,string[])[])",
+  "function targetSelectors() view returns (tuple(address,bytes4[])[])",
+  "function targetSenders() view returns (address[])"
+]

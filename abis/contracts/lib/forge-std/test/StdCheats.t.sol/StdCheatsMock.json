@@ -1,0 +1,5 @@
+[
+  "function exposed_assumeNotBlacklisted(address,address) view",
+  "function exposed_assumeNotPayable(address)",
+  "function exposed_assumePayable(address)"
+]

@@ -1,0 +1,13 @@
+[
+  "function arithmeticError(uint256) pure",
+  "function assertionError() pure",
+  "function divError(uint256) pure",
+  "function encodeStgError()",
+  "function enumConversion(uint256) pure",
+  "function indexOOBError(uint256) pure",
+  "function intern() returns (uint256)",
+  "function mem() pure",
+  "function modError(uint256) pure",
+  "function pop()",
+  "function someArr(uint256) view returns (uint256)"
+]

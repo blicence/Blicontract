@@ -1,0 +1,11 @@
+[
+  "event DepositRequest(address indexed,address indexed,uint256 indexed,address,uint256)",
+  "event OperatorSet(address indexed,address indexed,bool)",
+  "function claimableDepositRequest(uint256,address) view returns (uint256)",
+  "function deposit(uint256,address,address) returns (uint256)",
+  "function isOperator(address,address) view returns (bool)",
+  "function mint(uint256,address,address) returns (uint256)",
+  "function pendingDepositRequest(uint256,address) view returns (uint256)",
+  "function requestDeposit(uint256,address,address) returns (uint256)",
+  "function setOperator(address,bool) returns (bool)"
+]
