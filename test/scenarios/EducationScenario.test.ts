@@ -42,7 +42,7 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
         description: "Yazılım geliştirme eğitimleri",
         image: "https://example.com/academy_logo.png",
         externalLink: "https://techacademy.com",
-        cloneAddress: ethers.constants.AddressZero,
+        cloneAddress: ethers.ZeroAddress,
         exists: true
       };
 
@@ -67,7 +67,7 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
         description: "Yazılım geliştirme eğitimleri",
         image: "https://example.com/academy_logo.png",
         externalLink: "https://techacademy.com",
-        cloneAddress: ethers.constants.AddressZero,
+        cloneAddress: ethers.ZeroAddress,
         exists: true
       };
 
@@ -162,7 +162,7 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
         description: "Yazılım geliştirme eğitimleri",
         image: "https://example.com/academy_logo.png",
         externalLink: "https://techacademy.com",
-        cloneAddress: ethers.constants.AddressZero,
+        cloneAddress: ethers.ZeroAddress,
         exists: true
       };
 
@@ -315,7 +315,7 @@ describe("Online Eğitim Senaryosu (VestingApi)", function () {
         description: "Yazılım geliştirme eğitimleri",
         image: "https://example.com/academy_logo.png",
         externalLink: "https://techacademy.com",
-        cloneAddress: ethers.constants.AddressZero,
+        cloneAddress: ethers.ZeroAddress,
         exists: true
       };
 

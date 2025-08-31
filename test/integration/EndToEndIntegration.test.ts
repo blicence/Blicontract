@@ -82,7 +82,7 @@ describe("🚀 Phase 3: End-to-End Production Integration", function() {
 
         // 6. Setup test tokens for customer
         await testToken.transfer(customerAddress, ethers.parseEther("1000"));
-        await testToken.connect(customer).approve(streamLockManager.target, ethers.constants.MaxUint256);
+        await testToken.connect(customer).approve(streamLockManager.target, ethers.MaxUint256);
 
         console.log("✅ Phase 3 Setup completed");
         console.log(`   Factory: ${factory.target}`);
@@ -102,7 +102,7 @@ describe("🚀 Phase 3: End-to-End Production Integration", function() {
                 description: "A test producer for streaming integration",
                 image: "https://example.com/image.png",
                 externalLink: "https://example.com",
-                cloneAddress: ethers.constants.AddressZero, // Will be set by factory
+                cloneAddress: ethers.ZeroAddress, // Will be set by factory
                 exists: false // Will be set by factory
             };
 

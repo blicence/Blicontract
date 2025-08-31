@@ -42,7 +42,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
         description: "Özel kahve deneyimi",
         image: "https://example.com/cafe_logo.png",
         externalLink: "https://aromacafe.com",
-        cloneAddress: ethers.constants.AddressZero,
+        cloneAddress: ethers.ZeroAddress,
         exists: true
       };
 
@@ -109,7 +109,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
         description: "Özel kahve deneyimi",
         image: "https://example.com/cafe_logo.png",
         externalLink: "https://aromacafe.com",
-        cloneAddress: ethers.constants.AddressZero,
+        cloneAddress: ethers.ZeroAddress,
         exists: true
       };
 
@@ -230,7 +230,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
         description: "Özel kahve deneyimi",
         image: "https://example.com/cafe_logo.png",
         externalLink: "https://aromacafe.com",
-        cloneAddress: ethers.constants.AddressZero,
+        cloneAddress: ethers.ZeroAddress,
         exists: true
       };
 
@@ -335,7 +335,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
         description: "Özel kahve deneyimi",
         image: "https://example.com/cafe_logo.png",
         externalLink: "https://aromacafe.com",
-        cloneAddress: ethers.constants.AddressZero,
+        cloneAddress: ethers.ZeroAddress,
         exists: true
       };
 
