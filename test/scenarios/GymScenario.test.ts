@@ -274,10 +274,11 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
 
       const tx = await factory.connect(gymOwner).newBcontract(gymProducerData);
       const receipt = await tx.wait();
+      expect(receipt).to.not.be.null;
       
       // Gas kullanımının 2M'nin altında olduğunu kontrol et
-      expect(receipt.gasUsed.toNumber()).to.be.lessThan(2000000);
-      console.log(`Producer oluşturma gas kullanımı: ${receipt.gasUsed.toNumber()}`);
+      expect(Number(receipt!.gasUsed)).to.be.lessThan(2000000);
+      console.log(`Producer oluşturma gas kullanımı: ${Number(receipt!.gasUsed)}`);
     });
   });
 });

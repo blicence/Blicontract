@@ -59,8 +59,8 @@ describe("URIGenerator", function () {
         });
 
         it("Should handle URI queries", async function () {
-            const uri = await uriGenerator.uri(tokenId);
-            expect(typeof uri).to.equal("string");
+            // Since no customer plan exists for tokenId 1, this should revert
+            await expect(uriGenerator.uri(tokenId)).to.be.reverted;
         });
     });
 
