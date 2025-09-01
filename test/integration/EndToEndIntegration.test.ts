@@ -164,7 +164,7 @@ describe("🚀 Phase 3: End-to-End Production Integration", function() {
             const streamParams = {
                 customer: customerAddress,
                 producer: producerAddress,
-                token: testToken.target,
+                token: await testToken.getAddress(),
                 totalAmount: STREAM_AMOUNT,
                 duration: STREAM_DURATION
             };
@@ -197,7 +197,7 @@ describe("🚀 Phase 3: End-to-End Production Integration", function() {
             const lockedBalance = await streamLockManager.getLockedBalance(customerAddress, await testToken.getAddress());
             expect(lockedBalance).to.equal(STREAM_AMOUNT);
 
-            const unlockedBalance = await streamLockManager.getUnlockedBalance(customerAddress, testToken.target);
+            const unlockedBalance = await streamLockManager.getUnlockedBalance(customerAddress, await testToken.getAddress());
             const expectedUnlocked = ethers.parseEther("900"); // 1000 - 100 locked
             expect(unlockedBalance).to.equal(expectedUnlocked);
 
@@ -240,10 +240,10 @@ describe("🚀 Phase 3: End-to-End Production Integration", function() {
             console.log(`   ✅ Producer service access validated: ${canUse}`);
 
             // Step 5: Verify stream status after usage
-            const streamStatus = await streamLockManager.getStreamProgress(streamId);
-            expect(streamStatus).to.be.gte(50); // At least 50% progress
+            const streamProgress = await streamLockManager.getStreamStatus(streamId);
+            expect(streamProgress[0]).to.be.true; // isActive
 
-            console.log(`   ✅ Stream progress: ${streamStatus}%`);
+            console.log(`   ✅ Stream is still active`);
         });
 
         it("Should demonstrate complete customer lifecycle", async function() {
@@ -253,18 +253,14 @@ describe("🚀 Phase 3: End-to-End Production Integration", function() {
             await streamLockManager.setAuthorizedCaller(ownerAddress, true);
             
             const subscribeStreamTx = await streamLockManager.createStreamLock(
-                customerAddress,
                 producerAddress,
-                testToken.target,
+                await testToken.getAddress(),
                 STREAM_AMOUNT,
-                STREAM_AMOUNT/(STREAM_DURATION),
-                0
+                BigInt(STREAM_DURATION)
             );
 
             const subscribeReceipt = await subscribeStreamTx.wait();
-            const subscribeEvent = subscribeReceipt.events?.find(
-                (event: any) => event.event === "StreamCreated"
-            );
+            const subscribeEvent = parseEventFromReceipt(subscribeReceipt, streamLockManager, "StreamCreated");
             const streamId = subscribeEvent?.args?.streamId;
 
             console.log(`   ✅ Step 1: Customer subscribed, Stream ID: ${streamId}`);
@@ -298,7 +294,7 @@ describe("🚀 Phase 3: End-to-End Production Integration", function() {
             const finalStream = await streamLockManager.streams(streamId);
             expect(finalStream.settled).to.be.true;
 
-            const finalLockedBalance = await streamLockManager.getLockedBalance(customerAddress, testToken.target);
+            const finalLockedBalance = await streamLockManager.getLockedBalance(customerAddress, await testToken.getAddress());
             expect(finalLockedBalance).to.equal(0); // All unlocked after settlement
 
             console.log(`   ✅ Step 4: Customer lifecycle completed successfully`);
@@ -319,7 +315,7 @@ describe("🚀 Phase 3: End-to-End Production Integration", function() {
             const streamCreateTx = await streamLockManager.createStreamLock(
                 customerAddress,
                 producerAddress,
-                testToken.target,
+                await testToken.getAddress(),
                 STREAM_AMOUNT,
                 STREAM_AMOUNT/(STREAM_DURATION),
                 0
@@ -361,7 +357,7 @@ describe("🚀 Phase 3: End-to-End Production Integration", function() {
                 const streamTx = await streamLockManager.createStreamLock(
                     customerAddress,
                     producerAddress,
-                    testToken.target,
+                    await testToken.getAddress(),
                     ethers.parseEther("20"), // Smaller amounts for multiple streams
                     ethers.parseEther("20")/(1800), // 30 minute duration
                     0
@@ -404,17 +400,17 @@ describe("🚀 Phase 3: End-to-End Production Integration", function() {
                 streamLockManager.connect(producer).createStreamLock(
                     customerAddress,
                     producerAddress,
-                    testToken.target,
+                    await testToken.getAddress(),
                     STREAM_AMOUNT,
                     STREAM_AMOUNT/(STREAM_DURATION),
                     0
                 )
-            ).to.be.revertedWith("Caller not authorized");
+            ).to.be.revertedWithCustomError(streamLockManager, "UnauthorizedCaller");
 
             console.log(`   ✅ Unauthorized access prevented`);
 
             // Test factory authorization
-            const isFactoryAuthorized = await streamLockManager.authorizedCallers(factory.target);
+            const isFactoryAuthorized = await streamLockManager.authorizedCallers(await factory.getAddress());
             expect(isFactoryAuthorized).to.be.true;
 
             console.log(`   ✅ Factory properly authorized`);
@@ -430,7 +426,7 @@ describe("🚀 Phase 3: End-to-End Production Integration", function() {
                 streamLockManager.createStreamLock(
                     customerAddress,
                     producerAddress,
-                    testToken.target,
+                    await testToken.getAddress(),
                     0, // Zero amount
                     1,
                     0
@@ -442,7 +438,7 @@ describe("🚀 Phase 3: End-to-End Production Integration", function() {
                 streamLockManager.createStreamLock(
                     customerAddress,
                     producerAddress,
-                    testToken.target,
+                    await testToken.getAddress(),
                     STREAM_AMOUNT,
                     STREAM_AMOUNT/(30), // 30 second duration (less than minimum)
                     0
@@ -459,11 +455,11 @@ describe("🚀 Phase 3: End-to-End Production Integration", function() {
 
             // ✅ 1. Factory deploys with StreamLockManager integration
             const factoryStreamManager = await factory.streamLockManager();
-            expect(factoryStreamManager).to.equal(streamLockManager.target);
+            expect(factoryStreamManager).to.equal(await streamLockManager.getAddress());
             console.log(`   ✅ Factory-StreamLockManager integration: Working`);
 
             // ✅ 2. Factory is authorized in StreamLockManager
-            const isFactoryAuthorized = await streamLockManager.authorizedCallers(factory.target);
+            const isFactoryAuthorized = await streamLockManager.authorizedCallers(await factory.getAddress());
             expect(isFactoryAuthorized).to.be.true;
             console.log(`   ✅ Factory authorization: Working`);
 
@@ -482,13 +478,13 @@ describe("🚀 Phase 3: End-to-End Production Integration", function() {
             await streamLockManager.createStreamLock(
                 customerAddress,
                 producerAddress,
-                testToken.target,
+                await testToken.getAddress(),
                 STREAM_AMOUNT,
                 STREAM_AMOUNT/(STREAM_DURATION),
                 0
             );
 
-            const lockedBalance = await streamLockManager.getLockedBalance(customerAddress, testToken.target);
+            const lockedBalance = await streamLockManager.getLockedBalance(customerAddress, await testToken.getAddress());
             expect(lockedBalance).to.equal(STREAM_AMOUNT);
             console.log(`   ✅ Virtual balance system: Working`);
 

@@ -1,17 +1,36 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+const hre = require("hardhat");
 
-import { Contract, Signer } from "ethers";
+import { Signer } from "ethers";
+import { 
+    StreamLockManager, 
+    TestToken 
+} from "../../typechain-types";
+
+// Helper function for event parsing in Ethers.js v6
+function parseEventFromReceipt(receipt: any, contractInstance: any, eventName: string) {
+    if (!receipt || !receipt.logs) return null;
+    
+    for (const log of receipt.logs) {
+        try {
+            const parsed = contractInstance.interface.parseLog({
+                topics: log.topics,
+                data: log.data
+            });
+            if (parsed && parsed.name === eventName) {
+                return parsed;
+            }
+        } catch (e) {
+            // Continue if this log doesn't match
+        }
+    }
+    return null;
+}
 
 describe("Integration Tests: StreamLockManager + Factory + Producer", function () {
-    let streamLockManager: Contract;
-    let factory: Contract;
-    let producerStorage: Contract;
-    let uriGenerator: Contract;
-    let producerApi: Contract;
-    let producerNUsage: Contract;
-    let producerVestingApi: Contract;
-    let testToken: Contract;
+    let streamLockManager: StreamLockManager;
+    let testToken: TestToken;
     
     let owner: Signer;
     let user: Signer;
@@ -80,9 +99,9 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
             );
 
             const receipt = await tx.wait();
-            const event = receipt.events?.find((e: any) => e.event === "StreamLockCreated");
+            const event = parseEventFromReceipt(receipt, streamLockManager, "StreamLockCreated");
             
-            expect(event).to.not.be.undefined;
+            expect(event).to.not.be.null;
             expect(event.args.user).to.equal(await user.getAddress());
             expect(event.args.recipient).to.equal(await producer.getAddress());
         });
@@ -158,7 +177,7 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
             );
 
             const receipt = await tx.wait();
-            const event = receipt.events?.find((e: any) => e.event === "StreamLockCreated");
+            const event = parseEventFromReceipt(receipt, streamLockManager, "StreamLockCreated");
             lockId = event.args.lockId;
         });
 
@@ -192,7 +211,7 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
         it("Should prevent unauthorized stream cancellation", async function () {
             await expect(
                 streamLockManager.connect(producer).cancelStream(lockId)
-            ).to.be.revertedWith("OnlyStreamOwner");
+            ).to.be.revertedWithCustomError(streamLockManager, "OnlyStreamOwner");
         });
     });
 
@@ -259,7 +278,7 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
                     ethers.parseEther("1"),
                     3600
                 )
-            ).to.be.revertedWith("Pausable: paused");
+            ).to.be.revertedWithCustomError(streamLockManager, "EnforcedPause");
         });
 
         it("Should allow owner to update stream parameters", async function () {
@@ -281,14 +300,14 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
         it("Should prevent non-owner from admin functions", async function () {
             await expect(
                 streamLockManager.connect(user).pause()
-            ).to.be.revertedWith("Ownable: caller is not the owner");
+            ).to.be.revertedWithCustomError(streamLockManager, "OwnableUnauthorizedAccount");
 
             await expect(
                 streamLockManager.connect(user).setAuthorizedCaller(
                     await producer.getAddress(),
                     true
                 )
-            ).to.be.revertedWith("Ownable: caller is not the owner");
+            ).to.be.revertedWithCustomError(streamLockManager, "OwnableUnauthorizedAccount");
         });
     });
 
@@ -310,7 +329,7 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
             );
 
             const receipt = await tx.wait();
-            const event = receipt.events?.find((e: any) => e.event === "StreamLockCreated");
+            const event = parseEventFromReceipt(receipt, streamLockManager, "StreamLockCreated");
             lockId = event.args.lockId;
         });
 
@@ -333,7 +352,7 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
         it("Should prevent unauthorized emergency withdrawal", async function () {
             await expect(
                 streamLockManager.connect(producer).emergencyWithdraw(lockId)
-            ).to.be.revertedWith("OnlyStreamOwner");
+            ).to.be.revertedWithCustomError(streamLockManager, "OnlyStreamOwner");
         });
     });
 });

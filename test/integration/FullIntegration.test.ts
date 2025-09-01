@@ -350,7 +350,7 @@ describe("Full Integration: StreamLockManager + Factory + Producer", function ()
                     streamAmount,
                     duration
                 )
-            ).to.be.revertedWith("InvalidStreamParams");
+            ).to.be.revertedWithCustomError(streamLockManager, "InvalidStreamParams");
         });
 
         it("Should prevent unauthorized operations", async function () {
@@ -374,12 +374,12 @@ describe("Full Integration: StreamLockManager + Factory + Producer", function ()
             // Unauthorized user should not be able to cancel stream
             await expect(
                 streamLockManager.connect(user).cancelStream(lockId)
-            ).to.be.revertedWith("OnlyStreamOwner");
+            ).to.be.revertedWithCustomError(streamLockManager, "UnauthorizedCaller");
 
             // Unauthorized user should not be able to emergency withdraw
             await expect(
                 streamLockManager.connect(user).emergencyWithdraw(lockId)
-            ).to.be.revertedWith("OnlyStreamOwner");
+            ).to.be.revertedWithCustomError(streamLockManager, "UnauthorizedCaller");
         });
     });
 
@@ -390,7 +390,7 @@ describe("Full Integration: StreamLockManager + Factory + Producer", function ()
             // Only owner should be able to set authorized callers
             await expect(
                 streamLockManager.connect(user).setAuthorizedCaller(testAddress, true)
-            ).to.be.revertedWith("Ownable: caller is not the owner");
+            ).to.be.revertedWithCustomError(streamLockManager, "OwnableUnauthorizedAccount");
 
             // Owner can set authorized caller
             await streamLockManager.connect(owner).setAuthorizedCaller(testAddress, true);
@@ -414,7 +414,7 @@ describe("Full Integration: StreamLockManager + Factory + Producer", function ()
                     ethers.parseEther("1"),
                     3600
                 )
-            ).to.be.revertedWith("Pausable: paused");
+            ).to.be.revertedWithCustomError(streamLockManager, "EnforcedPause");
 
             // Owner can unpause
             await streamLockManager.connect(owner).unpause();

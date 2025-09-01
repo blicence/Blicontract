@@ -420,6 +420,9 @@ contract StreamLockManager is
 
         // Release all locked balance back to user
         _releaseLockedBalance(lock.user, lock.token, lock.totalAmount);
+        
+        // Withdraw the unlocked balance to user
+        _withdrawBalance(lock.user, lock.token, lock.totalAmount);
 
         emit EmergencyWithdraw(lockId, lock.user, lock.totalAmount);
     }
