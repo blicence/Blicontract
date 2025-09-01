@@ -34,7 +34,8 @@ describe("Factory - Working Tests", function () {
 
         // Deploy upgradeable contracts
         const StreamLockManagerFactory = await ethers.getContractFactory("StreamLockManager");
-        streamLockManager = await upgrades.deployProxy(StreamLockManagerFactory, [
+        streamLockManager = await // @ts-ignore
+        hre.upgrades.deployProxy(StreamLockManagerFactory, [
             await owner.getAddress(),
             ethers.parseEther("0.1"), // minStreamAmount  
             60 * 60, // minStreamDuration (1 hour)
@@ -43,7 +44,8 @@ describe("Factory - Working Tests", function () {
         await streamLockManager.waitForDeployment();
 
         const ProducerNUsageFactory = await ethers.getContractFactory("ProducerNUsage");
-        producerNUsage = await upgrades.deployProxy(ProducerNUsageFactory, []);
+        producerNUsage = await // @ts-ignore
+        hre.upgrades.deployProxy(ProducerNUsageFactory, []);
         await producerNUsage.waitForDeployment();
 
         // Deploy ProducerStorage (regular contract, not upgradeable)
@@ -52,13 +54,15 @@ describe("Factory - Working Tests", function () {
 
         // Deploy Factory
         const FactoryFactory = await ethers.getContractFactory("Factory");
-        factory = await upgrades.deployProxy(FactoryFactory, [
+        factory = await // @ts-ignore
+        hre.upgrades.deployProxy(FactoryFactory, [
             await uriGenerator.getAddress(),
             await producerStorage.getAddress(),
             await producerImplementation.getAddress(), // producerApi
             await producerNUsage.getAddress(),
             await producerImplementation.getAddress(), // producerVestingApi
-            await streamLockManager.getAddress()
+            await streamLockManager.getAddress(),
+            await producerImplementation.getAddress()  // Producer implementation
         ], { initializer: 'initialize' });
         await factory.waitForDeployment();
 

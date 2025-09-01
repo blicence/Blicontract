@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import hre from "hardhat";
 import { Signer } from "ethers";
 import { Producer, URIGenerator, ProducerStorage, StreamLockManager, ProducerNUsage, TestToken } from "../typechain-types";
 
@@ -41,37 +42,32 @@ describe("Producer", function () {
 
         // Deploy StreamLockManager
         const StreamLockManagerFactory = await ethers.getContractFactory("StreamLockManager");
-        const streamLockManagerImpl = await StreamLockManagerFactory.deploy();
-        await streamLockManagerImpl.waitForDeployment();
-        await streamLockManagerImpl.initialize(
+        streamLockManager = await // @ts-ignore
+        hre.upgrades.deployProxy(StreamLockManagerFactory, [
             await owner.getAddress(),
             ethers.parseEther("0.001"),
             3600,
             365 * 24 * 3600
-        );
-        streamLockManager = streamLockManagerImpl as StreamLockManager;
+        ]) as StreamLockManager;
 
         // Deploy ProducerNUsage
         const ProducerNUsageFactory = await ethers.getContractFactory("ProducerNUsage");
-        const producerNUsageImpl = await ProducerNUsageFactory.deploy();
-        await producerNUsageImpl.waitForDeployment();
-        await producerNUsageImpl.initialize();
-        producerNUsage = producerNUsageImpl as ProducerNUsage;
+        producerNUsage = await // @ts-ignore
+        hre.upgrades.deployProxy(ProducerNUsageFactory, []);
 
         // Deploy Producer
         const ProducerFactory = await ethers.getContractFactory("Producer");
-        const producerImpl = await ProducerFactory.deploy();
-        await producerImpl.waitForDeployment();
-        
-        // Initialize Producer
-        await producerImpl.initialize(
+        producer = await // @ts-ignore
+        hre.upgrades.deployProxy(ProducerFactory, [
             await user.getAddress(), // user as owner
             await uriGenerator.getAddress(),
             await producerNUsage.getAddress(),
             await producerStorage.getAddress(),
             await streamLockManager.getAddress()
-        );
-        producer = producerImpl as Producer;
+        ], { 
+            kind: 'uups',
+            unsafeAllow: ['constructor']
+        });
 
         // Transfer tokens to customer for testing
         await testToken.transfer(await customer.getAddress(), ethers.parseEther("1000"));
@@ -163,9 +159,9 @@ describe("Producer", function () {
             const customerPlanId = 1;
             const customerAddress = await customer.getAddress();
             
-            // This will test the basic function call
-            const canUse = await producer.checkStreamBeforeUsage(customerPlanId, customerAddress);
-            expect(typeof canUse).to.equal("boolean");
+            // This will test the basic function call - using staticCall for read-only operation
+            const canUse = await producer.checkStreamBeforeUsage.staticCall(customerPlanId, customerAddress);
+            expect(canUse).to.be.a("boolean");
         });
     });
 

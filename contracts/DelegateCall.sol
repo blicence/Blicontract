@@ -37,7 +37,7 @@ abstract contract DelegateCall {
     }
 
 
-    modifier onlyProxy() {
+    modifier onlyDelegateProxy() {
         checkDelegateCall();
 
         // if (_getImplementation() != __self) {

@@ -1,10 +1,8 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+const hre = require("hardhat");
 import { Signer } from "ethers";
 import { Factory, Producer, ProducerStorage, URIGenerator, StreamLockManager, ProducerNUsage, TestToken } from "../../typechain-types";
-
-// @ts-ignore
-const { upgrades } = require("hardhat");
 
 /**
  * İş Akışı Test Senaryosu
@@ -49,7 +47,8 @@ describe("İş Akışı Test Senaryosu", function () {
 
         // Upgradeable kontratları deploy et
         const StreamLockManagerFactory = await ethers.getContractFactory("StreamLockManager");
-        streamLockManager = await upgrades.deployProxy(StreamLockManagerFactory, [
+        streamLockManager = await // @ts-ignore
+        hre.upgrades.deployProxy(StreamLockManagerFactory, [
             await owner.getAddress(),
             ethers.parseEther("0.1"), // minStreamAmount
             3600, // minStreamDuration (1 saat)
@@ -57,20 +56,23 @@ describe("İş Akışı Test Senaryosu", function () {
         ]);
 
         const ProducerNUsageFactory = await ethers.getContractFactory("ProducerNUsage");
-        producerNUsage = await upgrades.deployProxy(ProducerNUsageFactory, []);
+        producerNUsage = await // @ts-ignore
+        hre.upgrades.deployProxy(ProducerNUsageFactory, []);
 
         // ProducerStorage (normal kontrat)
         producerStorage = await ethers.deployContract("ProducerStorage", [await owner.getAddress()]);
 
         // Factory deploy et
         const FactoryFactory = await ethers.getContractFactory("Factory");
-        factory = await upgrades.deployProxy(FactoryFactory, [
+        factory = await // @ts-ignore
+        hre.upgrades.deployProxy(FactoryFactory, [
             await uriGenerator.getAddress(),
             await producerStorage.getAddress(),
             await producerImplementation.getAddress(),
             await producerNUsage.getAddress(),
             await producerImplementation.getAddress(),
-            await streamLockManager.getAddress()
+            await streamLockManager.getAddress(),
+            await producerImplementation.getAddress()  // Producer implementation
         ], { initializer: 'initialize' });
 
         // Bağlantıları kur

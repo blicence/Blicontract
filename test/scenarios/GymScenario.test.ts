@@ -1,15 +1,15 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+const hre = require("hardhat");
+import { Signer } from "ethers";
 import { Factory, Producer, URIGenerator, TestToken } from "../../typechain-types";
-import { DataTypes } from "../shared/types";
 
 describe("Spor Salonu Senaryosu (ApiUsage)", function () {
   let factory: Factory;
   let uriGenerator: URIGenerator;
   let usdcToken: TestToken;
-  let gymOwner: SignerWithAddress;
-  let customer: SignerWithAddress;
+  let gymOwner: Signer;
+  let customer: Signer;
   let gymProducer: Producer;
   let deployerAddress: string;
 
@@ -17,7 +17,7 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
     const [deployer, _gymOwner, _customer] = await ethers.getSigners();
     gymOwner = _gymOwner;
     customer = _customer;
-    deployerAddress = deployer.target;
+    deployerAddress = await deployer.getAddress();
 
     // Deploy test token (USDC mock)
     const TestTokenFactory = await ethers.getContractFactory("TestToken");
@@ -39,15 +39,15 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
 
   describe("Test Senaryosu 2.1: Spor Salonu Kaydı", function () {
     it("Spor salonu sisteme başarıyla kayıt olur", async function () {
-      const gymProducerData: DataTypes.Producer = {
-        producerId: 0,
-        producerAddress: gymOwner.target,
+      const gymProducerData = {
+        producerId: 0n,
+        producerAddress: await gymOwner.getAddress(),
         name: "FitCenter Gym",
         description: "Modern spor salonu hizmetleri",
         image: "https://example.com/gym_logo.png",
         externalLink: "https://fitcenter.com",
-        cloneAddress: ethers.constants.AddressZero,
-        exists: true
+        cloneAddress: ethers.ZeroAddress,
+        exists: false // Factory will set this to true
       };
 
       // Factory.newBcontract() çağrısı
@@ -73,7 +73,7 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
         description: "Modern spor salonu hizmetleri",
         image: "https://example.com/gym_logo.png",
         externalLink: "https://fitcenter.com",
-        cloneAddress: ethers.constants.AddressZero,
+        cloneAddress: ethers.ZeroAddress,
         exists: true
       };
 
@@ -128,7 +128,7 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
         description: "Modern spor salonu hizmetleri",
         image: "https://example.com/gym_logo.png",
         externalLink: "https://fitcenter.com",
-        cloneAddress: ethers.constants.AddressZero,
+        cloneAddress: ethers.ZeroAddress,
         exists: true
       };
 
@@ -268,7 +268,7 @@ describe("Spor Salonu Senaryosu (ApiUsage)", function () {
         description: "Modern spor salonu hizmetleri",
         image: "https://example.com/gym_logo.png",
         externalLink: "https://fitcenter.com",
-        cloneAddress: ethers.constants.AddressZero,
+        cloneAddress: ethers.ZeroAddress,
         exists: true
       };
 

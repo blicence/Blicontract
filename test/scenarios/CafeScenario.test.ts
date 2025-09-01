@@ -1,14 +1,14 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Factory, Producer, URIGenerator, TestToken } from "../../typechain-types";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import { Factory, URIGenerator, TestToken, Producer } from "../../typechain-types";
 
 describe("Kafeterya Senaryosu (NUsage)", function () {
   let factory: Factory;
   let uriGenerator: URIGenerator;
   let usdcToken: TestToken;
-  let cafeOwner: SignerWithAddress;
-  let customer: SignerWithAddress;
+  let cafeOwner: HardhatEthersSigner;
+  let customer: HardhatEthersSigner;
   let cafeProducer: Producer;
   let deployerAddress: string;
 
@@ -16,7 +16,7 @@ describe("Kafeterya Senaryosu (NUsage)", function () {
     const [deployer, _cafeOwner, _customer] = await ethers.getSigners();
     cafeOwner = _cafeOwner;
     customer = _customer;
-    deployerAddress = deployer.target;
+    deployerAddress = await deployer.getAddress();
 
     // Deploy test token (USDC mock)
     const TestTokenFactory = await ethers.getContractFactory("TestToken");

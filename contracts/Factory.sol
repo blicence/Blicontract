@@ -5,11 +5,8 @@ pragma solidity 0.8.30;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "./Producer.sol";
-// import "./DelegateCall.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {IFactory} from "./interfaces/IFactory.sol";
 import {IProducerStorage} from "./interfaces/IProducerStorage.sol";
@@ -19,18 +16,20 @@ import {FactoryErrors} from "./errors/FactoryErrors.sol";
 // todo research  Clones.sol or ClonesUpgradeable
 
 contract Factory is Initializable, OwnableUpgradeable, UUPSUpgradeable, IFactory {
-    address private uriGeneratorAddress;
-    address private producerLogicAddress;
-    address private producerApiAddress;
-    address private producerNUsageAddress;
-    address private producerVestingApiAddress;
-    address ProducerImplementation;
-
+    // Pack addresses into struct to optimize storage
+    struct Addresses {
+        address uriGenerator;
+        address producerApi; 
+        address producerNUsage;
+        address producerVestingApi;
+        address producerImplementation;
+    }
+    
+    Addresses private addresses;
     IProducerStorage public producerStorage;
     IStreamLockManager public streamLockManager;
 
-    // @notice Event triggered when a new Bcontract is created
-    // @param  "uint256 _producerId,  string _name, string _description, string _image,  string _externalLink,  address owner"
+    // @notice Event for new Bcontract creation
     event BcontractCreated(
         uint256 _producerId,
         string _name,
@@ -46,70 +45,80 @@ contract Factory is Initializable, OwnableUpgradeable, UUPSUpgradeable, IFactory
         address _producerApiAddress,
         address _producerNUsageAddress,
         address _producerVestingApiAddress,
-        address _streamLockManagerAddress
+        address _streamLockManagerAddress,
+        address _producerImplementation
     ) external initializer onlyProxy {
         __Ownable_init(msg.sender);
         producerStorage = IProducerStorage(_producerStorageAddress);
         streamLockManager = IStreamLockManager(_streamLockManagerAddress);
-        uriGeneratorAddress = _uriGeneratorAddress;
-        producerApiAddress = _producerApiAddress;
-        producerNUsageAddress = _producerNUsageAddress;
-        producerVestingApiAddress = _producerVestingApiAddress;
-
-        ProducerImplementation = address(new Producer());
+        
+        addresses.uriGenerator = _uriGeneratorAddress;
+        addresses.producerApi = _producerApiAddress;
+        addresses.producerNUsage = _producerNUsageAddress;
+        addresses.producerVestingApi = _producerVestingApiAddress;
+        addresses.producerImplementation = _producerImplementation;
     }
 
     /**
      * @notice returns the Bcontract contract implementation
      */
     function getProducerImplementation() external view returns (address) {
-        return ProducerImplementation;
+        return addresses.producerImplementation;
     }
 
-    /**
-     * @notice Allows the owner update the Bcontract contract implementation for future Bcontract created
-     */
     function setProducerImplementation(
         address _ProducerImplementationAddress
     ) external onlyOwner onlyProxy {
         if (_ProducerImplementationAddress.code.length == 0) revert FactoryErrors.NotAContract();
-        ProducerImplementation = _ProducerImplementationAddress;
+        addresses.producerImplementation = _ProducerImplementationAddress;
     }
-
-    /**
-     * @notice returns the uriGenerator contract address
-     *
-     */
 
     function newBcontract(DataTypes.Producer calldata vars) external {
         if (producerStorage.exsistProducerClone(msg.sender)) revert FactoryErrors.ProducerAlreadyExists();
-        //Clones the   contract implementation
-        address clone = Clones.clone(ProducerImplementation);
-        //calls Bcontractv2.initialize
-        Producer b = Producer(clone);
+        
+        address clone = Clones.clone(addresses.producerImplementation);
+        
         incrementPR_ID();
-        producerStorage.SetCloneId(currentPR_ID(), clone);
+        uint256 producerId = currentPR_ID();
+        producerStorage.SetCloneId(producerId, clone);
 
-        DataTypes.Producer memory producer;
-        producer.producerId = currentPR_ID();
-        producer.cloneAddress = payable(clone);
-        producer.exists = true;
-        producer.name = vars.name;
-        producer.description = vars.description;
-        producer.image = vars.image;
-        producer.externalLink = vars.externalLink;
-        producer.producerAddress = payable(msg.sender);
-
-        producerStorage.addProducer(producer);
-        b.initialize(
-            payable(msg.sender),
-            uriGeneratorAddress,
-            producerNUsageAddress,
-            address(producerStorage),
-            address(streamLockManager)
+        producerStorage.addProducer(DataTypes.Producer({
+            producerId: producerId,
+            cloneAddress: payable(clone),
+            exists: true,
+            name: vars.name,
+            description: vars.description,
+            image: vars.image,
+            externalLink: vars.externalLink,
+            producerAddress: payable(msg.sender)
+        }));
+        
+        // Direct call to initialize function using interface
+        bytes memory initData = abi.encodeCall(
+            Producer(clone).initialize,
+            (
+                payable(msg.sender),
+                addresses.uriGenerator,
+                addresses.producerNUsage,
+                address(producerStorage),
+                address(streamLockManager)
+            )
         );
+        
+        (bool success, bytes memory returnData) = clone.call(initData);
+        if (!success) {
+            if (returnData.length > 0) {
+                assembly {
+                    let returnDataSize := mload(returnData)
+                    revert(add(32, returnData), returnDataSize)
+                }
+            } else {
+                revert FactoryErrors.InitializationFailed();
+            }
+        }
+        
         emit BcontractCreated(
-            currentPR_ID(),
+            producerId,
             vars.name,
             vars.description,
             vars.image,
@@ -122,7 +131,6 @@ contract Factory is Initializable, OwnableUpgradeable, UUPSUpgradeable, IFactory
        @param proAddress the address of the Bcontract
          @return the producerAddressInfo      
 */
-     
 
     function currentPR_ID() public view returns (uint256) {
         return producerStorage.currentPR_ID();
@@ -133,8 +141,5 @@ contract Factory is Initializable, OwnableUpgradeable, UUPSUpgradeable, IFactory
         return producerStorage.currentPR_ID();
     }
 
-    /**
-     * @dev Authorize contract upgrades (UUPS pattern)
-     */
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }

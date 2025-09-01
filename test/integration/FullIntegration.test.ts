@@ -1,5 +1,6 @@
 import { expect } from "chai";
-import { ethers, upgrades } from "hardhat";
+import { ethers } from "hardhat";
+
 import { Contract, Signer } from "ethers";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 
@@ -38,7 +39,8 @@ describe("Full Integration: StreamLockManager + Factory + Producer", function ()
 
         // Deploy StreamLockManager
         const StreamLockManager = await ethers.getContractFactory("StreamLockManager");
-        streamLockManager = await upgrades.deployProxy(
+        streamLockManager = await // @ts-ignore
+        hre.upgrades.deployProxy(
             StreamLockManager,
             [
                 await owner.getAddress(),
@@ -76,13 +78,32 @@ describe("Full Integration: StreamLockManager + Factory + Producer", function ()
             );
 
             const receipt = await tx.wait();
-            const event = receipt.events?.find((e: any) => e.event === "StreamLockCreated");
-            const lockId = event.args.lockId;
             
-            expect(event).to.not.be.undefined;
-            expect(event.args.user).to.equal(await customer.getAddress());
-            expect(event.args.recipient).to.equal(await producerOwner.getAddress());
-            expect(event.args.totalAmount).to.equal(streamAmount);
+            // Parse events using Ethers.js v6 approach
+            const logs = receipt?.logs || [];
+            const streamLockCreatedInterface = streamLockManager.interface;
+            let lockId: string = "";
+            
+            for (const log of logs) {
+                try {
+                    const parsedLog = streamLockCreatedInterface.parseLog({
+                        topics: log.topics,
+                        data: log.data
+                    });
+                    if (parsedLog?.name === "StreamLockCreated") {
+                        lockId = parsedLog.args.lockId;
+                        expect(parsedLog.args.user).to.equal(await customer.getAddress());
+                        expect(parsedLog.args.recipient).to.equal(await producerOwner.getAddress());
+                        expect(parsedLog.args.totalAmount).to.equal(streamAmount);
+                        break;
+                    }
+                } catch (e) {
+                    // Skip logs that can't be parsed by this interface
+                    continue;
+                }
+            }
+            
+            expect(lockId).to.not.equal("");
 
             // Check initial status
             const initialStatus = await streamLockManager.getStreamStatus(lockId);
@@ -162,8 +183,8 @@ describe("Full Integration: StreamLockManager + Factory + Producer", function ()
             const batchSize = 3;
 
             // Transfer tokens for multiple streams
-            await testToken.transfer(await customer.getAddress(), streamAmount.mul(batchSize));
-            await testToken.connect(customer).approve(streamLockManager.target, streamAmount.mul(batchSize));
+            await testToken.transfer(await customer.getAddress(), streamAmount * BigInt(batchSize));
+            await testToken.connect(customer).approve(streamLockManager.target, streamAmount * BigInt(batchSize));
 
             // Create batch streams
             const recipientAddress = await producerOwner.getAddress();
@@ -192,7 +213,7 @@ describe("Full Integration: StreamLockManager + Factory + Producer", function ()
             const totalReceived = finalBalance - initialBalance;
 
             // Should receive full amount from all streams
-            expect(totalReceived).to.equal(streamAmount.mul(batchSize));
+            expect(totalReceived).to.equal(streamAmount * BigInt(batchSize));
         });
     });
 
@@ -252,15 +273,15 @@ describe("Full Integration: StreamLockManager + Factory + Producer", function ()
             expect(afterUnlocked).to.equal(0);
 
             // Verify balance equation: total = locked + unlocked
-            expect(afterTotal).to.equal(afterLocked.add(afterUnlocked));
+            expect(afterTotal).to.equal(afterLocked + afterUnlocked);
         });
 
         it("Should handle multiple streams for same user", async function () {
             const streamAmount = ethers.parseEther("30");
             const duration = 3600;
 
-            await testToken.transfer(await customer.getAddress(), streamAmount.mul(2));
-            await testToken.connect(customer).approve(streamLockManager.target, streamAmount.mul(2));
+            await testToken.transfer(await customer.getAddress(), streamAmount * BigInt(2));
+            await testToken.connect(customer).approve(streamLockManager.target, streamAmount * BigInt(2));
 
             // Create two streams
             await streamLockManager.connect(customer).createStreamLock(
@@ -283,7 +304,7 @@ describe("Full Integration: StreamLockManager + Factory + Producer", function ()
                 testToken.target
             );
 
-            expect(totalLocked).to.equal(streamAmount.mul(2));
+            expect(totalLocked).to.equal(streamAmount * BigInt(2));
 
             // Check user's active streams
             const activeStreams = await streamLockManager.getUserActiveStreams(
@@ -423,8 +444,8 @@ describe("Full Integration: StreamLockManager + Factory + Producer", function ()
             const duration = 3600;
             const batchSize = 5;
 
-            await testToken.transfer(await customer.getAddress(), streamAmount.mul(batchSize));
-            await testToken.connect(customer).approve(streamLockManager.target, streamAmount.mul(batchSize));
+            await testToken.transfer(await customer.getAddress(), streamAmount * BigInt(batchSize));
+            await testToken.connect(customer).approve(streamLockManager.target, streamAmount * BigInt(batchSize));
 
             // Measure gas for batch operation
             const recipientAddr = await producerOwner.getAddress();

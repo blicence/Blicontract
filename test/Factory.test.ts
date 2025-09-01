@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import "@openzeppelin/hardhat-upgrades";
-const { upgrades } = require("hardhat");
+import hre from "hardhat";
 import { Signer } from "ethers";
 import { Factory, ProducerStorage, URIGenerator, StreamLockManager, ProducerNUsage, Producer, TestToken } from "../typechain-types";
 
@@ -16,24 +15,35 @@ describe("Factory", function () {
     let owner: Signer;
     let user1: Signer;
     let user2: Signer;
+    let producer: Signer;
+    let user: Signer;
 
     beforeEach(async () => {
         [owner, user1, user2] = await ethers.getSigners();
+        producer = user1;
+        user = user2;
 
         // Deploy fresh contracts for each test
-        testToken = await ethers.deployContract("TestToken", ["Test Token", "TEST"]);
+        testToken = await ethers.deployContract("TestToken", ["Test Token", "TEST", 18, ethers.parseEther("1000000")]);
         
         // Deploy StreamLockManager
         const StreamLockManagerFactory = await ethers.getContractFactory("StreamLockManager");
-        streamLockManager = await upgrades.deployProxy(StreamLockManagerFactory, [await owner.getAddress()]);
+        streamLockManager = await // @ts-ignore
+        hre.upgrades.deployProxy(StreamLockManagerFactory, [
+            await owner.getAddress(),
+            ethers.parseEther("0.001"), // minStreamAmount
+            3600, // minStreamDuration
+            365 * 24 * 3600 // maxStreamDuration
+        ]);
 
         // Deploy ProducerNUsage
         const ProducerNUsageFactory = await ethers.getContractFactory("ProducerNUsage");
-        producerNUsage = await upgrades.deployProxy(ProducerNUsageFactory, [await owner.getAddress()]);
+        producerNUsage = await // @ts-ignore
+        hre.upgrades.deployProxy(ProducerNUsageFactory, []);
 
         // Deploy ProducerStorage
         const ProducerStorageFactory = await ethers.getContractFactory("ProducerStorage");
-        producerStorage = await upgrades.deployProxy(ProducerStorageFactory, [await owner.getAddress()]);
+        producerStorage = await ProducerStorageFactory.deploy(await owner.getAddress());
 
         // Deploy URIGenerator
         uriGenerator = await ethers.deployContract("URIGenerator");
@@ -43,13 +53,15 @@ describe("Factory", function () {
 
         // Deploy Factory
         const FactoryFactory = await ethers.getContractFactory("Factory");
-        factory = await upgrades.deployProxy(FactoryFactory, [
+        factory = await // @ts-ignore
+        hre.upgrades.deployProxy(FactoryFactory, [
             await uriGenerator.getAddress(),
             await producerStorage.getAddress(),
             await producerImplementation.getAddress(), // producerApi
             await producerNUsage.getAddress(),
             await producerImplementation.getAddress(), // producerVestingApi
-            await streamLockManager.getAddress()
+            await streamLockManager.getAddress(),
+            await producerImplementation.getAddress()  // Producer implementation
         ], { initializer: 'initialize' });
 
         // Set producer implementation
@@ -158,7 +170,7 @@ describe("Factory", function () {
             const nonContractAddress = await user.getAddress();
             await expect(
                 factory.setProducerImplementation(nonContractAddress)
-            ).to.be.revertedWith("Not a contract");
+            ).to.be.revertedWithCustomError(factory, "NotAContract");
         });
     });
 
@@ -188,7 +200,8 @@ describe("Factory", function () {
 
         it("Should increment producer ID", async function () {
             const currentId = await factory.currentPR_ID();
-            const newId = await factory.incrementPR_ID();
+            await factory.incrementPR_ID();
+            const newId = await factory.currentPR_ID();
             expect(newId).to.equal(currentId + 1n);
         });
     });

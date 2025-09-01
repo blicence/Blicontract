@@ -34,7 +34,8 @@ describe("Complete Factory Tests", function () {
 
         // Deploy StreamLockManager
         const StreamLockManagerFactory = await ethers.getContractFactory("StreamLockManager");
-        streamLockManager = await upgrades.deployProxy(StreamLockManagerFactory, [
+        streamLockManager = await // @ts-ignore
+        hre.upgrades.deployProxy(StreamLockManagerFactory, [
             await owner.getAddress(),
             ethers.parseEther("0.1"),
             60 * 60,
@@ -44,7 +45,8 @@ describe("Complete Factory Tests", function () {
 
         // Deploy ProducerNUsage
         const ProducerNUsageFactory = await ethers.getContractFactory("ProducerNUsage");
-        producerNUsage = await upgrades.deployProxy(ProducerNUsageFactory, []);
+        producerNUsage = await // @ts-ignore
+        hre.upgrades.deployProxy(ProducerNUsageFactory, []);
         await producerNUsage.waitForDeployment();
 
         // Deploy ProducerStorage
@@ -53,13 +55,15 @@ describe("Complete Factory Tests", function () {
 
         // Deploy Factory
         const FactoryFactory = await ethers.getContractFactory("Factory");
-        factory = await upgrades.deployProxy(FactoryFactory, [
+        factory = await // @ts-ignore
+        hre.upgrades.deployProxy(FactoryFactory, [
             await uriGenerator.getAddress(),
             await producerStorage.getAddress(),
             await producerImplementation.getAddress(),
             await producerNUsage.getAddress(),
             await producerImplementation.getAddress(),
-            await streamLockManager.getAddress()
+            await streamLockManager.getAddress(),
+            await producerImplementation.getAddress()  // Producer implementation
         ], { initializer: 'initialize' });
         await factory.waitForDeployment();
 
@@ -132,7 +136,7 @@ describe("Complete Factory Tests", function () {
             const nonContractAddress = await user1.getAddress();
             await expect(
                 factory.connect(owner).setProducerImplementation(nonContractAddress)
-            ).to.be.revertedWith("Not a contract");
+            ).to.be.revertedWithCustomError(factory, "NotAContract");
         });
     });
 

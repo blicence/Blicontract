@@ -10,7 +10,8 @@ interface IFactory {
         address _producerApiAddress,
         address _producerNUsageAddress,
         address _producerVestingApiAddress,
-        address _streamLockManagerAddress
+        address _streamLockManagerAddress,
+        address _producerImplementation
     ) external;
 
     function getProducerImplementation() external view returns (address);

@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { upgrades } from "hardhat";
+import hre from "hardhat";
 import { Signer } from "ethers";
 import { Factory, ProducerStorage, URIGenerator, StreamLockManager, ProducerNUsage, Producer, TestToken } from "../typechain-types";
 
@@ -24,15 +24,22 @@ describe("Factory - Simple Tests", function () {
         
         // Deploy StreamLockManager
         const StreamLockManagerFactory = await ethers.getContractFactory("StreamLockManager");
-        streamLockManager = await upgrades.deployProxy(StreamLockManagerFactory, [await owner.getAddress()]);
+        streamLockManager = await // @ts-ignore
+        hre.upgrades.deployProxy(StreamLockManagerFactory, [
+            await owner.getAddress(),
+            ethers.parseEther("0.001"), // minStreamAmount
+            3600, // minStreamDuration
+            365 * 24 * 3600 // maxStreamDuration
+        ]);
 
         // Deploy ProducerNUsage
         const ProducerNUsageFactory = await ethers.getContractFactory("ProducerNUsage");
-        producerNUsage = await upgrades.deployProxy(ProducerNUsageFactory, [await owner.getAddress()]);
+        producerNUsage = await // @ts-ignore
+        hre.upgrades.deployProxy(ProducerNUsageFactory, []);
 
         // Deploy ProducerStorage
         const ProducerStorageFactory = await ethers.getContractFactory("ProducerStorage");
-        producerStorage = await upgrades.deployProxy(ProducerStorageFactory, [await owner.getAddress()]);
+        producerStorage = await ProducerStorageFactory.deploy(await owner.getAddress());
 
         // Deploy URIGenerator
         uriGenerator = await ethers.deployContract("URIGenerator");
@@ -42,14 +49,16 @@ describe("Factory - Simple Tests", function () {
 
         // Deploy Factory
         const FactoryFactory = await ethers.getContractFactory("Factory");
-        factory = await upgrades.deployProxy(FactoryFactory, [
+        factory = await // @ts-ignore
+        hre.upgrades.deployProxy(FactoryFactory, [
             await uriGenerator.getAddress(),
             await producerStorage.getAddress(),
             await producerImplementation.getAddress(), // producerApi
             await producerNUsage.getAddress(),
             await producerImplementation.getAddress(), // producerVestingApi
-            await streamLockManager.getAddress()
-        ], { initializer: 'initialize' });
+            await streamLockManager.getAddress(),
+            await producerImplementation.getAddress()  // Producer implementation
+        ]);
 
         // Set producer implementation
         await factory.connect(owner).setProducerImplementation(await producerImplementation.getAddress());

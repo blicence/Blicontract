@@ -1,4 +1,5 @@
 [
+  "error InitializationFailed()",
   "error InvalidAmount()",
   "error InvalidToken()",
   "error NotAContract()",

@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
  
 import {SafeTransferLib} from "./libraries/SafeTransferLib.sol";
 import {ERC20} from "./libraries/ERC20.sol";
@@ -21,6 +22,7 @@ contract Producer is
     Initializable,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable,
+    UUPSUpgradeable,
     DelegateCall,
     PausableUpgradeable/* ,
     ERC1155Upgradeable */
@@ -62,7 +64,7 @@ contract Producer is
         address _producerNUsageAddress,
         address _producerStorageAddress,
         address _streamLockManagerAddress
-    ) external initializer onlyProxy {
+    ) external initializer {
        /*  __ERC1155_init(""); */
         __Ownable_init(user);
         __Pausable_init();
@@ -415,4 +417,11 @@ modifier onlyCustomer(address   customerAddress) {
     function getStreamLockManager() external view returns (address) {
         return address(streamLockManager);
     }
+
+    /**
+     * Function required by UUPS proxy pattern
+     */
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyOwner {}
 }

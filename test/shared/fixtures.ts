@@ -12,7 +12,8 @@ export async function CustomerNftUpgradeableFixture() {
     const customerNftUpgradeable: ContractFactory = await ethers.getContractFactory(
       `CustomerNftUpgradeable`
     );
-    const customerNft = (await upgrades.deployProxy(customerNftUpgradeable, {
+    const customerNft = (await // @ts-ignore
+        hre.upgrades.deployProxy(customerNftUpgradeable, {
       kind: "uups",
     })) as CustomerNftUpgradeable;
     await customerNft.deployed();
@@ -27,7 +28,8 @@ export async function ProducerLogicUpgradeableFixture() {
     const producerLogicUpgradeable: ContractFactory = await ethers.getContractFactory(
       `ProducerLogicUpgradeable`
     );
-    const producerLogic = (await upgrades.deployProxy(producerLogicUpgradeable, {
+    const producerLogic = (await // @ts-ignore
+        hre.upgrades.deployProxy(producerLogicUpgradeable, {
       kind: "uups",
     })) as ProducerLogicUpgradeable;
     await producerLogic.deployed();
@@ -40,7 +42,8 @@ export async function BcontractFactoryFixture() {
     const bcontractFactory: ContractFactory = await ethers.getContractFactory(
       `BcontractFactory`
     );
-    const bcontractv2Factory = (await upgrades.deployProxy(bcontractFactory, {
+    const bcontractv2Factory = (await // @ts-ignore
+        hre.upgrades.deployProxy(bcontractFactory, {
       kind: "uups",
     })) as BcontractFactory;
     await bcontractv2Factory.deployed();
@@ -62,7 +65,8 @@ export async function deployProxysFixture() {
 
 
   const ProducerLogic = await ethers.getContractFactory("ProducerLogicUpgradeable");
-  const producerLogic = await upgrades.deployProxy(ProducerLogic, [], {
+  const producerLogic = await // @ts-ignore
+        hre.upgrades.deployProxy(ProducerLogic, [], {
     kind: "uups",
   });
   await producerLogic.deployed();
@@ -70,7 +74,8 @@ export async function deployProxysFixture() {
   proxyAddresses.PRODUCER_LOGIC_PROXY_ADDRESS = producerLogic.target;
   
   const CustomerNftUpgradeable = await ethers.getContractFactory("CustomerNftUpgradeable");
-  const customerNft = await upgrades.deployProxy(CustomerNftUpgradeable, [], {
+  const customerNft = await // @ts-ignore
+        hre.upgrades.deployProxy(CustomerNftUpgradeable, [], {
     kind: "uups",
   });
   await customerNft.deployed();
@@ -82,7 +87,8 @@ export async function deployProxysFixture() {
   const BcontractFactory = await ethers.getContractFactory("BcontractFactory");
  
 
-  const bcontractFactory = await upgrades.deployProxy(
+  const bcontractFactory = await // @ts-ignore
+        hre.upgrades.deployProxy(
     BcontractFactory,
     [customerNft.target, producerLogic.target],
     {

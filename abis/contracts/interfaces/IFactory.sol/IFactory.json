@@ -2,7 +2,7 @@
   "function currentPR_ID() view returns (uint256)",
   "function getProducerImplementation() view returns (address)",
   "function incrementPR_ID() returns (uint256)",
-  "function initialize(address,address,address,address,address,address)",
+  "function initialize(address,address,address,address,address,address,address)",
   "function newBcontract(tuple(uint256,address,string,string,string,string,address,bool))",
   "function setProducerImplementation(address)"
 ]

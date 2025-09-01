@@ -17,4 +17,7 @@ library FactoryErrors {
 
     /// @dev Invalid token
     error InvalidToken();
+    
+    /// @dev Initialization failed
+    error InitializationFailed();
 }

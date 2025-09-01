@@ -1,5 +1,6 @@
 import { expect } from "chai";
-import { ethers, upgrades } from "hardhat";
+import { ethers } from "hardhat";
+
 import { Contract, Signer } from "ethers";
 
 describe("Integration Tests: StreamLockManager + Factory + Producer", function () {
@@ -35,7 +36,8 @@ describe("Integration Tests: StreamLockManager + Factory + Producer", function (
 
         // Deploy StreamLockManager first
         const StreamLockManager = await ethers.getContractFactory("StreamLockManager");
-        streamLockManager = await upgrades.deployProxy(
+        streamLockManager = await // @ts-ignore
+        hre.upgrades.deployProxy(
             StreamLockManager,
             [
                 await owner.getAddress(),
