@@ -74,7 +74,7 @@ contract URIGenerator is
         onlyExistCustumer(vars.planId, vars.customerAdress, vars.cloneAddress)
     {
         
-        DataTypes.Plan memory plan = producerStorage.getPlan(vars.planId);
+        // DataTypes.Plan memory plan = producerStorage.getPlan(vars.planId);
 
         /*     if  (plan.planType == DataTypes.PlanTypes.api) {
             DataTypes.CustomerPlanInfo memory capi = producerStorage.getCustomerPlanInfo(vars.planId);
@@ -107,21 +107,21 @@ contract URIGenerator is
     }
 
     function safeTransferFrom(
-        address from,
-        address to,
-        uint256 id,
-        uint256 amount,
-        bytes memory data
+        address /* from */,
+        address /* to */,
+        uint256 /* id */,
+        uint256 /* amount */,
+        bytes memory /* data */
     ) public pure override {
         revert NFT_TransferIsNotAllowed();
     }
 
     function safeBatchTransferFrom(
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
+        address /* from */,
+        address /* to */,
+        uint256[] memory /* ids */,
+        uint256[] memory /* amounts */,
+        bytes memory /* data */
     ) public pure override {
         revert NFT_TransferIsNotAllowed();
     }
@@ -147,29 +147,28 @@ contract URIGenerator is
             .getCustomerPlan(tokenId);
 
         DataTypes.Plan memory plan = producerStorage.getPlan(capi.planId);
-
-        
         DataTypes.Producer memory producer = producerStorage.getProducer(
             capi.cloneAddress
         );
-        UriMeta memory uriMeta = UriMeta({
-            custumerPlanId: tokenId,
-            planId: plan.planId,
-            producerName: producer.name,
-            cloneAddress: capi.cloneAddress,
-            description: plan.description,
-            externalLink: plan.externalLink,
-            totalSupply: plan.totalSupply,
-            currentSupply: plan.currentSupply,
-            backgroundColor: plan.backgroundColor,
-            image: plan.image,
-            priceAddress: plan.priceAddress,
-            startDate: capi.startDate,
-            endDate: capi.endDate,
-            remainingQuota: capi.remainingQuota,
-            planType: plan.planType,
-            status: plan.status
-        });
+        
+        // Create UriMeta in smaller steps to avoid stack depth issues
+        UriMeta memory uriMeta;
+        uriMeta.custumerPlanId = tokenId;
+        uriMeta.planId = plan.planId;
+        uriMeta.producerName = producer.name;
+        uriMeta.cloneAddress = capi.cloneAddress;
+        uriMeta.description = plan.description;
+        uriMeta.externalLink = plan.externalLink;
+        uriMeta.totalSupply = plan.totalSupply;
+        uriMeta.currentSupply = plan.currentSupply;
+        uriMeta.backgroundColor = plan.backgroundColor;
+        uriMeta.image = plan.image;
+        uriMeta.priceAddress = plan.priceAddress;
+        uriMeta.startDate = capi.startDate;
+        uriMeta.endDate = capi.endDate;
+        uriMeta.remainingQuota = capi.remainingQuota;
+        uriMeta.planType = plan.planType;
+        uriMeta.status = plan.status;
 
         if (uriMeta.planType == DataTypes.PlanTypes.api) {
             return constructTokenUriApi(uriMeta);

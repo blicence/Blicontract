@@ -1,10 +1,11 @@
 {
-  "name": "hardhat-project-template-ts",
+  "name": "blicontract",
   "version": "1.0.0",
-  "description": "A fully-fledged Hardhat project template based on TypeScript.",
+  "description": "Blicontract - Decentralized subscription service platform with streaming payments",
   "keywords": [
-    "template",
-    "typescript",
+    "blockchain",
+    "subscription",
+    "streaming",
     "ethereum",
     "smart-contracts",
     "solidity",
@@ -13,13 +14,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pcaversaccio/hardhat-project-template-ts.git"
+    "url": "git+https://github.com/blicence/Blicontract.git"
   },
-  "homepage": "https://github.com/pcaversaccio/hardhat-project-template-ts#readme",
+  "homepage": "https://github.com/blicence/Blicontract#readme",
   "bugs": {
-    "url": "https://github.com/pcaversaccio/hardhat-project-template-ts/issues"
+    "url": "https://github.com/blicence/Blicontract/issues"
   },
-  "author": "Pascal Marco Caversaccio <pascal.caversaccio@hotmail.ch>",
+  "author": "Blicence Team",
   "license": "MIT",
   "packageManager": "pnpm@10.15.0",
   "scripts": {

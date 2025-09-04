@@ -10,7 +10,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
  
 import {SafeTransferLib} from "./libraries/SafeTransferLib.sol";
-import {ERC20} from "./libraries/ERC20.sol";
+import {ERC20 as SolmateERC20} from "./libraries/ERC20.sol";
 import "./DelegateCall.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";
 import "./storage/ProducerStorage.sol";
@@ -178,7 +178,7 @@ modifier onlyCustomer(address   customerAddress) {
             DataTypes.PlanInfoNUsage memory pInfoNUsage= producerStorage.getPlanInfoNUsage(vars.planId);
             DataTypes.Plan memory plan= producerStorage.getPlan(vars.planId);
             require(vars.remainingQuota >0, "remainingQuota must be higher than zero!");
-            require(ERC20(address(plan.priceAddress)).balanceOf(msg.sender) >= pInfoNUsage.oneUsagePrice*vars.remainingQuota, "Amount must be higher than zero!");
+            require(SolmateERC20(address(plan.priceAddress)).balanceOf(msg.sender) >= pInfoNUsage.oneUsagePrice*vars.remainingQuota, "Amount must be higher than zero!");
         
             // Create stream lock for the customer plan
             uint256 totalAmount = pInfoNUsage.oneUsagePrice * vars.remainingQuota;
@@ -221,7 +221,7 @@ modifier onlyCustomer(address   customerAddress) {
                 
                 
                 
-                  SafeTransferLib.safeTransferFrom(ERC20(address(plan.priceAddress)),address(this),msg.sender ,  (pInfoNUsage.oneUsagePrice)*cpnu.remainingQuota);
+                  SafeTransferLib.safeTransferFrom(SolmateERC20(address(plan.priceAddress)),address(this),msg.sender ,  (pInfoNUsage.oneUsagePrice)*cpnu.remainingQuota);
             }
             producerNUsage.updateCustomerPlan(vars);
         }
@@ -304,7 +304,7 @@ modifier onlyCustomer(address   customerAddress) {
         payable(msg.sender).transfer(balance);
     }
 
-    function withdrawTokens(ERC20 token) public onlyOwner {
+    function withdrawTokens(SolmateERC20 token) public onlyOwner {
         uint256 balance = token.balanceOf(address(this));
         token.transfer(msg.sender, balance);
     }

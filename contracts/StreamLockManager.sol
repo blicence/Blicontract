@@ -435,7 +435,7 @@ contract StreamLockManager is
      * @param lockId Stream lock ID
      * @return canUse Whether consumer can use the service
      */
-    function checkAndSettleOnUsage(address consumer, bytes32 lockId) external onlyAuthorized returns (bool canUse) {
+    function checkAndSettleOnUsage(address consumer, bytes32 lockId) external view onlyAuthorized returns (bool canUse) {
         TokenLock storage lock = tokenLocks[lockId];
         
         if (!lock.isActive) return false;

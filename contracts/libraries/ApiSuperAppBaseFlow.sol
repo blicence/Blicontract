@@ -47,7 +47,7 @@ abstract contract ApiStreamBaseFlow {
     /**
      * @dev Filter for accepting specific tokens in streams
      */
-    function isAcceptedToken(address token) public view virtual returns (bool) {
+    function isAcceptedToken(address /* token */) public view virtual returns (bool) {
         return true; // Accept all tokens by default
     }
 
@@ -56,32 +56,32 @@ abstract contract ApiStreamBaseFlow {
 
     /// @dev Override if custom logic needed when a new stream is created
     function onStreamCreated(
-        address token,
-        address sender,
-        uint256 amount,
-        uint256 duration
+        address /* token */,
+        address /* sender */,
+        uint256 /* amount */,
+        uint256 /* duration */
     ) internal virtual returns (bool) {
         return true;
     }
 
     /// @dev Override if custom logic needed when a stream is updated
     function onStreamUpdated(
-        address token,
-        address sender,
-        uint256 newAmount,
-        uint256 newDuration,
-        uint256 previousAmount
+        address /* token */,
+        address /* sender */,
+        uint256 /* newAmount */,
+        uint256 /* newDuration */,
+        uint256 /* previousAmount */
     ) internal virtual returns (bool) {
         return true;
     }
 
     /// @dev Override if custom logic needed when a stream is deleted
     function onStreamDeleted(
-        address token,
-        address sender,
-        address receiver,
-        uint256 previousAmount,
-        uint256 remainingAmount
+        address /* token */,
+        address /* sender */,
+        address /* receiver */,
+        uint256 /* previousAmount */,
+        uint256 /* remainingAmount */
     ) internal virtual returns (bool) {
         return true;
     }

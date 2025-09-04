@@ -50,7 +50,7 @@
   "function calculateAccruedAmount(bytes32) view returns (uint256)",
   "function calculateRemainingAmount(bytes32) view returns (uint256)",
   "function cancelStream(bytes32)",
-  "function checkAndSettleOnUsage(address,bytes32) returns (bool)",
+  "function checkAndSettleOnUsage(address,bytes32) view returns (bool)",
   "function claimStreamsByProducer() returns (uint256)",
   "function createStreamForCustomerPlan(uint256,address,address,address,uint256,uint256) returns (bytes32)",
   "function createStreamLock(address,address,uint256,uint256) returns (bytes32)",

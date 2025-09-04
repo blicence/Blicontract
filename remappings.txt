@@ -1,3 +1,4 @@
+src/=contracts/
 hardhat/=node_modules/hardhat/
 xdeployer/=node_modules/xdeployer/
 forge-std/=contracts/lib/forge-std/src/

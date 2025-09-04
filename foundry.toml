@@ -4,7 +4,10 @@ src = 'contracts'                                         # the source directory
 test = 'test/forge'                                             # the test directory
 out = 'forge-artifacts'                                       # the output directory (for artifacts)
 libs = ['contracts/lib']                                      # a list of library directories
-remappings = []                                               # a list of remappings
+remappings = [
+    "src/=contracts/",
+    "@openzeppelin/=node_modules/@openzeppelin/"
+]                                               # a list of remappings
 libraries = []                                                # a list of deployed libraries to link against
 cache = true                                                  # whether to cache builds or not
 cache_path = 'cache'                                          # where the cache is stored if enabled
@@ -15,7 +18,7 @@ auto_detect_solc = true                                       # enable auto-dete
 offline = true                                                # offline mode, if enabled, network access (downloading solc) is disallowed
 optimizer = true                                              # enable or disable the solc optimizer
 optimizer_runs = 999999                                       # the number of optimizer runs
-via_ir = false                                                # whether to enable EVM bytecode generation through an intermediate representation (ir) or not
+via_ir = true                                                # whether to enable EVM bytecode generation through an intermediate representation (ir) or not
 verbosity = 2                                                 # the verbosity of tests
 ignored_error_codes = []                                      # a list of ignored solc error codes
 fuzz = { runs = 256 }                                         # the number of fuzz runs for tests

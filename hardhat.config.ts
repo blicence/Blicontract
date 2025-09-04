@@ -17,7 +17,7 @@ import "@matterlabs/hardhat-zksync-ethers";
 import "hardhat-gas-reporter";
 import "hardhat-abi-exporter";
 import "solidity-coverage";
-// import "hardhat-contract-sizer";
+import "hardhat-contract-sizer";
 // Uncomment if you want to use the Hardhat Tenderly module
 // You must also uncomment the subsequent `tenderly` configuration in this file accordingly
 // import "@tenderly/hardhat-tenderly";
@@ -1318,16 +1318,14 @@ const config: HardhatUserConfig = {
     // However, keep in mind that this costs money in a production environment!
     gasLimit: 1.2 * 10 ** 6,
   },
-  /*
   contractSizer: {
     alphaSort: true,
     runOnCompile: true,
     disambiguatePaths: false,
     strict: true,
-    only: [],
+    only: ["Factory", "Producer", "URIGenerator", "StreamLockManager"],
     except: ["CreateX", "Create2DeployerLocal", "Test"],
   },
-  */
   gasReporter: {
     enabled: vars.has("REPORT_GAS") ? true : false,
     currency: "USD",
