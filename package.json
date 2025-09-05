@@ -219,7 +219,13 @@
     "prettier:fix": "npx prettier -w \"**/*.{js,ts,md,sol,json,yml,yaml}\"",
     "slippy:check": "npx slippy \"contracts/**/*.sol\"",
     "lint:check": "pnpm prettier:check && pnpm slippy:check && npx eslint .",
-    "lint:fix": "pnpm prettier:fix && npx eslint . --fix"
+    "lint:fix": "pnpm prettier:fix && npx eslint . --fix",
+    "production:deploy": "npx hardhat run scripts/deploy-complete.ts",
+    "production:deploy:mainnet": "npx hardhat run scripts/deploy-complete.ts --network mainnet",
+    "production:deploy:sepolia": "npx hardhat run scripts/deploy-complete.ts --network sepolia",
+    "production:deploy:polygon": "npx hardhat run scripts/deploy-complete.ts --network polygon",
+    "production:deploy:arbitrum": "npx hardhat run scripts/deploy-complete.ts --network arbitrumMain",
+    "production:core": "npx hardhat run scripts/deploy-production.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",

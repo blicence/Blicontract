@@ -46,6 +46,31 @@ npm run test:hh
 npm run deploy:localhost
 ```
 
+## 🌟 Production Deployment
+
+### Quick Production Deploy
+```bash
+# Complete production deployment (recommended)
+npm run production:deploy:mainnet
+
+# Test on sepolia first
+npm run production:deploy:sepolia
+```
+
+### Manual Production Deploy
+```bash
+# Core deployment only
+npm run production:core --network mainnet
+```
+
+### Supported Networks
+- **Mainnet**: `npm run production:deploy:mainnet`
+- **Polygon**: `npm run production:deploy:polygon`
+- **Arbitrum**: `npm run production:deploy:arbitrum`
+- **Sepolia** (testnet): `npm run production:deploy:sepolia`
+
+📖 **[Complete Production Guide](PRODUCTION_DEPLOYMENT_GUIDE.md)**
+
 ## 📊 Current Status
 
 ✅ **Phase 1**: Core streaming infrastructure  
