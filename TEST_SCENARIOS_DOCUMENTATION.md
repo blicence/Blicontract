@@ -1,5 +1,12 @@
 # Blockchain Hizmet Sağlayıcı Test Senaryoları ve Dokümantasyon
 
+## 🎯 Test Durumu (Güncel)
+**✅ 239 Test Başarılı** - Tüm senaryolar çalışıyor
+- ✅ End-to-End Integration: 9/9 geçti
+- ✅ Scenario Tests: 9/9 geçti  
+- ✅ StreamLockManager Integration: ✅
+- ✅ Production Ready: ✅
+
 ## Proje Özeti
 
 Bu proje, küçük ve orta ölçekli hizmet sağlayıcıların blockchain teknolojisi kullanarak hizmetlerini son kullanıcılara kolayca sunabilmelerini sağlayan bir platformdur. Sistem 3 farklı plan tipi sunar: Nusage, VestingApi ve ApiUsage.
@@ -9,9 +16,10 @@ Bu proje, küçük ve orta ölçekli hizmet sağlayıcıların blockchain teknol
 ### Ana Bileşenler:
 1. **Factory.sol**: Yeni Producer kontratları oluşturur
 2. **Producer.sol**: Hizmet sağlayıcının ana kontratı
-3. **URIGenerator.sol**: NFT metadata'sı oluşturur
-4. **ProducerStorage.sol**: Veri depolama katmanı
-5. **Logic Kontratları**: Plan tipi spesifik mantık
+3. **StreamLockManager.sol**: Token kilitleme ve ödeme akışları
+4. **URIGenerator.sol**: NFT metadata'sı oluşturur
+5. **ProducerStorage.sol**: Veri depolama katmanı
+6. **Logic Kontratları**: Plan tipi spesifik mantık
 
 ### Plan Tipleri:
 - **Nusage**: Kullanım başına ödeme (örn: kafeterya puan kartı)

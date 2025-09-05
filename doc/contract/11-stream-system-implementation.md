@@ -1,43 +1,64 @@
 
-# Stream System Implementation Contracts
+# StreamLockManager Implementation - Güncel Kod
 
-Bu dokümantasyon, yeni token kilitleme ve stream sisteminin detaylı smart contract implementasyonlarını içermektedir.
+Bu dokümantasyon, production'da çalışan StreamLockManager sisteminin güncel implementasyonunu içermektedir.
 
 ## İçindekiler
-- [Core Contracts](#core-contracts)
-- [Interface Definitions](#interface-definitions)
-- [Library Implementations](#library-implementations)
-- [Integration Contracts](#integration-contracts)
-- [Test Contracts](#test-contracts)
-- [Deployment Scripts](#deployment-scripts)
+- [Ana Kontrat](#ana-kontrat)
+- [Interface Tanımları](#interface-tanımları)
+- [Library Implementasyonları](#library-implementasyonları)
+- [Test Coverage](#test-coverage)
+- [Production Deployment](#production-deployment)
 
 ---
 
-## Core Contracts
+## Ana Kontrat
 
-### 1. StreamLockManager.sol
+### StreamLockManager.sol (Production Ready)
 ```solidity
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.30;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "./interfaces/IStreamLockManager.sol";
-import "./libraries/StreamCalculator.sol";
+import "./libraries/VirtualBalance.sol";
+import "./libraries/StreamRateCalculator.sol";
 
 /**
  * @title StreamLockManager
- * @dev Core contract for managing token locks and payment streams
- * @notice Allows users to lock tokens for time-based streaming payments
+ * @dev Main contract for managing token locks and streaming payments
+ * Replaces Superfluid integration with a more controlled streaming system
  */
 contract StreamLockManager is 
-    IStreamLockManager, 
-    ReentrancyGuard, 
-    Pausable, 
-    AccessControl 
+    Initializable,
+    OwnableUpgradeable,
+    PausableUpgradeable,
+    ReentrancyGuardUpgradeable,
+    UUPSUpgradeable,
+    VirtualBalance,
+    IStreamLockManager
 {
+    using SafeERC20 for IERC20;
+
+    // State variables
+    mapping(address => bool) public authorizedCallers;
+    mapping(bytes32 => StreamData) public streams;
+    mapping(address => mapping(address => VirtualBalanceData)) public virtualBalances;
+    mapping(address => bytes32[]) public userActiveStreams;
+    mapping(address => bytes32[]) public producerIncomingStreams;
+    
+    uint256 public minStreamAmount;
+    uint256 public minStreamDuration;
+    uint256 public maxStreamDuration;
+    uint256 private _streamNonce;
+```
     using SafeERC20 for IERC20;
     using StreamCalculator for uint256;
 

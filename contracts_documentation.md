@@ -8,19 +8,21 @@ Sistem, merkezi olmayan bir abonelik ve hizmet platformu oluşturmak üzere tasa
 
 1.  **`Factory.sol`**: Yeni `Producer` (üretici/hizmet sağlayıcı) kontratlarının örneklerini (klonlarını) oluşturmaktan sorumlu merkezi bir kontrattır.
 2.  **`Producer.sol`**: Tek bir üreticinin temel mantığını temsil eder. Plan yönetimi, müşteri abonelikleri ve farklı hizmet türleri için özel mantık kontratlarıyla etkileşimleri içerir.
-3.  **`URIGenerator.sol`**: Müşteri aboneliklerini temsil eden ERC1155 NFT'leri için URI'lar (ve dolayısıyla meta veriler) oluşturur. Bu NFT'ler genellikle devredilemezdir ve bir müşterinin belirli bir plana erişimini zincir üzerinde temsil eder.
-4.  **`DelegateCall.sol`**: Proxy desenlerinde kullanılan, mantık kontratlarının bir proxy'nin depolama bağlamında güvenli bir şekilde yürütülmesini sağlayan soyut bir kontrattır. Bu, kontrat mantığının depolamayı etkilemeden yükseltilebilmesine olanak tanır.
-5.  **Depolama Kontratları (örn: `ProducerStorage.sol`)**: Kalıcı verilerin (üretici bilgileri, plan detayları, müşteri abonelikleri vb.) saklandığı kontratlardır. Bu dokümantasyonda doğrudan içeriği verilmese de, `Producer.sol` ve `URIGenerator.sol` gibi kontratlar tarafından yoğun bir şekilde kullanılırlar.
-6.  **Mantık/API Kontratları (örn: `ProducerApi.sol`, `ProducerNUsage.sol`, `ProducerVestingApi.sol`)**: `Producer.sol` tarafından çağrılan, farklı abonelik planı türlerine (API erişimi, kullanıma dayalı, hak edişli API vb.) özgü iş mantığını içeren kontratlardır.
+3.  **`StreamLockManager.sol`**: Token kilitleme ve ödeme akışlarını yöneten ana kontrat. Superfluid yerine özel streaming sistemi sağlar.
+4.  **`URIGenerator.sol`**: Müşteri aboneliklerini temsil eden ERC1155 NFT'leri için URI'lar (ve dolayısıyla meta veriler) oluşturur. Bu NFT'ler genellikle devredilemezdir ve bir müşterinin belirli bir plana erişimini zincir üzerinde temsil eder.
+5.  **`DelegateCall.sol`**: Proxy desenlerinde kullanılan, mantık kontratlarının bir proxy'nin depolama bağlamında güvenli bir şekilde yürütülmesini sağlayan soyut bir kontrattır. Bu, kontrat mantığının depolamayı etkilemeden yükseltilebilmesine olanak tanır.
+6.  **Depolama Kontratları (örn: `ProducerStorage.sol`)**: Kalıcı verilerin (üretici bilgileri, plan detayları, müşteri abonelikleri vb.) saklandığı kontratlardır. Bu dokümantasyonda doğrudan içeriği verilmese de, `Producer.sol` ve `URIGenerator.sol` gibi kontratlar tarafından yoğun bir şekilde kullanılırlar.
+7.  **Mantık/API Kontratları (örn: `ProducerApi.sol`, `ProducerNUsage.sol`, `ProducerVestingApi.sol`)**: `Producer.sol` tarafından çağrılan, farklı abonelik planı türlerine (API erişimi, kullanıma dayalı, hak edişli API vb.) özgü iş mantığını içeren kontratlardır.
 
 **Temel Akış:**
 
-1.  **Kurulum**: `Factory`, `URIGenerator` ve çeşitli depolama/mantık kontratları dağıtılır ve başlangıç yapılandırmaları yapılır.
-2.  **Üretici Oluşturma**: Bir kullanıcı, `Factory.newBcontract()` fonksiyonunu çağırarak yeni bir `Producer` kontratı (klon) oluşturur. Bu klon, gerekli bağımlılık adresleriyle (örneğin, `URIGenerator`, `ProducerStorage`) başlatılır.
+1.  **Kurulum**: `Factory`, `StreamLockManager`, `URIGenerator` ve çeşitli depolama/mantık kontratları dağıtılır ve başlangıç yapılandırmaları yapılır.
+2.  **Üretici Oluşturma**: Bir kullanıcı, `Factory.newBcontract()` fonksiyonunu çağırarak yeni bir `Producer` kontratı (klon) oluşturur. Bu klon, gerekli bağımlılık adresleriyle (örneğin, `StreamLockManager`, `URIGenerator`, `ProducerStorage`) başlatılır.
 3.  **Plan Yönetimi**: `Producer` sahibi, kendi `Producer` kontratı üzerinden hizmet planları oluşturur ve yönetir. Bu bilgiler `ProducerStorage`'a kaydedilir.
-4.  **Müşteri Aboneliği**: Müşteriler, bir `Producer`'ın planına abone olmak için `Producer.addCustomerPlan()` fonksiyonunu çağırır. Bu işlem sırasında ödeme yapılabilir ve aboneliği temsil eden bir NFT (`URIGenerator.mint()` aracılığıyla) basılır.
-5.  **Hizmet Kullanımı**: Müşteriler, abone oldukları hizmetleri kullanır. Kullanıma dayalı planlar için `Producer.useFromQuota()` gibi fonksiyonlar çağrılabilir.
-6.  **NFT Meta Verileri**: Cüzdanlar veya pazar yerleri, abonelik NFT'lerinin meta verilerini `URIGenerator.uri()` fonksiyonu aracılığıyla sorgular. `URIGenerator`, dinamik olarak SVG tabanlı bir görsel ve JSON meta verisi oluşturur.
+4.  **Müşteri Aboneliği**: Müşteriler, bir `Producer`'ın planına abone olmak için `Producer.addCustomerPlan()` fonksiyonunu çağırır. Bu işlem sırasında ödeme yapılabilir, token kilitleme yapılır ve aboneliği temsil eden bir NFT (`URIGenerator.mint()` aracılığıyla) basılır.
+5.  **Stream Yönetimi**: `StreamLockManager` aracılığıyla token'lar kullanıcı hesabında kilitlenir ve zaman bazlı ödeme akışları yönetilir.
+6.  **Hizmet Kullanımı**: Müşteriler, abone oldukları hizmetleri kullanır. Stream'lar aktif olduğu sürece erişim sağlanır.
+7.  **NFT Meta Verileri**: Cüzdanlar veya pazar yerleri, abonelik NFT'lerinin meta verilerini `URIGenerator.uri()` fonksiyonu aracılığıyla sorgular. `URIGenerator`, dinamik olarak SVG tabanlı bir görsel ve JSON meta verisi oluşturur.
 
 ---
 

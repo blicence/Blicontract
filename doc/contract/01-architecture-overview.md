@@ -14,12 +14,13 @@ BliContract, merkezi olmayan bir abonelik ve hizmet platformu oluşturmak için 
 
 ## Mimari Katmanları
 
-Sistem beş ana katmandan oluşur:
+Sistem altı ana katmandan oluşur:
 
 ### 1. Core Layer (Temel Katman)
 Sistemin temel kontratlarını içerir:
 - **[`Factory.sol`](./02-core-contracts.md#factory)**: Yeni Producer kontratları oluşturur
 - **[`Producer.sol`](./02-core-contracts.md#producer)**: Üretici iş mantığını yönetir  
+- **[`StreamLockManager.sol`](./02-core-contracts.md#streamlockmanager)**: Token kilitleme ve ödeme akışları
 - **[`URIGenerator.sol`](./02-core-contracts.md#urigenerator)**: NFT meta verilerini oluşturur
 - **[`DelegateCall.sol`](./02-core-contracts.md#delegatecall)**: Proxy güvenliğini sağlar
 
@@ -37,7 +38,13 @@ Plan türlerine özgü iş mantığını içerir:
 Kalıcı veri yönetimini sağlar:
 - **[`ProducerStorage.sol`](./05-storage-layer.md)**: Tüm sistem verilerini saklar
 
-### 5. Library Layer (Kütüphane Katmanı)
+### 5. Streaming Layer (Akış Katmanı)
+Token kilitleme ve ödeme akışlarını yönetir:
+- **[`StreamLockManager.sol`](./10-token-locking-stream-system.md)**: Ana streaming kontratı
+- **[`VirtualBalance.sol`](./10-token-locking-stream-system.md)**: Sanal balance sistemi
+- **[`StreamRateCalculator.sol`](./10-token-locking-stream-system.md)**: Stream hesaplamaları
+
+### 6. Library Layer (Kütüphane Katmanı)
 Yardımcı fonksiyonlar ve veri türlerini içerir:
 - **[Kütüphaneler](./06-library-layer.md)**: Utilities, DataTypes, SafeTransfer vb.
 
