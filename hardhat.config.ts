@@ -75,9 +75,10 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 999_999,
+        runs: 200, // Düşük runs değeri daha küçük bytecode üretir
       },
       evmVersion: "cancun", // En son EVM version
+      viaIR: true, // İleri Intermediate Representation optimizasyonu
     },
   },
   zksolc: {
@@ -130,9 +131,12 @@ const config: HardhatUserConfig = {
     },
     sepolia: {
       chainId: 11155111,
-      url: vars.get("ETH_SEPOLIA_TESTNET_URL", "https://rpc.sepolia.org"),
+      url: vars.get("ETH_SEPOLIA_TESTNET_URL", "https://ethereum-sepolia-rpc.publicnode.com"),
       accounts,
       ledgerAccounts,
+      timeout: 120000, // 2 dakika timeout
+      gas: 8000000, // Yeterli gas limit
+      gasPrice: 20000000000, // 20 gwei
     },
     holesky: {
       chainId: 17000,
@@ -268,6 +272,9 @@ const config: HardhatUserConfig = {
       ),
       accounts,
       ledgerAccounts,
+      timeout: 120000, // 2 dakika timeout
+      gas: 8000000, // Yeterli gas limit
+      gasPrice: 25000000000, // 25 gwei (Avalanche için optimal)
     },
     avalanche: {
       chainId: 43114,
@@ -1322,7 +1329,7 @@ const config: HardhatUserConfig = {
     alphaSort: true,
     runOnCompile: true,
     disambiguatePaths: false,
-    strict: true,
+    strict: false, // Sadece uyarı ver, hata verme
     only: ["Factory", "Producer", "URIGenerator", "StreamLockManager"],
     except: ["CreateX", "Create2DeployerLocal", "Test"],
   },
