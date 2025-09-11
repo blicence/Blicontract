@@ -67,13 +67,46 @@ enum PlanTypes {
 }
 ```
 
-#### Plan Türü Özellikleri
+#### Plan Türü Özellikleri ✨ **GÜNCEL**
 
-| Tür | Açıklama | Ödeme Modeli | Özel Özellikler |
-|-----|----------|--------------|-----------------|
-| `api` | API erişim abonelikleri | Superfluid stream | Sürekli ödeme, aylık limitler |
-| `nUsage` | Kota tabanlı kullanım | Ön ödemeli tokenlar | Kullanım bazlı, kota takibi |
-| `vestingApi` | Vesting tabanlı haklar | Zaman tabanlı vesting | Cliff + stream kombinasyonu |
+| Tür | Açıklama | Ödeme Modeli | Stream Desteği | Özel Özellikler |
+|-----|----------|--------------|----------------|-----------------|
+| `api` | API erişim abonelikleri | Stream-based payment | ✅ **TAM DESTEK** | Unlimited quota, sürekli stream |
+| `nUsage` | Kota tabanlı kullanım | Upfront + stream | ✅ **TAM DESTEK** | Quota tracking, stream settlement |
+| `vestingApi` | Vesting tabanlı haklar | Cliff + stream | ✅ **TAM DESTEK** | Cliff payment + time vesting |
+
+#### Stream Integration Details ✨ **YENİ**
+
+**API Plans Stream Flow:**
+```solidity
+// Stream amount = flowRate * streamDuration
+uint256 totalAmount = uint256(int256(pInfoApi.flowRate)) * streamDuration;
+
+// Unlimited service access with time-based payment
+vars.remainingQuota = type(uint256).max;
+vars.endDate = uint32(block.timestamp + streamDuration);
+```
+
+**NUsage Plans Stream Flow:**
+```solidity
+// Stream amount = oneUsagePrice * quota
+uint256 totalAmount = pInfoNUsage.oneUsagePrice * vars.remainingQuota;
+
+// Traditional quota with stream payment backing
+uint256 streamDuration = _calculateStreamDuration(vars.planId, vars.remainingQuota);
+```
+
+**VestingApi Plans Stream Flow:**
+```solidity
+// Stream amount = cliff + (flowRate * duration)
+uint256 streamAmount = uint256(int256(pInfoVesting.flowRate)) * streamDuration;
+uint256 totalAmount = pInfoVesting.startAmount + streamAmount;
+
+// Cliff validation + unlimited access
+require(pInfoVesting.cliffDate > block.timestamp, "Cliff date must be in the future");
+vars.remainingQuota = type(uint256).max;
+vars.endDate = uint32(pInfoVesting.cliffDate + streamDuration);
+```
 
 ---
 
@@ -545,6 +578,200 @@ event CustomerPlanCreated(
     address indexed customerAddress,
     DataTypes.PlanTypes planType  // Not indexed, saves gas
 );
+```
+
+---
+
+## Stream Integration Data Structures ✨ **YENİ BÖLÜM**
+
+### Stream-Customer Plan Mappings
+```solidity
+// Producer.sol içinde tanımlı
+mapping(uint256 => bytes32) public customerPlanToStreamLock;
+mapping(bytes32 => uint256) public streamLockToCustomerPlan;
+```
+
+**Amaç**: Customer plan ID'leri ile stream lock ID'leri arasında çift yönlü ilişki
+
+**Kullanım Örnekleri:**
+```solidity
+// Customer plan'den stream bul
+bytes32 streamLockId = customerPlanToStreamLock[custumerPlanId];
+
+// Stream'den customer plan bul  
+uint256 custumerPlanId = streamLockToCustomerPlan[streamLockId];
+```
+
+### Stream Events ✨ **YENİ**
+
+#### CustomerPlanWithStreamCreated Event
+```solidity
+event CustomerPlanWithStreamCreated(
+    uint256 indexed customerPlanId,
+    bytes32 indexed streamLockId,
+    address indexed customer
+);
+```
+
+**Ne Zaman Emit Edilir:**
+- `addCustomerPlanWithStream()` başarılı stream oluşturduğunda
+- Her plan türü için stream aktif hale geldiğinde
+
+**Kullanım:**
+```solidity
+// Event listening
+producer.on('CustomerPlanWithStreamCreated', (customerPlanId, streamLockId, customer) => {
+    console.log(`Stream ${streamLockId} created for customer plan ${customerPlanId}`);
+    // Update UI, database, analytics
+});
+```
+
+#### StreamUsageValidated Event
+```solidity
+event StreamUsageValidated(
+    uint256 indexed customerPlanId,
+    bytes32 indexed streamLockId,
+    address indexed customer,
+    bool canUse
+);
+```
+
+**Ne Zaman Emit Edilir:**
+- `checkStreamBeforeUsage()` çağrıldığında
+- `settleStreamOnUsage()` settlement işleminde
+- Stream durumu kontrol edildiğinde
+
+**Kullanım Senaryoları:**
+```solidity
+// Real-time access monitoring
+producer.on('StreamUsageValidated', (customerPlanId, streamLockId, customer, canUse) => {
+    if (!canUse) {
+        // Send notification to customer
+        notifyInsufficientStream(customer, customerPlanId);
+    }
+});
+```
+
+### Enhanced Function Return Types ✨ **YENİ**
+
+#### addCustomerPlanWithStream Return
+```solidity
+function addCustomerPlanWithStream(
+    DataTypes.CustomerPlan memory vars,
+    uint256 streamDuration
+) external returns (uint256 custumerPlanId, bytes32 streamLockId);
+```
+
+**Return Values:**
+- `custumerPlanId`: Oluşturulan customer plan'in benzersiz ID'si
+- `streamLockId`: Oluşturulan stream'in lock ID'si (bytes32(0) = no stream)
+
+#### validateUsageWithStream Return
+```solidity
+function validateUsageWithStream(uint256 customerPlanId) 
+    external view returns (bool canUse, uint256 remainingTime, bytes32 streamLockId);
+```
+
+**Return Values:**
+- `canUse`: Servis kullanım izni (true/false)
+- `remainingTime`: Stream'de kalan süre (saniye)
+- `streamLockId`: İlişkili stream lock ID'si
+
+### Gas Optimization Patterns ✨ **YENİ**
+
+#### Stream Duration Calculation
+```solidity
+function _calculateStreamDuration(uint256 planId, uint256 quota) 
+    internal view returns (uint256 duration) {
+    // Optimized calculation based on plan type and quota
+    DataTypes.Plan memory plan = producerStorage.getPlan(planId);
+    
+    if (plan.planType == DataTypes.PlanTypes.nUsage) {
+        // Gas-efficient duration tiers
+        if (quota <= 10) return 7 days;
+        if (quota <= 100) return 30 days;
+        return 90 days;
+    }
+    
+    return 30 days; // Default for other plan types
+}
+```
+
+#### Graceful Stream Fallback
+```solidity
+function _createCustomerPlanStream(...) internal returns (bytes32 lockId) {
+    if (address(streamLockManager) != address(0)) {
+        try streamLockManager.createStreamForCustomerPlan(...) returns (bytes32 streamId) {
+            lockId = streamId;
+        } catch {
+            // Graceful fallback: continue without stream
+            lockId = bytes32(0);
+        }
+    }
+    return lockId;
+}
+```
+
+### Integration Best Practices ✨ **YENİ**
+
+#### 1. Stream Validation Pattern
+```typescript
+// Frontend integration pattern
+async function validateAndUseService(custumerPlanId: number) {
+    // Always validate before service usage
+    const [canUse, remainingTime, streamLockId] = 
+        await producer.validateUsageWithStream(custumerPlanId);
+    
+    if (!canUse) {
+        throw new Error('Stream payment insufficient or expired');
+    }
+    
+    // Use service with settlement
+    return await producer.settleStreamOnUsage(custumerPlanId, 1);
+}
+```
+
+#### 2. Multi-Plan Type Handling
+```typescript
+// Plan type specific logic
+function getStreamConfig(planType: number, planData: any) {
+    switch (planType) {
+        case 0: // API
+            return {
+                duration: 30 * 24 * 60 * 60, // 30 days
+                unlimited: true
+            };
+        case 1: // nUsage
+            return {
+                duration: calculateNUsageDuration(planData.quota),
+                unlimited: false
+            };
+        case 2: // vestingApi
+            return {
+                duration: planData.vestingPeriod,
+                cliffRequired: true
+            };
+    }
+}
+```
+
+#### 3. Error Handling Patterns
+```typescript
+// Robust error handling for stream operations
+try {
+    const result = await producer.addCustomerPlanWithStream(customerPlan, duration);
+    
+    if (result.streamLockId === ethers.constants.HashZero) {
+        console.warn('Plan created without stream - StreamLockManager unavailable');
+    }
+    
+    return result;
+} catch (error) {
+    if (error.message.includes('Insufficient token balance')) {
+        throw new Error('Please ensure sufficient token balance for stream payment');
+    }
+    throw error;
+}
 ```
 
 ---

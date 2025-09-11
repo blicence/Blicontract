@@ -783,6 +783,337 @@ interface ApiResponse {
 
 ---
 
+## Stream-Aware Integration ✨ **YENİ BÖLÜM**
+
+### Stream Entegrasyon Özellikleri
+
+BliContract v2 ile birlikte gelen stream-aware fonksiyonlar, gelişmiş ödeme akışları ve real-time validation sağlar.
+
+#### 1. Enhanced Customer Plan Creation
+```typescript
+class StreamAwarePlanManager {
+  private producer: ethers.Contract;
+  
+  async createCustomerPlanWithStream(
+    planData: CustomerPlanData, 
+    streamDuration: number
+  ): Promise<StreamPlanResult> {
+    try {
+      // Enhanced customer plan creation
+      const tx = await this.producer.addCustomerPlanWithStream(
+        {
+          customerAdress: planData.customerAddress,
+          planId: planData.planId,
+          producerId: planData.producerId,
+          cloneAddress: this.producer.address,
+          priceAddress: planData.tokenAddress,
+          startDate: Math.floor(Date.now() / 1000),
+          endDate: planData.endDate || 0,
+          remainingQuota: planData.quota,
+          status: 1, // Active
+          planType: planData.planType
+        },
+        streamDuration // Stream duration in seconds
+      );
+      
+      const receipt = await tx.wait();
+      const [custumerPlanId, streamLockId] = tx.returnValue;
+      
+      return {
+        success: true,
+        custumerPlanId: custumerPlanId.toNumber(),
+        streamLockId: streamLockId,
+        transactionHash: receipt.transactionHash,
+        streamActive: streamLockId !== ethers.constants.HashZero
+      };
+      
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+}
+
+interface CustomerPlanData {
+  customerAddress: string;
+  planId: number;
+  producerId: number;
+  tokenAddress: string;
+  quota: number;
+  endDate?: number;
+  planType: number; // 0=api, 1=nUsage, 2=vestingApi
+}
+
+interface StreamPlanResult {
+  success: boolean;
+  custumerPlanId?: number;
+  streamLockId?: string;
+  transactionHash?: string;
+  streamActive?: boolean;
+  error?: string;
+}
+```
+
+#### 2. Real-time Stream Validation
+```typescript
+class StreamValidator {
+  private producer: ethers.Contract;
+  
+  async validateServiceAccess(custumerPlanId: number): Promise<ServiceAccessInfo> {
+    try {
+      const [canUse, remainingTime, streamLockId] = await this.producer.validateUsageWithStream(custumerPlanId);
+      
+      return {
+        canUse,
+        remainingTime: remainingTime.toNumber(),
+        streamLockId,
+        accessLevel: this.determineAccessLevel(canUse, remainingTime),
+        expiresAt: remainingTime > 0 ? new Date(Date.now() + remainingTime * 1000) : null
+      };
+      
+    } catch (error) {
+      throw new Error(`Stream validation failed: ${error.message}`);
+    }
+  }
+  
+  private determineAccessLevel(canUse: boolean, remainingTime: number): string {
+    if (!canUse) return 'denied';
+    if (remainingTime === 0) return 'unlimited';
+    if (remainingTime < 86400) return 'expiring_soon'; // Less than 24 hours
+    return 'active';
+  }
+}
+
+interface ServiceAccessInfo {
+  canUse: boolean;
+  remainingTime: number;
+  streamLockId: string;
+  accessLevel: string;
+  expiresAt: Date | null;
+}
+```
+
+#### 3. Stream Settlement on Usage
+```typescript
+class StreamSettlementService {
+  private producer: ethers.Contract;
+  
+  async useServiceWithSettlement(
+    custumerPlanId: number, 
+    usageAmount: number = 1
+  ): Promise<UsageResult> {
+    try {
+      // First validate access
+      const accessInfo = await this.validateServiceAccess(custumerPlanId);
+      if (!accessInfo.canUse) {
+        throw new Error('Service access denied');
+      }
+      
+      // Settle stream and update usage
+      const tx = await this.producer.settleStreamOnUsage(custumerPlanId, usageAmount);
+      const receipt = await tx.wait();
+      
+      // Parse settlement events
+      const events = receipt.events?.filter(e => e.event === 'StreamUsageValidated') || [];
+      const settlementSuccess = events.length > 0 && events[0].args?.canUse;
+      
+      return {
+        success: true,
+        usageConsumed: usageAmount,
+        settlementSuccess,
+        transactionHash: receipt.transactionHash,
+        newAccessInfo: await this.validateServiceAccess(custumerPlanId)
+      };
+      
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+}
+
+interface UsageResult {
+  success: boolean;
+  usageConsumed?: number;
+  settlementSuccess?: boolean;
+  transactionHash?: string;
+  newAccessInfo?: ServiceAccessInfo;
+  error?: string;
+}
+```
+
+### Plan Type Specific Stream Implementations
+
+#### API Plans with Stream Payment
+```typescript
+// Example: Continuous API access with streaming payments
+const streamingApiPlan = {
+  planId: 3001,
+  name: "Streaming API Pro",
+  description: "Continuous API access with real-time streaming payments",
+  flowRate: "385802469135802", // ~1 DAI per month in wei/second
+  perMonthLimit: 50000,
+  streamDuration: 2592000, // 30 days
+  autoRenewal: true
+};
+
+class StreamingApiService {
+  async createApiSubscription(planId: number, duration: number): Promise<StreamPlanResult> {
+    const customerPlan = {
+      customerAddress: await this.signer.getAddress(),
+      planId,
+      producerId: this.producerId,
+      tokenAddress: this.daiAddress,
+      quota: Number.MAX_SAFE_INTEGER, // Unlimited for API
+      planType: 0 // API plan
+    };
+    
+    return await this.planManager.createCustomerPlanWithStream(customerPlan, duration);
+  }
+  
+  async useStreamingApi(custumerPlanId: number, apiCall: ApiCall): Promise<ApiResponse> {
+    // Validate stream before usage
+    const accessInfo = await this.validator.validateServiceAccess(custumerPlanId);
+    if (!accessInfo.canUse) {
+      throw new Error('Stream payment insufficient');
+    }
+    
+    // Make API call
+    const response = await this.makeApiCall(apiCall);
+    
+    // Stream settlement handled automatically by StreamLockManager
+    // No explicit quota consumption for API plans
+    
+    return response;
+  }
+}
+```
+
+#### VestingApi Plans with Cliff + Stream
+```typescript
+// Example: Premium content access with cliff payment + streaming
+const vestingContentPlan = {
+  planId: 4001,
+  name: "Premium Research Vault",
+  description: "1-year access to premium research with initial bonus",
+  cliffAmount: ethers.utils.parseEther("1000"), // $1000 immediate access
+  monthlyStreamAmount: ethers.utils.parseEther("500"), // $500 per month for 11 months
+  cliffDate: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours from now
+  totalValue: ethers.utils.parseEther("6500") // $6500 total value
+};
+
+class VestingContentService {
+  async createVestingSubscription(planId: number): Promise<StreamPlanResult> {
+    const vestingInfo = await this.producer.getPlanInfoVesting(planId);
+    const streamDuration = 11 * 30 * 24 * 60 * 60; // 11 months
+    
+    const customerPlan = {
+      customerAddress: await this.signer.getAddress(),
+      planId,
+      producerId: this.producerId,
+      tokenAddress: this.usdcAddress,
+      quota: Number.MAX_SAFE_INTEGER, // Unlimited for vesting
+      planType: 2 // VestingApi plan
+    };
+    
+    return await this.planManager.createCustomerPlanWithStream(customerPlan, streamDuration);
+  }
+  
+  async accessPremiumContent(custumerPlanId: number, contentId: string): Promise<ContentAccess> {
+    const accessInfo = await this.validator.validateServiceAccess(custumerPlanId);
+    
+    if (!accessInfo.canUse) {
+      throw new Error('Vesting period not started or insufficient payment');
+    }
+    
+    // Check if cliff period has passed
+    const customerPlan = await this.producer.getCustomerPlan(custumerPlanId);
+    const vestingInfo = await this.producer.getPlanInfoVesting(customerPlan.planId);
+    
+    if (Date.now() / 1000 < vestingInfo.cliffDate) {
+      return {
+        access: 'cliff_only',
+        content: await this.getCliffContent(contentId),
+        fullAccessDate: new Date(vestingInfo.cliffDate * 1000)
+      };
+    }
+    
+    return {
+      access: 'full',
+      content: await this.getFullContent(contentId),
+      streamActive: accessInfo.streamLockId !== ethers.constants.HashZero
+    };
+  }
+}
+
+interface ContentAccess {
+  access: 'cliff_only' | 'full' | 'denied';
+  content?: any;
+  fullAccessDate?: Date;
+  streamActive?: boolean;
+}
+```
+
+### Stream Monitoring and Analytics
+```typescript
+class StreamAnalytics {
+  private producer: ethers.Contract;
+  private streamLockManager: ethers.Contract;
+  
+  async getStreamMetrics(custumerPlanId: number): Promise<StreamMetrics> {
+    try {
+      const streamLockId = await this.producer.getStreamLockIdForCustomerPlan(custumerPlanId);
+      
+      if (streamLockId === ethers.constants.HashZero) {
+        return { hasStream: false };
+      }
+      
+      const [isActive, isExpired, accruedAmount, remainingAmount, remainingTime] = 
+        await this.streamLockManager.getStreamStatus(streamLockId);
+      
+      return {
+        hasStream: true,
+        streamLockId,
+        isActive,
+        isExpired,
+        accruedAmount: ethers.utils.formatEther(accruedAmount),
+        remainingAmount: ethers.utils.formatEther(remainingAmount),
+        remainingTime: remainingTime.toNumber(),
+        progressPercentage: this.calculateProgress(accruedAmount, remainingAmount),
+        estimatedEndDate: new Date(Date.now() + remainingTime.toNumber() * 1000)
+      };
+      
+    } catch (error) {
+      throw new Error(`Stream metrics failed: ${error.message}`);
+    }
+  }
+  
+  private calculateProgress(accrued: ethers.BigNumber, remaining: ethers.BigNumber): number {
+    const total = accrued.add(remaining);
+    if (total.isZero()) return 0;
+    return accrued.mul(100).div(total).toNumber();
+  }
+}
+
+interface StreamMetrics {
+  hasStream: boolean;
+  streamLockId?: string;
+  isActive?: boolean;
+  isExpired?: boolean;
+  accruedAmount?: string;
+  remainingAmount?: string;
+  remainingTime?: number;
+  progressPercentage?: number;
+  estimatedEndDate?: Date;
+}
+```
+
+---
+
 ## Plan Türü Örnekleri
 
 ### 1. API Subscription Plan (Streaming)

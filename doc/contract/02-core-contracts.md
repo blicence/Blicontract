@@ -253,8 +253,11 @@ contract Producer is
 IURIGenerator public uriGenerator;
 IProducerStorage public producerStorage;
 IProducerNUsage public producerNUsage;
-IProducerVestingApi public producerVestingApi;
-IProducerApi public producerApi;
+IStreamLockManager public streamLockManager;
+
+// Mapping to store stream lock IDs for customer plans
+mapping(uint256 => bytes32) public customerPlanToStreamLock;
+mapping(bytes32 => uint256) public streamLockToCustomerPlan;
 ```
 
 ### Olaylar
@@ -265,6 +268,19 @@ event LogAddPlan(
     address producerAddress,
     string name,
     DataTypes.PlanTypes planType
+);
+
+event CustomerPlanWithStreamCreated(
+    uint256 indexed customerPlanId,
+    bytes32 indexed streamLockId,
+    address indexed customer
+);
+
+event StreamUsageValidated(
+    uint256 indexed customerPlanId,
+    bytes32 indexed streamLockId,
+    address indexed customer,
+    bool canUse
 );
 ```
 
@@ -283,17 +299,17 @@ Kontratın yalnızca proxy üzerinden başlatılabilmesini sağlar.
 function initialize(
     address payable user,
     address _uriGeneratorAddress,
-    address _producerApiAddress,
     address _producerNUsageAddress,
-    address _producerVestingApiAddress,
-    address _producerStorageAddress
+    address _producerStorageAddress,
+    address _streamLockManagerAddress
 ) external initializer onlyProxy
 ```
 
 **İşlemler:**
-1. OpenZeppelin kontratlarını başlatır (`Ownable`, `Pausable`)
+1. OpenZeppelin kontratlarını başlatır (`Ownable`, `Pausable`, `ReentrancyGuard`)
 2. Bağımlılık kontratlarının arayüzlerini ayarlar
-3. Sahipliği `user` adresine devreder
+3. StreamLockManager entegrasyonunu yapılandırır
+4. Sahipliği `user` adresine devreder
 
 ### Plan Yönetimi
 
@@ -330,47 +346,177 @@ function addCustomerPlan(DataTypes.CustomerPlan memory vars) public
 
 **Plan Türüne Göre İşlemler:**
 
-**1. Vesting API Planları:**
-```solidity
-if (vars.planType == DataTypes.PlanTypes.vestingApi) {
-    producerVestingApi.addCustomerPlan(vars);
-}
-```
-
-**2. NUsage Planları:**
+**1. NUsage Planları:**
 ```solidity
 if (vars.planType == DataTypes.PlanTypes.nUsage) {
     // Kota kontrolü
     require(vars.remainingQuota > 0, "remainingQuota must be higher than zero!");
     
     // Bakiye kontrolü
-    require(ERC20(plan.priceAddress).balanceOf(msg.sender) >= 
+    require(SolmateERC20(plan.priceAddress).balanceOf(msg.sender) >= 
             pInfoNUsage.oneUsagePrice * vars.remainingQuota, 
             "Amount must be higher than zero!");
     
-    // Token transferi
-    SafeTransferLib.safeTransferFrom(
-        ERC20(plan.priceAddress), 
-        msg.sender, 
-        address(this), 
-        pInfoNUsage.oneUsagePrice * vars.remainingQuota
+    // Stream oluşturma
+    uint256 totalAmount = pInfoNUsage.oneUsagePrice * vars.remainingQuota;
+    uint256 streamDuration = _calculateStreamDuration(vars.planId, vars.remainingQuota);
+    
+    streamLockId = _createCustomerPlanStream(
+        vars.custumerPlanId,
+        msg.sender,
+        address(this),
+        address(plan.priceAddress),
+        totalAmount,
+        streamDuration
     );
     
     producerNUsage.addCustomerPlan(vars);
 }
 ```
 
-**3. API Planları:**
-```solidity
-if (vars.planType == DataTypes.PlanTypes.api) {
-    producerApi.addCustomerPlan(vars);
-}
-```
-
 **Son Adım:**
 ```solidity
 uriGenerator.mint(vars); // NFT basımı
+
+// Stream event
+if (streamLockId != bytes32(0)) {
+    emit CustomerPlanWithStreamCreated(vars.custumerPlanId, streamLockId, msg.sender);
+}
 ```
+
+#### `addCustomerPlanWithStream()` - ✨ Yeni Özellik
+```solidity
+function addCustomerPlanWithStream(
+    DataTypes.CustomerPlan memory vars,
+    uint256 streamDuration
+) external returns (uint256 custumerPlanId, bytes32 streamLockId)
+```
+
+**Amaç**: Gelişmiş customer plan oluşturma ile explicit stream yapılandırması
+
+**Desteklenen Plan Türleri:**
+
+**1. NUsage Plans (Kota Tabanlı):**
+- Token bakiye kontrolü
+- Kota validasyonu 
+- Stream oluşturma (eğer duration > 0)
+- ProducerNUsage entegrasyonu
+
+**2. API Plans (Subscription Tabanlı):** ✨ **YENİ**
+```solidity
+else if (vars.planType == DataTypes.PlanTypes.api) {
+    DataTypes.PlanInfoApi memory pInfoApi = producerStorage.getPlanInfoApi(vars.planId);
+    
+    // Stream oluşturma
+    if (streamDuration > 0 && address(streamLockManager) != address(0)) {
+        uint256 totalAmount = uint256(int256(pInfoApi.flowRate)) * streamDuration;
+        
+        // StreamLockManager üzerinden stream oluştur
+        streamLockId = streamLockManager.createStreamForCustomerPlan(...);
+        
+        // Mapping kaydet
+        customerPlanToStreamLock[custumerPlanId] = streamLockId;
+        streamLockToCustomerPlan[streamLockId] = custumerPlanId;
+    }
+    
+    // Unlimited quota for API plans
+    vars.remainingQuota = type(uint256).max;
+    vars.endDate = uint32(block.timestamp + streamDuration);
+    
+    producerStorage.addCustomerPlan(vars);
+}
+```
+
+**3. VestingApi Plans (Zaman Tabanlı):** ✨ **YENİ**
+```solidity
+else if (vars.planType == DataTypes.PlanTypes.vestingApi) {
+    DataTypes.PlanInfoVesting memory pInfoVesting = producerStorage.getPlanInfoVesting(vars.planId);
+    
+    // Cliff date kontrolü
+    require(pInfoVesting.cliffDate > block.timestamp, "Cliff date must be in the future");
+    
+    // Total vesting amount (cliff + stream)
+    uint256 streamAmount = uint256(int256(pInfoVesting.flowRate)) * streamDuration;
+    uint256 totalAmount = pInfoVesting.startAmount + streamAmount;
+    
+    // Stream oluşturma
+    if (streamDuration > 0 && address(streamLockManager) != address(0)) {
+        streamLockId = streamLockManager.createStreamForCustomerPlan(...);
+        
+        // Mapping kaydet
+        customerPlanToStreamLock[custumerPlanId] = streamLockId;
+        streamLockToCustomerPlan[streamLockId] = custumerPlanId;
+    }
+    
+    // Unlimited quota + cliff + stream end date
+    vars.remainingQuota = type(uint256).max;
+    vars.endDate = uint32(pInfoVesting.cliffDate + streamDuration);
+    
+    producerStorage.addCustomerPlan(vars);
+}
+```
+
+### Stream Validasyon Fonksiyonları ✨ **YENİ BÖLÜM**
+
+#### `validateUsageWithStream()`
+```solidity
+function validateUsageWithStream(uint256 customerPlanId) 
+    external view returns (bool canUse, uint256 remainingTime, bytes32 streamLockId)
+```
+
+**Amaç**: Stream durumuna göre servis kullanım izni kontrolü
+
+**İş Akışı:**
+1. **Customer Plan Kontrolü**: Aktif olduğunu doğrula
+2. **Stream Lookup**: customerPlanToStreamLock mapping'den stream ID al
+3. **Stream Status**: StreamLockManager'dan durumu sorgula
+4. **Fallback Logic**: Stream yoksa geleneksel kota/tarih kontrolü
+
+#### `settleStreamOnUsage()`
+```solidity
+function settleStreamOnUsage(uint256 customerPlanId, uint256 usageAmount) 
+    external returns (bool success)
+```
+
+**Amaç**: Servis kullanımında stream güncelleme ve customer plan settlement
+
+**İşlemler:**
+1. StreamLockManager.updateStreamOnUsage() çağır
+2. NUsage plan ise kota düşür
+3. Storage'da customer plan güncelle
+4. Event emit et
+
+#### `checkStreamBeforeUsage()`
+```solidity
+function checkStreamBeforeUsage(uint256 customerPlanId, address customer) 
+    public returns (bool canUse)
+```
+
+**Amaç**: Servis kullanımı öncesi stream durumu kontrolü
+
+#### Helper Fonksiyonlar
+
+**Stream Mapping Fonksiyonları:**
+```solidity
+function getStreamLockIdForCustomerPlan(uint256 customerPlanId) external view returns (bytes32)
+function getCustomerPlanIdForStreamLock(bytes32 streamLockId) external view returns (uint256)
+```
+
+**Stream Duration Hesaplama:**
+```solidity
+function _calculateStreamDuration(uint256 planId, uint256 quota) internal view returns (uint256)
+```
+- NUsage planları için kota bazlı süre hesaplama
+- Kota <= 10: 7 gün
+- Kota <= 100: 30 gün  
+- Kota > 100: 90 gün
+
+**Stream Oluşturma:**
+```solidity
+function _createCustomerPlanStream(...) internal returns (bytes32 lockId)
+```
+- StreamLockManager entegrasyonu
+- Hata durumunda graceful fallback
 
 #### `updateCustomerPlan()`
 ```solidity

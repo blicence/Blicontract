@@ -22,5 +22,6 @@
   "function getUnlockedBalance(address,address) view returns (uint256)",
   "function getUserActiveStreams(address) view returns (bytes32[])",
   "function settleStream(bytes32) returns (uint256, uint256)",
+  "function updateStreamOnUsage(bytes32,uint256) returns (bool)",
   "function validateStreamAccess(address,bytes32) view returns (bool, uint256)"
 ]

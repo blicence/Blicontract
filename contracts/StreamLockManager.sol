@@ -546,6 +546,39 @@ contract StreamLockManager is
     }
 
     /**
+     * @dev Update stream on usage - for internal tracking
+     * @param lockId Stream lock ID
+     * @param usageAmount Amount used (for logging purposes)
+     * @return success Whether update was successful
+     */
+    function updateStreamOnUsage(bytes32 lockId, uint256 usageAmount) external override onlyAuthorized returns (bool success) {
+        TokenLock storage lock = tokenLocks[lockId];
+        if (lock.lockId == bytes32(0)) {
+            revert StreamNotFound();
+        }
+        
+        if (!lock.isActive) {
+            revert StreamNotActive();
+        }
+        
+        // Calculate current accrued amount
+        uint256 accrued = calculateAccruedAmount(lockId);
+        
+        // Emit usage tracking event
+        emit StreamUsageRecorded(lockId, usageAmount, accrued, block.timestamp);
+        
+        return true;
+    }
+
+    // New event for usage tracking
+    event StreamUsageRecorded(
+        bytes32 indexed lockId,
+        uint256 usageAmount,
+        uint256 accruedAmount,
+        uint256 timestamp
+    );
+
+    /**
      * @dev Authorize contract upgrades (UUPS pattern)
      */
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}

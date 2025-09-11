@@ -32,6 +32,10 @@ contract Producer is
     IProducerNUsage public producerNUsage;
     IStreamLockManager public streamLockManager;
 
+    // Mapping to store stream lock IDs for customer plans
+    mapping(uint256 => bytes32) public customerPlanToStreamLock;
+    mapping(bytes32 => uint256) public streamLockToCustomerPlan;
+
    event LogAddPlan(
         uint256 planId,
         address producerAddress,
@@ -174,7 +178,6 @@ modifier onlyCustomer(address   customerAddress) {
         
         if (vars.planType == DataTypes.PlanTypes.nUsage) {
             
-            // todo add payment to the producer
             DataTypes.PlanInfoNUsage memory pInfoNUsage= producerStorage.getPlanInfoNUsage(vars.planId);
             DataTypes.Plan memory plan= producerStorage.getPlan(vars.planId);
             require(vars.remainingQuota >0, "remainingQuota must be higher than zero!");
@@ -241,8 +244,8 @@ modifier onlyCustomer(address   customerAddress) {
         uint256 customerPlanId,
         address customer
     ) public returns (bool canUse) {
-        // Get associated stream lock ID
-        bytes32 streamLockId = _getStreamLockIdForCustomerPlan(customerPlanId);
+        // Get associated stream lock ID from mapping
+        bytes32 streamLockId = customerPlanToStreamLock[customerPlanId];
         
         if (streamLockId != bytes32(0) && address(streamLockManager) != address(0)) {
             // Validate through StreamLockManager
@@ -262,11 +265,17 @@ modifier onlyCustomer(address   customerAddress) {
      * @param customerPlanId Customer plan ID
      * @return streamLockId Associated stream lock ID
      */
-    function _getStreamLockIdForCustomerPlan(uint256 customerPlanId) internal pure returns (bytes32 streamLockId) {
-        // TODO: Implement storage mapping from customerPlanId to streamLockId
-        // For now, return empty for backward compatibility
-        customerPlanId; // Silence unused parameter warning
-        return bytes32(0);
+    function getStreamLockIdForCustomerPlan(uint256 customerPlanId) external view returns (bytes32 streamLockId) {
+        return customerPlanToStreamLock[customerPlanId];
+    }
+
+    /**
+     * @dev Get customer plan ID for stream lock
+     * @param streamLockId Stream lock ID
+     * @return customerPlanId Associated customer plan ID
+     */
+    function getCustomerPlanIdForStreamLock(bytes32 streamLockId) external view returns (uint256 customerPlanId) {
+        return streamLockToCustomerPlan[streamLockId];
     }
 
    function useFromQuota(
@@ -391,15 +400,11 @@ modifier onlyCustomer(address   customerAddress) {
         uint256 customerPlanId,
         address customer
     ) external pure returns (bool canUse, bytes32 streamLockId) {
-        // Get stream lock ID for customer plan (would need to be stored in mapping)
-        // For now, return true for backward compatibility
+        // For backward compatibility only - use validateUsageWithStream instead
         customerPlanId; // Silence unused parameter warning
         customer; // Silence unused parameter warning
         canUse = true;
         streamLockId = bytes32(0);
-        
-        // TODO: Implement mapping from customerPlanId to streamLockId
-        // and validate through StreamLockManager
     }
 
     /**
@@ -408,6 +413,256 @@ modifier onlyCustomer(address   customerAddress) {
      */
     function setStreamLockManager(address _streamLockManager) external onlyOwner {
         streamLockManager = IStreamLockManager(_streamLockManager);
+    }
+
+    /**
+     * @dev Enhanced customer plan creation with explicit stream configuration
+     * @param vars Customer plan data
+     * @param streamDuration Duration for the stream in seconds (0 = no stream)
+     * @return custumerPlanId The created customer plan ID
+     * @return streamLockId The created stream lock ID (bytes32(0) if no stream)
+     */
+    function addCustomerPlanWithStream(
+        DataTypes.CustomerPlan memory vars,
+        uint256 streamDuration
+    ) external returns (uint256 custumerPlanId, bytes32 streamLockId) {
+        
+        // Validate plan exists and is active
+        DataTypes.Plan memory plan = producerStorage.getPlan(vars.planId);
+        require(plan.status == DataTypes.Status.active, "Plan is not active");
+        
+        // Generate unique customer plan ID
+        custumerPlanId = _generateCustomerPlanId(vars.planId, msg.sender);
+        vars.custumerPlanId = custumerPlanId;
+        
+        if (vars.planType == DataTypes.PlanTypes.nUsage) {
+            DataTypes.PlanInfoNUsage memory pInfoNUsage = producerStorage.getPlanInfoNUsage(vars.planId);
+            
+            require(vars.remainingQuota > 0, "Remaining quota must be higher than zero");
+            
+            uint256 totalAmount = pInfoNUsage.oneUsagePrice * vars.remainingQuota;
+            require(
+                SolmateERC20(address(plan.priceAddress)).balanceOf(msg.sender) >= totalAmount,
+                "Insufficient token balance"
+            );
+            
+            // Create stream if duration is specified and StreamLockManager is available
+            if (streamDuration > 0 && address(streamLockManager) != address(0)) {
+                try streamLockManager.createStreamForCustomerPlan(
+                    custumerPlanId,
+                    msg.sender,
+                    address(this),
+                    address(plan.priceAddress),
+                    totalAmount,
+                    streamDuration
+                ) returns (bytes32 lockId) {
+                    streamLockId = lockId;
+                    
+                    // Store mapping between customer plan and stream
+                    customerPlanToStreamLock[custumerPlanId] = streamLockId;
+                    streamLockToCustomerPlan[streamLockId] = custumerPlanId;
+                    
+                    emit CustomerPlanWithStreamCreated(custumerPlanId, streamLockId, msg.sender);
+                } catch {
+                    // If stream creation fails, proceed without stream
+                    streamLockId = bytes32(0);
+                }
+            }
+            
+            // Add customer plan through NUsage logic
+            producerNUsage.addCustomerPlan(vars);
+        } else if (vars.planType == DataTypes.PlanTypes.api) {
+            DataTypes.PlanInfoApi memory pInfoApi = producerStorage.getPlanInfoApi(vars.planId);
+            
+            // For API plans, create stream for monthly payment
+            if (streamDuration > 0 && address(streamLockManager) != address(0)) {
+                // Calculate total amount for the stream duration
+                uint256 totalAmount = uint256(int256(pInfoApi.flowRate)) * streamDuration; // flowRate * seconds
+                
+                require(
+                    SolmateERC20(address(plan.priceAddress)).balanceOf(msg.sender) >= totalAmount,
+                    "Insufficient token balance for API plan"
+                );
+                
+                try streamLockManager.createStreamForCustomerPlan(
+                    custumerPlanId,
+                    msg.sender,
+                    address(this),
+                    address(plan.priceAddress),
+                    totalAmount,
+                    streamDuration
+                ) returns (bytes32 lockId) {
+                    streamLockId = lockId;
+                    
+                    // Store mapping between customer plan and stream
+                    customerPlanToStreamLock[custumerPlanId] = streamLockId;
+                    streamLockToCustomerPlan[streamLockId] = custumerPlanId;
+                    
+                    emit CustomerPlanWithStreamCreated(custumerPlanId, streamLockId, msg.sender);
+                } catch {
+                    // If stream creation fails, proceed without stream
+                    streamLockId = bytes32(0);
+                }
+            }
+            
+            // Set unlimited quota for API plans
+            vars.remainingQuota = type(uint256).max;
+            vars.endDate = uint32(block.timestamp + streamDuration);
+            
+            // Add customer plan through storage
+            producerStorage.addCustomerPlan(vars);
+            
+        } else if (vars.planType == DataTypes.PlanTypes.vestingApi) {
+            DataTypes.PlanInfoVesting memory pInfoVesting = producerStorage.getPlanInfoVesting(vars.planId);
+            
+            // For vesting plans, handle cliff amount and streaming
+            require(pInfoVesting.cliffDate > block.timestamp, "Cliff date must be in the future");
+            
+            // Calculate total vesting amount (cliff + stream)
+            uint256 streamAmount = uint256(int256(pInfoVesting.flowRate)) * streamDuration;
+            uint256 totalAmount = pInfoVesting.startAmount + streamAmount;
+            
+            require(
+                SolmateERC20(address(plan.priceAddress)).balanceOf(msg.sender) >= totalAmount,
+                "Insufficient token balance for vesting plan"
+            );
+            
+            // Create stream for the vesting portion (after cliff)
+            if (streamDuration > 0 && address(streamLockManager) != address(0)) {
+                try streamLockManager.createStreamForCustomerPlan(
+                    custumerPlanId,
+                    msg.sender,
+                    address(this),
+                    address(plan.priceAddress),
+                    totalAmount,
+                    streamDuration
+                ) returns (bytes32 lockId) {
+                    streamLockId = lockId;
+                    
+                    // Store mapping between customer plan and stream
+                    customerPlanToStreamLock[custumerPlanId] = streamLockId;
+                    streamLockToCustomerPlan[streamLockId] = custumerPlanId;
+                    
+                    emit CustomerPlanWithStreamCreated(custumerPlanId, streamLockId, msg.sender);
+                } catch {
+                    // If stream creation fails, proceed without stream
+                    streamLockId = bytes32(0);
+                }
+            }
+            
+            // Set plan end date based on cliff + stream duration
+            vars.remainingQuota = type(uint256).max; // Unlimited for vesting
+            vars.endDate = uint32(pInfoVesting.cliffDate + streamDuration);
+            
+            // Add customer plan through storage
+            producerStorage.addCustomerPlan(vars);
+        }
+        
+        // Mint NFT representing the subscription
+        uriGenerator.mint(vars);
+        
+        return (custumerPlanId, streamLockId);
+    }
+
+    /**
+     * @dev Validate if customer can use service based on stream status
+     * @param customerPlanId Customer plan ID
+     * @return canUse Whether customer can use the service
+     * @return remainingTime Time remaining in stream (0 if unlimited or no stream)
+     * @return streamLockId Associated stream lock ID
+     */
+    function validateUsageWithStream(
+        uint256 customerPlanId
+    ) external view returns (bool canUse, uint256 remainingTime, bytes32 streamLockId) {
+        
+        // First check if customer plan exists and is active
+        DataTypes.CustomerPlan memory customerPlan = producerStorage.getCustomerPlan(customerPlanId);
+        
+        if (customerPlan.status != DataTypes.Status.active) {
+            return (false, 0, bytes32(0));
+        }
+        
+        // Get associated stream lock ID from mapping
+        streamLockId = customerPlanToStreamLock[customerPlanId];
+        
+        // If no stream, check traditional quota/expiry logic
+        if (streamLockId == bytes32(0) || address(streamLockManager) == address(0)) {
+            bool hasQuota = (customerPlan.remainingQuota > 0 || customerPlan.remainingQuota == type(uint256).max);
+            bool notExpired = (customerPlan.endDate == 0 || block.timestamp <= customerPlan.endDate);
+            return (hasQuota && notExpired, customerPlan.endDate > block.timestamp ? customerPlan.endDate - block.timestamp : 0, streamLockId);
+        }
+        
+        // Check stream status
+        try streamLockManager.getStreamStatus(streamLockId) returns (
+            bool isActive,
+            bool isExpired,
+            uint256 accruedAmount,
+            uint256, // remainingAmount - unused
+            uint256 streamRemainingTime
+        ) {
+            // Stream is valid if active and not expired
+            canUse = isActive && !isExpired && accruedAmount > 0;
+            remainingTime = streamRemainingTime;
+        } catch {
+            // If stream check fails, fall back to traditional validation
+            bool hasQuota = customerPlan.remainingQuota > 0;
+            bool notExpired = (customerPlan.endDate == 0 || block.timestamp <= customerPlan.endDate);
+            canUse = hasQuota && notExpired;
+            remainingTime = customerPlan.endDate > block.timestamp ? customerPlan.endDate - block.timestamp : 0;
+        }
+        
+        return (canUse, remainingTime, streamLockId);
+    }
+
+    /**
+     * @dev Settle stream and update customer plan on service usage
+     * @param customerPlanId Customer plan ID
+     * @param usageAmount Amount of usage to deduct
+     * @return success Whether settlement was successful
+     */
+    function settleStreamOnUsage(
+        uint256 customerPlanId,
+        uint256 usageAmount
+    ) external returns (bool success) {
+        
+        DataTypes.CustomerPlan memory customerPlan = producerStorage.getCustomerPlan(customerPlanId);
+        require(customerPlan.status == DataTypes.Status.active, "Customer plan not active");
+        
+        // Get associated stream lock ID from mapping
+        bytes32 streamLockId = customerPlanToStreamLock[customerPlanId];
+        
+        if (streamLockId != bytes32(0) && address(streamLockManager) != address(0)) {
+            // Try to update stream on usage
+            try streamLockManager.updateStreamOnUsage(streamLockId, usageAmount) {
+                emit StreamUsageValidated(customerPlanId, streamLockId, msg.sender, true);
+            } catch {
+                // Stream update failed, proceed with traditional logic
+                emit StreamUsageValidated(customerPlanId, streamLockId, msg.sender, false);
+            }
+        }
+        
+        // Update customer plan usage if it's nUsage type
+        if (customerPlan.planType == DataTypes.PlanTypes.nUsage) {
+            require(customerPlan.remainingQuota >= usageAmount, "Insufficient quota");
+            
+            // Update the customer plan
+            customerPlan.remainingQuota -= usageAmount;
+            
+            // Update in storage
+            producerStorage.updateCustomerPlan(customerPlan);
+        }
+        
+        return true;
+    }
+
+    /**
+     * @dev Generate unique customer plan ID
+     * @param planId Plan ID
+     * @param customer Customer address
+     * @return Unique customer plan ID
+     */
+    function _generateCustomerPlanId(uint256 planId, address customer) internal view returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(planId, customer, address(this), block.timestamp)));
     }
 
     /**

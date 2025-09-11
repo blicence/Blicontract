@@ -143,4 +143,6 @@ interface IStreamLockManager {
         uint256 totalAmount,
         uint256 duration
     ) external returns (bytes32 lockId);
+
+    function updateStreamOnUsage(bytes32 lockId, uint256 usageAmount) external returns (bool success);
 }

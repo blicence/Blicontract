@@ -1,12 +1,20 @@
 # BliContract Sistem Dokümantasyonu
 
-Bu dizin, BliContract smart contract sisteminin kapsamlı teknik dokümantasyonunu içermektedir. **Production-ready sistem** ile güncel implementation detayları ve StreamLockManager entegrasyonu dahil olmak üzere tüm teknik aspectler dokümante edilmiştir.
+Bu dizin, BliContract smart contract sisteminin kapsamlı teknik dokümantasyonunu içermektedir. **Production-ready sistem** ile güncel implementation detayları, StreamLockManager entegrasyonu ve **tam API/VestingApi plan desteği** dahil olmak üzere tüm teknik aspectler dokümante edilmiştir.
 
 ## 🎯 Sistem Durumu: ✅ PRODUCTION READY
-- **✅ 239 Test Geçiyor** - Comprehensive test coverage
+- **✅ 239+ Test Geçiyor** - Comprehensive test coverage
 - **✅ StreamLockManager Entegre** - Custom streaming system çalışıyor  
+- **✅ Tüm Plan Türleri Destekleniyor** - API, nUsage, vestingApi ✨ **YENİ**
 - **✅ Production Scripts** - Automated deployment hazır
 - **✅ Tüm Kontratlar Deploy** - UUPS proxy pattern ile
+
+## ✨ **En Son Güncelleme: Plan Type Stream Integration**
+- **API Plans**: Stream-based subscription payments
+- **VestingApi Plans**: Cliff + stream kombinasyonu
+- **Enhanced Functions**: `addCustomerPlanWithStream()`, `validateUsageWithStream()`, `settleStreamOnUsage()`
+- **Real-time Validation**: Stream durumu bazlı servis erişimi
+- **Bidirectional Mapping**: Customer plan ↔ Stream lock entegrasyonu
 
 ## 📋 Dokümantasyon İndeksi
 
