@@ -53,6 +53,64 @@ contract ProducerApi is
 IProducerStorage public producerStorage;
 ```
 
+### Ana Fonksiyonlar
+
+#### `addPlanInfoApi(DataTypes.PlanInfoApi memory _planInfoApi)`
+API plan bilgilerini ekler ve stream parametrelerini ayarlar.
+
+**Parametreler:**
+- `_planInfoApi`: API planına özgü bilgiler (flowRate, baseQuota vs.)
+
+**Güvenlik:**
+- Yalnızca doğru Producer kontratı çağrı yapabilir
+- Plan türü API olmalıdır
+
+**Örnek Kullanım:**
+```solidity
+DataTypes.PlanInfoApi memory apiInfo = DataTypes.PlanInfoApi({
+    planId: 1,
+    flowRate: 1000000000000000000, // 1 token per second
+    baseQuota: 10000 // 10k API calls base quota
+});
+producerApi.addPlanInfoApi(apiInfo);
+```
+
+#### `validateApiUsage(uint256 _customerPlanId, uint256 _requestedUsage)`
+API kullanım talebini doğrular ve quota kontrolü yapar.
+
+**Parametreler:**
+- `_customerPlanId`: Müşteri plan ID'si
+- `_requestedUsage`: Talep edilen kullanım miktarı
+
+**Döndürür:**
+- `isValid`: Kullanımın geçerli olup olmadığı
+- `remainingQuota`: Kalan quota miktarı
+
+#### `processApiUsage(uint256 _customerPlanId, uint256 _usageAmount)`
+API kullanımını işler ve stream hesaplamalarını yapar.
+
+**Parametreler:**
+- `_customerPlanId`: Müşteri plan ID'si  
+- `_usageAmount`: Kullanılan miktar
+
+#### `calculateApiCost(uint256 _planId, uint256 _usageAmount)`
+API kullanım maliyetini hesaplar.
+
+**Parametreler:**
+- `_planId`: Plan ID'si
+- `_usageAmount`: Kullanım miktarı
+
+**Döndürür:**
+- `cost`: Hesaplanan maliyet
+
+### Olaylar (Events)
+
+```solidity
+event PlanInfoApiAdded(uint256 indexed planId, uint256 flowRate, uint256 baseQuota);
+event ApiUsageProcessed(uint256 indexed customerPlanId, uint256 usageAmount, uint256 cost);
+event ApiUsageValidated(uint256 indexed customerPlanId, bool isValid, uint256 remainingQuota);
+```
+
 ### Superfluid Entegrasyonu
 
 #### Kütüphane Kullanımı
@@ -62,7 +120,7 @@ using SuperTokenV1Library for ISuperToken;
 
 **SuperTokenV1Library**: Superfluid token işlemleri için yardımcı kütüphane
 
-### Olaylar
+### Olaylar (Legacy - will be deprecated)
 
 ```solidity
 event startedStream(address indexed customerAdress, address producer);
@@ -442,6 +500,140 @@ ProducerApi ile aynı mantık.
 - **Harici Scheduler**: VestingScheduler kontratı kullanımı
 - **Superfluid Entegrasyonu**: Stream tabanlı vesting
 - **Esnek Güncelleme**: Bitiş tarihi güncellenebilir
+
+---
+
+## ProducerVestingApi
+
+### Genel Bakış
+[`ProducerVestingApi.sol`](../../contracts/logic/ProducerVestingApi.sol) kontratı, vesting schedule tabanlı API planlarının mantığını yönetir. Bu kontrat cliff periyodu ve kademeli token açığa çıkarma (gradual release) işlemlerini destekler.
+
+### Kalıtım
+```solidity
+contract ProducerVestingApi is
+    Initializable,
+    OwnableUpgradeable,
+    UUPSUpgradeable,
+    DelegateCall
+```
+
+### Durum Değişkenleri
+
+```solidity
+IProducerStorage public producerStorage;
+```
+
+### Ana Fonksiyonlar
+
+#### `addPlanInfoVesting(DataTypes.PlanInfoVesting memory _planInfoVesting)`
+Vesting API plan bilgilerini ekler.
+
+**Parametreler:**
+- `_planInfoVesting`: Vesting planına özgü bilgiler (cliffDate, flowRate, startAmount)
+
+**Güvenlik:**
+- Yalnızca doğru Producer kontratı çağrı yapabilir
+- Plan türü vestingApi olmalıdır
+- Cliff tarihi gelecekte olmalıdır
+
+**Örnek Kullanım:**
+```solidity
+DataTypes.PlanInfoVesting memory vestingInfo = DataTypes.PlanInfoVesting({
+    planId: 1,
+    cliffDate: uint32(block.timestamp + 30 days), // 30 gün cliff
+    flowRate: 100000000000000000, // 0.1 token per second after cliff
+    startAmount: 1000000000000000000000 // 1000 tokens after cliff
+});
+producerVestingApi.addPlanInfoVesting(vestingInfo);
+```
+
+#### `calculateVestedAmount(uint256 _customerPlanId)`
+Müşteri planı için vest edilmiş token miktarını hesaplar.
+
+**Parametreler:**
+- `_customerPlanId`: Müşteri plan ID'si
+
+**Döndürür:**
+- `vestedAmount`: Claim edilebilir miktar
+- `totalAmount`: Toplam vesting miktarı
+
+**Hesaplama Mantığı:**
+```solidity
+// Cliff geçmediyse 0
+if (block.timestamp < vestingInfo.cliffDate) return (0, vestingInfo.startAmount);
+
+// Cliff sonrası: startAmount + (geçen_zaman * flowRate)
+uint256 timeSinceCliff = block.timestamp - vestingInfo.cliffDate;
+uint256 streamedAmount = vestingInfo.flowRate * timeSinceCliff;
+vestedAmount = vestingInfo.startAmount + streamedAmount;
+```
+
+#### `claimVestedTokens(uint256 _customerPlanId, uint256 _amount)`
+Vest edilmiş tokenları claim eder.
+
+**Parametreler:**
+- `_customerPlanId`: Müşteri plan ID'si
+- `_amount`: Claim edilecek miktar
+
+**Güvenlik:**
+- Yalnızca müşteri claim edebilir
+- Plan aktif olmalıdır
+- Vest edilmiş miktarı aşamaz
+
+#### `isCliffEnded(uint256 _customerPlanId)`
+Cliff periyodunun bitip bitmediğini kontrol eder.
+
+**Döndürür:**
+- `cliffEnded`: Cliff periyodunun durumu
+
+#### `calculateVestingSchedule(uint256 _planId, uint256 _totalAmount, uint256 _vestingDuration)`
+Vesting schedule'ını hesaplar.
+
+**Parametreler:**
+- `_planId`: Plan ID'si
+- `_totalAmount`: Toplam vest edilecek miktar
+- `_vestingDuration`: Vesting süresi (saniye)
+
+**Döndürür:**
+- `startAmount`: Cliff sonrası başlangıç miktarı (%25)
+- `flowRate`: Saniye bazında akış oranı
+
+### Olaylar (Events)
+
+```solidity
+event PlanInfoVestingAdded(uint256 indexed planId, uint32 cliffDate, uint256 flowRate, uint256 startAmount);
+event VestingStarted(uint256 indexed customerPlanId, address indexed customer, uint256 totalAmount, uint32 cliffDate);
+event TokensClaimed(uint256 indexed customerPlanId, address indexed customer, uint256 claimedAmount, uint256 remainingAmount);
+```
+
+### Vesting Akışı
+
+#### 1. Plan Oluşturma
+```
+Producer -> addPlan() -> addPlanInfoVesting()
+```
+
+#### 2. Müşteri Satın Alma
+```
+Customer -> buyPlan() -> VestingStarted event
+```
+
+#### 3. Cliff Periyodu
+```
+[30 gün bekleme] -> isCliffEnded() = true
+```
+
+#### 4. Token Claim
+```
+calculateVestedAmount() -> claimVestedTokens() -> TokensClaimed event
+```
+
+### Güvenlik Özellikleri
+
+- **Cliff Protection**: Erken token çıkarma engellenir
+- **Progressive Release**: Kademeli token açığa çıkarma
+- **Customer Only Claims**: Yalnızca müşteri kendi tokenlarını claim edebilir
+- **Amount Validation**: Vest edilmiş miktarı aşan claim engellenir
 
 ---
 

@@ -8,13 +8,16 @@ Bu dizin, BliContract smart contract sisteminin kapsamlı teknik dokümantasyonu
 - **✅ Tüm Plan Türleri Destekleniyor** - API, nUsage, vestingApi ✨ **YENİ**
 - **✅ Production Scripts** - Automated deployment hazır
 - **✅ Tüm Kontratlar Deploy** - UUPS proxy pattern ile
+- **✅ Factory Enhanced** - getAllProducers, getActiveProducers, getProducerById ✨ **YENİ**
+- **✅ Logic Layer Complete** - ProducerApi, ProducerVestingApi added ✨ **YENİ**
 
-## ✨ **En Son Güncelleme: Plan Type Stream Integration**
-- **API Plans**: Stream-based subscription payments
-- **VestingApi Plans**: Cliff + stream kombinasyonu
-- **Enhanced Functions**: `addCustomerPlanWithStream()`, `validateUsageWithStream()`, `settleStreamOnUsage()`
-- **Real-time Validation**: Stream durumu bazlı servis erişimi
-- **Bidirectional Mapping**: Customer plan ↔ Stream lock entegrasyonu
+## ✨ **En Son Güncelleme: Contract Architecture Completion**
+- **ProducerApi.sol**: Stream-based API plan logic contract
+- **ProducerVestingApi.sol**: Vesting + cliff period logic contract  
+- **Factory Enhanced**: Producer discovery and marketplace functions
+- **Frontend Integration**: Real contract data with useProducers hook
+- **Documentation Updated**: Logic layer and Factory docs completed
+- **Test Coverage**: New comprehensive tests for enhanced functionality
 
 ## 📋 Dokümantasyon İndeksi
 

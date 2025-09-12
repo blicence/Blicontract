@@ -141,5 +141,61 @@ contract Factory is Initializable, OwnableUpgradeable, UUPSUpgradeable, IFactory
         return producerStorage.currentPR_ID();
     }
 
+    /**
+     * @notice Get all producers registered in the factory
+     * @return producers Array of all producer structs
+     */
+    function getAllProducers() external view returns (DataTypes.Producer[] memory producers) {
+        uint256 totalProducers = currentPR_ID();
+        producers = new DataTypes.Producer[](totalProducers);
+        
+        for (uint256 i = 1; i <= totalProducers; i++) {
+            producers[i - 1] = producerStorage.getProducer(producerStorage.getCloneId(i));
+        }
+        
+        return producers;
+    }
+
+    /**
+     * @notice Get active producers (those with existing flag set to true)
+     * @return activeProducers Array of active producer structs
+     */
+    function getActiveProducers() external view returns (DataTypes.Producer[] memory activeProducers) {
+        uint256 totalProducers = currentPR_ID();
+        uint256 activeCount = 0;
+        
+        // First pass: count active producers
+        for (uint256 i = 1; i <= totalProducers; i++) {
+            DataTypes.Producer memory producer = producerStorage.getProducer(producerStorage.getCloneId(i));
+            if (producer.exists) {
+                activeCount++;
+            }
+        }
+        
+        // Second pass: populate active producers array
+        activeProducers = new DataTypes.Producer[](activeCount);
+        uint256 index = 0;
+        
+        for (uint256 i = 1; i <= totalProducers; i++) {
+            DataTypes.Producer memory producer = producerStorage.getProducer(producerStorage.getCloneId(i));
+            if (producer.exists) {
+                activeProducers[index] = producer;
+                index++;
+            }
+        }
+        
+        return activeProducers;
+    }
+
+    /**
+     * @notice Get producer by ID
+     * @param producerId The ID of the producer
+     * @return producer The producer struct
+     */
+    function getProducerById(uint256 producerId) external view returns (DataTypes.Producer memory producer) {
+        address cloneAddress = producerStorage.getCloneId(producerId);
+        return producerStorage.getProducer(cloneAddress);
+    }
+
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }

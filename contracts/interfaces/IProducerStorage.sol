@@ -26,11 +26,15 @@ interface IProducerStorage {
 
     function addPlanInfoApi(DataTypes.PlanInfoApi calldata vars) external;
 
+    function setPlanInfoApi(uint256 _planId, DataTypes.PlanInfoApi calldata vars) external;
+
     function addPlanInfoNUsage(DataTypes.PlanInfoNUsage calldata vars) external;
 
     function addPlanInfoVesting(
         DataTypes.PlanInfoVesting calldata vars
     ) external;
+
+    function setPlanInfoVesting(uint256 _planId, DataTypes.PlanInfoVesting calldata vars) external;
 
     function setPlan(DataTypes.Plan calldata vars) external;
 
@@ -87,6 +91,8 @@ interface IProducerStorage {
     function updateCustomerPlan(
         DataTypes.CustomerPlan calldata vars
     ) external;
+
+    function setCustomerPlan(uint256 _customerPlanId, DataTypes.CustomerPlan calldata vars) external;
 
     function exsitCustomerPlan(
         uint256 planId,

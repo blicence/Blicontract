@@ -198,6 +198,64 @@ function setProducerImplementation(address _ProducerImplementationAddress)
 
 **Amaç**: Gelecekteki klonlar için yeni implementation ayarlar
 **Kontrol**: Adresin geçerli bir kontrat olduğunu doğrular
+
+#### `getAllProducers()`
+```solidity
+function getAllProducers() external view returns (DataTypes.Producer[] memory producers)
+```
+
+**Amaç**: Sistemde kayıtlı tüm producers'ları getirir
+
+**Döndürür:**
+- `producers`: Tüm producer struct'larının array'i
+
+**İş Akışı:**
+1. Toplam producer sayısını alır (`currentPR_ID()`)
+2. Producer array'ini oluşturur
+3. Her producer ID için storage'dan bilgileri alır
+4. Array'i doldurur ve döndürür
+
+#### `getActiveProducers()`
+```solidity
+function getActiveProducers() external view returns (DataTypes.Producer[] memory activeProducers)
+```
+
+**Amaç**: Yalnızca aktif (exists=true) producers'ları getirir
+
+**Döndürür:**
+- `activeProducers`: Aktif producer struct'larının array'i
+
+**İş Akışı:**
+1. **İlk Geçiş**: Aktif producer sayısını sayar
+2. **Array Oluşturma**: Uygun boyutta array oluşturur
+3. **İkinci Geçiş**: Aktif producers'ları array'e ekler
+
+**Optimizasyon**: İki geçişli yaklaşım ile memory kullanımını optimize eder
+
+#### `getProducerById()`
+```solidity
+function getProducerById(uint256 producerId) external view returns (DataTypes.Producer memory producer)
+```
+
+**Amaç**: Belirli ID'ye sahip producer'ı getirir
+
+**Parametreler:**
+- `producerId`: Producer ID'si
+
+**Döndürür:**
+- `producer`: Producer struct'ı
+
+**İş Akışı:**
+1. Producer ID'den clone adresini alır
+2. Clone adresinden producer bilgilerini alır
+
+#### `currentPR_ID()` & `incrementPR_ID()`
+```solidity
+function currentPR_ID() public view returns (uint256)
+function incrementPR_ID() public returns (uint256)
+```
+
+**Amaç**: Producer ID'lerini yönetir
 **Yetki**: Yalnızca sahip çağırabilir
 
 ### Yardımcı Fonksiyonlar

@@ -49,6 +49,14 @@ contract ProducerStorage is IProducerStorage, Ownable {
         producerVestingApi = _producervestingApi;
     }
 
+    /**
+     * @dev Set factory address only
+     * @param _factory Factory contract address
+     */
+    function setFactoryAddress(address _factory) external onlyOwner {
+        factory = IFactory(_factory);
+    }
+
     event LogProducer(address producerAddress, string name, uint256 producerId, address cloneAddress);
     event LogProducerSet(address producerAddress, string name, uint256 producerId, address cloneAddress);
     event LogAddPlan(uint256 planId, address producerAddress, string name, DataTypes.PlanTypes planType);
@@ -448,5 +456,44 @@ contract ProducerStorage is IProducerStorage, Ownable {
     function incrementPR_ID() public returns (uint256) {
         PR_ID++;
         return PR_ID;
+    }
+
+    /**
+     * @dev Set API plan information for a specific plan ID
+     * @param _planId Plan ID to update
+     * @param vars API plan information
+     */
+    function setPlanInfoApi(uint256 _planId, DataTypes.PlanInfoApi calldata vars) external {
+        require(
+            msg.sender == producerApi || msg.sender == owner(),
+            "Only producer API contract or owner can call this function"
+        );
+        planInfoApi[_planId] = vars;
+    }
+
+    /**
+     * @dev Set vesting plan information for a specific plan ID
+     * @param _planId Plan ID to update
+     * @param vars Vesting plan information
+     */
+    function setPlanInfoVesting(uint256 _planId, DataTypes.PlanInfoVesting calldata vars) external {
+        require(
+            msg.sender == producerVestingApi || msg.sender == owner(),
+            "Only producer vesting API contract or owner can call this function"
+        );
+        planInfoVesting[_planId] = vars;
+    }
+
+    /**
+     * @dev Set customer plan information for a specific customer plan ID
+     * @param _customerPlanId Customer plan ID to update
+     * @param vars Customer plan information
+     */
+    function setCustomerPlan(uint256 _customerPlanId, DataTypes.CustomerPlan calldata vars) external {
+        require(
+            msg.sender == producerApi || msg.sender == producerVestingApi || msg.sender == owner(),
+            "Only logic contracts or owner can call this function"
+        );
+        customerPlans[_customerPlanId] = vars;
     }
 }
