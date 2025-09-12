@@ -15,6 +15,9 @@ export interface DeploymentResult {
     streamLockManager: string;
     producerStorage: string;
     uriGenerator: string;
+    producerApi: string;
+    producerNUsage: string;
+    producerVestingApi: string;
     testTokens?: {
         usdc: string;
         dai: string;
@@ -100,8 +103,72 @@ class ProductionDeployer {
         return producerStorage;
     }
 
+    async deployLogicContracts() {
+        console.log("\n📦 Step 3: Deploying Logic Contracts...");
+        
+        // Deploy ProducerApi
+        console.log("📦 Step 3a: Deploying ProducerApi...");
+        const ProducerApi = await ethers.getContractFactory("ProducerApi");
+        const producerApi = await // @ts-ignore
+        upgrades.deployProxy(
+            ProducerApi,
+            [],
+            {
+                initializer: "initialize",
+                kind: "uups"
+            }
+        );
+
+        await producerApi.waitForDeployment();
+        const producerApiAddress = await producerApi.getAddress();
+        console.log("✅ ProducerApi deployed to:", producerApiAddress);
+        this.deploymentResult.producerApi = producerApiAddress;
+
+        // Deploy ProducerNUsage
+        console.log("📦 Step 3b: Deploying ProducerNUsage...");
+        const ProducerNUsage = await ethers.getContractFactory("ProducerNUsage");
+        const producerNUsage = await // @ts-ignore
+        upgrades.deployProxy(
+            ProducerNUsage,
+            [],
+            {
+                initializer: "initialize",
+                kind: "uups"
+            }
+        );
+
+        await producerNUsage.waitForDeployment();
+        const producerNUsageAddress = await producerNUsage.getAddress();
+        console.log("✅ ProducerNUsage deployed to:", producerNUsageAddress);
+        this.deploymentResult.producerNUsage = producerNUsageAddress;
+
+        // Deploy ProducerVestingApi
+        console.log("📦 Step 3c: Deploying ProducerVestingApi...");
+        const ProducerVestingApi = await ethers.getContractFactory("ProducerVestingApi");
+        const producerVestingApi = await // @ts-ignore
+        upgrades.deployProxy(
+            ProducerVestingApi,
+            [],
+            {
+                initializer: "initialize",
+                kind: "uups"
+            }
+        );
+
+        await producerVestingApi.waitForDeployment();
+        const producerVestingApiAddress = await producerVestingApi.getAddress();
+        console.log("✅ ProducerVestingApi deployed to:", producerVestingApiAddress);
+        this.deploymentResult.producerVestingApi = producerVestingApiAddress;
+
+        return {
+            producerApi,
+            producerNUsage,
+            producerVestingApi
+        };
+    }
+
     async deployURIGenerator() {
-        console.log("\n📦 Step 3: Deploying URIGenerator...");
+        console.log("\n📦 Step 4: Deploying URIGenerator...");
         
         const URIGenerator = await ethers.getContractFactory("URIGenerator");
         const uriGenerator = await // @ts-ignore
@@ -123,8 +190,8 @@ class ProductionDeployer {
         return uriGenerator;
     }
 
-    async deployFactory(producerStorage: any, uriGenerator: any, streamLockManager: any) {
-        console.log("\n📦 Step 4: Deploying Factory...");
+    async deployFactory(producerStorage: any, uriGenerator: any, streamLockManager: any, logicContracts: any) {
+        console.log("\n📦 Step 5: Deploying Factory...");
         
         // Deploy Producer implementation
         const Producer = await ethers.getContractFactory("Producer");
@@ -134,9 +201,6 @@ class ProductionDeployer {
         
         console.log("📝 Producer implementation:", producerImplAddress);
         
-        // Use mock address for other modules
-        const mockNUsageAddress = this.deployer.address;
-        
         // Deploy Factory with all dependencies
         const Factory = await ethers.getContractFactory("Factory");
         const factory = await // @ts-ignore
@@ -145,9 +209,9 @@ class ProductionDeployer {
             [
                 await uriGenerator.getAddress(), // uriGenerator
                 await producerStorage.getAddress(), // producerStorage  
-                mockNUsageAddress, // producerApi
-                mockNUsageAddress, // producerNUsage
-                mockNUsageAddress, // producerVestingApi
+                await logicContracts.producerApi.getAddress(), // producerApi
+                await logicContracts.producerNUsage.getAddress(), // producerNUsage
+                await logicContracts.producerVestingApi.getAddress(), // producerVestingApi
                 await streamLockManager.getAddress(), // StreamLockManager
                 producerImplAddress // Producer implementation
             ],
@@ -167,15 +231,21 @@ class ProductionDeployer {
         // Set Factory in ProducerStorage
         await producerStorage.setFactory(
             address,
-            mockNUsageAddress, // producerApi
-            mockNUsageAddress, // producerNUsage  
-            mockNUsageAddress // producerVestingApi
+            await logicContracts.producerApi.getAddress(), // producerApi
+            await logicContracts.producerNUsage.getAddress(), // producerNUsage  
+            await logicContracts.producerVestingApi.getAddress() // producerVestingApi
         );
+
+        // Set ProducerStorage in logic contracts
+        await logicContracts.producerApi.setProducerStorage(await producerStorage.getAddress());
+        await logicContracts.producerNUsage.setProducerStorage(await producerStorage.getAddress());
+        await logicContracts.producerVestingApi.setProducerStorage(await producerStorage.getAddress());
         
         // Authorize Factory in StreamLockManager
         await streamLockManager.setAuthorizedCaller(address, true);
         
         console.log("✅ Factory authorized in StreamLockManager");
+        console.log("✅ Logic contracts configured");
         
         return factory;
     }
@@ -183,7 +253,7 @@ class ProductionDeployer {
     async deployTestTokens() {
         if (!this.config.testTokens) return;
         
-        console.log("\n🪙 Step 5: Deploying Test Tokens...");
+        console.log("\n🪙 Step 6: Deploying Test Tokens...");
         
         const TestToken = await ethers.getContractFactory("TestToken");
         
@@ -269,8 +339,9 @@ class ProductionDeployer {
         
         const streamLockManager = await this.deployStreamLockManager();
         const producerStorage = await this.deployProducerStorage();
+        const logicContracts = await this.deployLogicContracts();
         const uriGenerator = await this.deployURIGenerator();
-        const factory = await this.deployFactory(producerStorage, uriGenerator, streamLockManager);
+        const factory = await this.deployFactory(producerStorage, uriGenerator, streamLockManager, logicContracts);
         
         await this.deployTestTokens();
         await this.verifyContracts();
@@ -283,6 +354,9 @@ class ProductionDeployer {
         console.log(`🔒 StreamLockManager: ${this.deploymentResult.streamLockManager}`);
         console.log(`📦 ProducerStorage: ${this.deploymentResult.producerStorage}`);
         console.log(`🔗 URIGenerator: ${this.deploymentResult.uriGenerator}`);
+        console.log(`📊 ProducerApi: ${this.deploymentResult.producerApi}`);
+        console.log(`📈 ProducerNUsage: ${this.deploymentResult.producerNUsage}`);
+        console.log(`🔄 ProducerVestingApi: ${this.deploymentResult.producerVestingApi}`);
         
         if (this.deploymentResult.testTokens) {
             console.log(`🪙 Test USDC: ${this.deploymentResult.testTokens.usdc}`);

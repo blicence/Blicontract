@@ -59,6 +59,9 @@ Core deployment script with detailed configuration:
 - URIGenerator (UUPS Proxy)
 - Factory (UUPS Proxy)
 - Producer implementation
+- **ProducerApi (UUPS Proxy)** - API subscription logic
+- **ProducerNUsage (UUPS Proxy)** - Usage tracking logic  
+- **ProducerVestingApi (UUPS Proxy)** - Vesting API logic
 
 ## Step-by-Step Deployment
 
@@ -105,6 +108,9 @@ Example structure:
   "streamLockManager": "0x...",
   "producerStorage": "0x...",
   "uriGenerator": "0x...",
+  "producerApi": "0x...",
+  "producerNUsage": "0x...",
+  "producerVestingApi": "0x...",
   "testTokens": {
     "usdc": "0x...",
     "dai": "0x..."
@@ -136,7 +142,10 @@ Example structure:
 - ProducerStorage: ~3.2M gas (~0.064 ETH)  
 - URIGenerator: ~3.0M gas (~0.06 ETH)
 - Factory: ~2.8M gas (~0.056 ETH)
-- **Total: ~11.5M gas (~0.23 ETH)**
+- ProducerApi: ~2.2M gas (~0.044 ETH)
+- ProducerNUsage: ~1.8M gas (~0.036 ETH)
+- ProducerVestingApi: ~2.5M gas (~0.05 ETH)
+- **Total: ~18M gas (~0.36 ETH)**
 
 ### Gas Optimization Tips:
 ```bash
@@ -224,7 +233,10 @@ const contracts = {
   factory: "0x...",
   streamLockManager: "0x...",
   producerStorage: "0x...",
-  uriGenerator: "0x..."
+  uriGenerator: "0x...",
+  producerApi: "0x...",
+  producerNUsage: "0x...",
+  producerVestingApi: "0x..."
 };
 ```
 
@@ -234,7 +246,38 @@ Ensure frontend has latest contract ABIs:
 cp artifacts/contracts/*.sol/*.json frontend/src/contracts/
 ```
 
-## Support
+## New Logic Contracts Features 🆕
+
+### 📊 ProducerApi
+- **Purpose**: Handles API subscription plans with streaming payments
+- **Features**: 
+  - API plan creation with flow rates and monthly limits
+  - Real-time usage validation and quota management
+  - Stream-based billing for API consumption
+- **Key Functions**: `addPlanInfoApi()`, `validateApiUsage()`
+
+### 📈 ProducerNUsage  
+- **Purpose**: Advanced usage tracking and analytics
+- **Features**:
+  - Detailed usage metrics collection
+  - Customer usage history and patterns
+  - Resource consumption monitoring
+- **Key Functions**: Usage tracking, analytics, and reporting
+
+### 🔄 ProducerVestingApi
+- **Purpose**: Vesting API plans with cliff periods and gradual token release
+- **Features**:
+  - Cliff-based vesting schedules
+  - Stream-based token vesting
+  - Progressive API access unlocking
+- **Key Functions**: `addPlanInfoVesting()`, `startVesting()`, `claimTokens()`
+
+### 🔗 Integration Benefits
+- **Modular Architecture**: Each logic contract handles specific functionality
+- **Upgradeable**: UUPS proxy pattern for future improvements  
+- **Gas Optimized**: Separate contracts reduce main contract size
+- **Specialized Logic**: Focused contracts for better code organization
+
 
 For deployment issues:
 1. Check deployment logs in `deployments/` directory

@@ -1,0 +1,136 @@
+# Blicontract Deployed Contracts - Avalanche Fuji Testnet (UPDATED)
+# ===================================================================
+# Latest Deployment: September 13, 2025 - WITH LOGIC CONTRACTS
+# Network: Avalanche Fuji (Chain ID: 43113)
+# Deployer: 0x1d05E1D817783F3D1DBd8c19F035F745792b7472
+
+## 🚀 LATEST DEPLOYMENT (September 13, 2025)
+## ==========================================
+
+### Core Platform Contracts
+Factory (Main Contract):
+0x598C66C8202cAb8Cc1898468eA54173CB894F269
+- UUPS Proxy pattern
+- Complete integration with all logic contracts
+- Entry point for all platform operations
+
+StreamLockManager:
+0x1cFb808C80e4556c895B33b695A78aCA37AC0056
+- UUPS Proxy pattern
+- Streaming payments and subscription management
+
+ProducerStorage:
+0x9b46540610A4Bff6B4166cC6b5545CDa09a4fF6b
+- Centralized data storage for all producer data
+
+URIGenerator:
+0x93B323439d72148A14085dD1869Aa6a5841ba340
+- NFT metadata generation and management
+
+### 🆕 Logic Contracts (NEW)
+ProducerApi:
+0xc080345e72f341B94C89798824964a36a33CA5f1
+- API subscription plans with streaming payments
+- Usage validation and quota management
+
+ProducerNUsage:
+0x13abaC29Fedb009326aD894d742433132aD51326
+- Advanced usage tracking and analytics
+- Customer usage patterns and metrics
+
+ProducerVestingApi:
+0xAa2Bced86F113750a328B6E748aC57C41Df5F744
+- Vesting API plans with cliff periods
+- Progressive token release and access unlocking
+
+### Test Tokens (Latest)
+Test USDC: 0xb55b5DEA289C6139E85851c1269b2308104C53d2
+Test DAI: 0x4D0bc66503A4290Ce91f62e92ed58aec68dAB22c
+
+## 📜 PREVIOUS DEPLOYMENT (Initial - September 13, 2025)
+## ====================================================
+
+### Core Contracts (First Deployment)
+Factory: 0xbdd2C58d6192513705fec43BC4b6636BfC6680A1
+StreamLockManager: 0x85f322E1f65166BfcC7a141c165e27D2DA9d520F
+ProducerStorage: 0xc7F3f7031EeC64Cca11dCfe9dfb61DaFD7d14fE3
+URIGenerator: 0x02919C50F6951A9B4417641AD23C49d37e9BfD5D
+
+### Test Tokens (Previous)
+Test USDC: 0x0B671CeB832ae77fa1C7da692fF7b2617290bf35
+Test DAI: 0xa70c64A0732A3FD0dC3837e8a2f9F6fec8d36d1F
+
+## 🔧 Technical Details
+## ===================
+
+### Contract Sizes (All Optimized)
+- Factory: 6.2 KiB ✅
+- Producer: 16.8 KiB ✅ 
+- StreamLockManager: 10.2 KiB ✅
+- ProducerStorage: 14.9 KiB ✅
+- URIGenerator: 14.8 KiB ✅
+- ProducerApi: 5.3 KiB ✅
+- ProducerNUsage: 4.2 KiB ✅
+- ProducerVestingApi: 6.2 KiB ✅
+
+### Optimization Settings
+- Solidity: 0.8.30
+- Optimizer: Enabled (200 runs for size optimization)
+- Via IR: Enabled for advanced optimization
+
+### Gas Usage (Latest Deployment)
+- Total Gas Used: ~18M gas
+- Cost at 25 gwei: ~0.45 AVAX
+- All contracts under Ethereum mainnet size limits
+
+## 🔗 Integration Guide
+## ===================
+
+### Frontend Integration (Use Latest Addresses)
+```typescript
+const contracts = {
+  factory: "0x598C66C8202cAb8Cc1898468eA54173CB894F269",
+  streamLockManager: "0x1cFb808C80e4556c895B33b695A78aCA37AC0056",
+  producerStorage: "0x9b46540610A4Bff6B4166cC6b5545CDa09a4fF6b",
+  uriGenerator: "0x93B323439d72148A14085dD1869Aa6a5841ba340",
+  producerApi: "0xc080345e72f341B94C89798824964a36a33CA5f1",
+  producerNUsage: "0x13abaC29Fedb009326aD894d742433132aD51326",
+  producerVestingApi: "0xAa2Bced86F113750a328B6E748aC57C41Df5F744"
+};
+```
+
+### Test Tokens (Add to Wallet)
+- USDC: 0xb55b5DEA289C6139E85851c1269b2308104C53d2
+- DAI: 0x4D0bc66503A4290Ce91f62e92ed58aec68dAB22c
+
+## ✅ Verification Status
+## ======================
+- ✅ All contracts verified on Snowtrace
+- ✅ Source code publicly available
+- ✅ Proxy implementations linked correctly
+- ✅ Logic contracts properly configured
+- ✅ Factory integrated with all modules
+
+## 🌐 Network Information
+## ======================
+- RPC URL: https://api.avax-test.network/ext/bc/C/rpc
+- Explorer: https://testnet.snowtrace.io/
+- Chain ID: 43113
+- Native Token: AVAX (for gas fees)
+
+## 📋 Next Steps
+## ==============
+1. ✅ Logic contracts deployed and integrated
+2. ✅ Complete platform functionality available
+3. 🔄 Test all new logic contract features
+4. 🔄 Run comprehensive integration tests
+5. 🔄 Prepare for mainnet deployment
+
+## 📚 Documentation
+## =================
+- Deployment Guide: PRODUCTION_DEPLOYMENT_GUIDE.md
+- Contract Documentation: contracts_documentation.md
+- API Documentation: Available for all logic contracts
+
+Last Updated: September 13, 2025
+Status: ✅ COMPLETE WITH LOGIC CONTRACTS
