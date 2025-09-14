@@ -74,6 +74,17 @@ library DataTypes {
         nUsage, // for number of usage,
         vestingApi // for vesting api usage,
     }
+
+    /**
+     * @title StreamType
+     * @dev This enum represents the type of stream in StreamLockManager.
+     * @notice The possible values are: REGULAR, VESTING, USAGE_POOL.
+     */
+    enum StreamType {
+        REGULAR,    // Regular streaming subscription
+        VESTING,    // Vesting stream with cliff
+        USAGE_POOL  // Prepaid usage pool
+    }
     // When creating a producer plan, the information of the related plan will be entered according to the type of the plan.
     // For example, when creating an API plan, the API plan information will be entered.
     // This information will change according to the type of plan.
@@ -165,6 +176,43 @@ library DataTypes {
         uint256 remainingQuota; // user remaining quota
         Status status;
         PlanTypes planType;
+        // StreamLockManager integration fields
+        uint256 streamId; // ID of associated stream in StreamLockManager (0 if no stream)
+        bool hasActiveStream; // Whether this customer plan has an active stream
+    }
+
+    /**
+     * @title StreamCustomerLink
+     * @dev This struct links StreamLockManager streams with customer plans.
+     * @param streamId The ID of the stream in StreamLockManager.
+     * @param customerPlanId The ID of the customer plan.
+     * @param planId The ID of the producer plan.
+     * @param streamType The type of stream (REGULAR, VESTING, USAGE_POOL).
+     * @param isActive Whether the link is currently active.
+     */
+    struct StreamCustomerLink {
+        uint256 streamId;
+        uint256 customerPlanId;
+        uint256 planId;
+        StreamType streamType;
+        bool isActive;
+    }
+
+    /**
+     * @title UsagePoolInfo
+     * @dev This struct contains information about usage pools for N-Usage plans.
+     * @param totalUsages Total number of usages purchased.
+     * @param usedUsages Number of usages already consumed.
+     * @param remainingUsages Number of usages remaining.
+     * @param lastUsageTime Timestamp of last usage.
+     * @param isActive Whether the usage pool is currently active.
+     */
+    struct UsagePoolInfo {
+        uint256 totalUsages;
+        uint256 usedUsages;
+        uint256 remainingUsages;
+        uint256 lastUsageTime;
+        bool isActive;
     }
 
     struct Customer {

@@ -363,7 +363,9 @@ contract ProducerStorage is IProducerStorage, Ownable {
             vars.endDate,
             vars.remainingQuota,
             vars.status,
-            vars.planType
+            vars.planType,
+            0, // streamId - initially 0 (no stream)
+            false // hasActiveStream - initially false
         );
 
         customer.customerPlans.push(customerPlan);
@@ -482,6 +484,14 @@ contract ProducerStorage is IProducerStorage, Ownable {
             "Only producer vesting API contract or owner can call this function"
         );
         planInfoVesting[_planId] = vars;
+    }
+
+    function setPlanInfoNUsage(uint256 _planId, DataTypes.PlanInfoNUsage calldata vars) external {
+        require(
+            msg.sender == producerNUsage || msg.sender == owner(),
+            "Only producer N-Usage API contract or owner can call this function"
+        );
+        planInfoNUsage[_planId] = vars;
     }
 
     /**

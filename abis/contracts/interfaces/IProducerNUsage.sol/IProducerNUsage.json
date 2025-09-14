@@ -1,6 +1,6 @@
 [
-  "function addCustomerPlan(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8))",
+  "function addCustomerPlan(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8,uint256,bool))",
   "function setProducerStorage(address)",
-  "function updateCustomerPlan(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8))",
-  "function useFromQuota(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8)) returns (uint256)"
+  "function updateCustomerPlan(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8,uint256,bool))",
+  "function useFromQuota(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8,uint256,bool)) returns (uint256)"
 ]

@@ -30,6 +30,8 @@ interface IProducerStorage {
 
     function addPlanInfoNUsage(DataTypes.PlanInfoNUsage calldata vars) external;
 
+    function setPlanInfoNUsage(uint256 _planId, DataTypes.PlanInfoNUsage calldata vars) external;
+
     function addPlanInfoVesting(
         DataTypes.PlanInfoVesting calldata vars
     ) external;

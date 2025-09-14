@@ -191,7 +191,12 @@ contract StreamLockManager is
             endTime: block.timestamp + duration,
             lastClaimTime: block.timestamp,
             isActive: true,
-            lockId: lockId
+            lockId: lockId,
+            streamType: StreamType.REGULAR,
+            cliffDate: 0,
+            usageCount: 0,
+            usedCount: 0,
+            immediateAmount: 0
         });
 
         // Update mappings
@@ -582,4 +587,268 @@ contract StreamLockManager is
      * @dev Authorize contract upgrades (UUPS pattern)
      */
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    // ============ EXTENDED FUNCTIONS FOR PLAN INTEGRATIONS ============
+
+    /**
+     * @dev Create a vesting stream with cliff period
+     * @param user User creating the stream
+     * @param recipient Stream recipient (producer)
+     * @param token ERC20 token address
+     * @param totalAmount Total amount to vest
+     * @param cliffDate Cliff period end timestamp
+     * @param vestingDuration Total vesting duration
+     * @param immediateAmount Amount released immediately
+     */
+    function createVestingStream(
+        address user,
+        address recipient,
+        address token,
+        uint256 totalAmount,
+        uint256 cliffDate,
+        uint256 vestingDuration,
+        uint256 immediateAmount
+    ) external onlyAuthorized nonReentrant whenNotPaused returns (bytes32 streamId) {
+        require(user != address(0) && recipient != address(0), "Invalid addresses");
+        require(token != address(0), "Invalid token");
+        require(totalAmount > immediateAmount, "Invalid amounts");
+        require(cliffDate > block.timestamp, "Invalid cliff date");
+        require(vestingDuration > 0, "Invalid duration");
+
+        // Generate unique stream ID
+        streamId = keccak256(abi.encodePacked(
+            user, recipient, token, totalAmount, cliffDate, block.timestamp, block.number
+        ));
+
+        // Calculate vesting rate (after cliff)
+        uint256 vestingAmount = totalAmount - immediateAmount;
+        uint256 streamRate = vestingAmount / vestingDuration;
+
+        // Lock tokens
+        _depositBalance(user, token, totalAmount);
+        _lockBalance(user, token, totalAmount);
+
+        // Create vesting stream
+        tokenLocks[streamId] = TokenLock({
+            user: user,
+            recipient: recipient,
+            token: token,
+            totalAmount: totalAmount,
+            streamRate: streamRate,
+            startTime: block.timestamp,
+            endTime: cliffDate + vestingDuration,
+            lastClaimTime: block.timestamp,
+            isActive: true,
+            lockId: streamId,
+            streamType: StreamType.VESTING,
+            cliffDate: cliffDate,
+            usageCount: 0,
+            usedCount: 0,
+            immediateAmount: immediateAmount
+        });
+
+        // Update mappings
+        userLocks[user].push(streamId);
+        recipientLocks[recipient].push(streamId);
+
+        // Transfer immediate amount if any
+        if (immediateAmount > 0) {
+            IERC20(token).safeTransfer(recipient, immediateAmount);
+        }
+
+        emit StreamLockCreated(streamId, user, recipient, token, totalAmount, vestingDuration);
+        return streamId;
+    }
+
+    /**
+     * @dev Create a usage pool for prepaid services
+     * @param user User creating the pool
+     * @param recipient Service provider (producer)
+     * @param token Payment token
+     * @param totalAmount Total prepaid amount
+     * @param usageCount Total number of usages prepaid
+     */
+    function createUsagePool(
+        address user,
+        address recipient,
+        address token,
+        uint256 totalAmount,
+        uint256 usageCount
+    ) external onlyAuthorized nonReentrant whenNotPaused returns (bytes32 poolId) {
+        require(user != address(0) && recipient != address(0), "Invalid addresses");
+        require(token != address(0), "Invalid token");
+        require(totalAmount > 0 && usageCount > 0, "Invalid amounts");
+
+        // Generate unique pool ID
+        poolId = keccak256(abi.encodePacked(
+            user, recipient, token, totalAmount, usageCount, block.timestamp, block.number
+        ));
+
+        // Calculate price per usage
+        uint256 pricePerUsage = totalAmount / usageCount;
+
+        // Lock tokens
+        _depositBalance(user, token, totalAmount);
+        _lockBalance(user, token, totalAmount);
+
+        // Create usage pool
+        tokenLocks[poolId] = TokenLock({
+            user: user,
+            recipient: recipient,
+            token: token,
+            totalAmount: totalAmount,
+            streamRate: pricePerUsage, // Store as rate for consistency
+            startTime: block.timestamp,
+            endTime: block.timestamp + (365 days), // Default 1 year expiry
+            lastClaimTime: block.timestamp,
+            isActive: true,
+            lockId: poolId,
+            streamType: StreamType.USAGE_POOL,
+            cliffDate: 0,
+            usageCount: usageCount,
+            usedCount: 0,
+            immediateAmount: 0
+        });
+
+        // Update mappings
+        userLocks[user].push(poolId);
+        recipientLocks[recipient].push(poolId);
+
+        emit StreamLockCreated(poolId, user, recipient, token, totalAmount, 0);
+        return poolId;
+    }
+
+    /**
+     * @dev Consume usage from a prepaid pool
+     * @param poolId Usage pool ID
+     * @param usageAmount Number of usages to consume
+     */
+    function consumeUsageFromPool(
+        bytes32 poolId,
+        uint256 usageAmount
+    ) external onlyAuthorized nonReentrant returns (bool success) {
+        TokenLock storage pool = tokenLocks[poolId];
+        
+        require(pool.isActive, "Pool not active");
+        require(pool.streamType == StreamType.USAGE_POOL, "Not a usage pool");
+        require(pool.usedCount + usageAmount <= pool.usageCount, "Insufficient usage balance");
+
+        // Update usage count
+        pool.usedCount += usageAmount;
+        
+        // Calculate amount to transfer
+        uint256 transferAmount = pool.streamRate * usageAmount; // streamRate = pricePerUsage
+        
+        // Transfer to recipient
+        IERC20(pool.token).safeTransfer(pool.recipient, transferAmount);
+        
+        // Unlock the transferred amount
+        _unlockBalance(pool.user, pool.token, transferAmount);
+
+        // If all usage consumed, deactivate pool
+        if (pool.usedCount >= pool.usageCount) {
+            pool.isActive = false;
+        }
+
+        emit PartialClaim(poolId, pool.recipient, transferAmount);
+        return true;
+    }
+
+    /**
+     * @dev Link a stream to a customer plan
+     * @param customerPlanId Customer plan ID
+     * @param streamId Stream ID to link
+     */
+    function linkStreamToCustomerPlan(
+        uint256 customerPlanId,
+        bytes32 streamId
+    ) external onlyAuthorized {
+        require(tokenLocks[streamId].user != address(0), "Stream does not exist");
+        customerPlanStreams[customerPlanId] = streamId;
+        
+        emit CustomerPlanStreamCreated(customerPlanId, streamId, tokenLocks[streamId].user, tokenLocks[streamId].recipient);
+    }
+
+    /**
+     * @dev Get stream ID linked to a customer plan
+     * @param customerPlanId Customer plan ID
+     * @return streamId Linked stream ID
+     */
+    function getCustomerPlanStream(
+        uint256 customerPlanId
+    ) external view returns (bytes32 streamId) {
+        return customerPlanStreams[customerPlanId];
+    }
+
+    /**
+     * @dev Check if vesting period is active (past cliff)
+     * @param lockId Vesting stream ID
+     * @return active True if vesting is active
+     */
+    function isVestingActive(bytes32 lockId) external view returns (bool active) {
+        TokenLock storage lock = tokenLocks[lockId];
+        require(lock.streamType == StreamType.VESTING, "Not a vesting stream");
+        return block.timestamp >= lock.cliffDate && lock.isActive;
+    }
+
+    /**
+     * @dev Get vesting information
+     * @param lockId Vesting stream ID
+     * @return cliffDate Cliff period end
+     * @return vestedAmount Total vested amount so far
+     * @return claimableAmount Amount that can be claimed now
+     */
+    function getVestingInfo(bytes32 lockId) external view returns (
+        uint256 cliffDate,
+        uint256 vestedAmount,
+        uint256 claimableAmount
+    ) {
+        TokenLock storage lock = tokenLocks[lockId];
+        require(lock.streamType == StreamType.VESTING, "Not a vesting stream");
+        
+        cliffDate = lock.cliffDate;
+        
+        if (block.timestamp < lock.cliffDate) {
+            // Still in cliff period
+            vestedAmount = lock.immediateAmount;
+            claimableAmount = 0;
+        } else {
+            // Calculate vested amount after cliff
+            uint256 timeSinceCliff = block.timestamp - lock.cliffDate;
+            uint256 vestingDuration = lock.endTime - lock.cliffDate;
+            uint256 vestingAmount = lock.totalAmount - lock.immediateAmount;
+            
+            if (timeSinceCliff >= vestingDuration) {
+                vestedAmount = lock.totalAmount;
+            } else {
+                uint256 timeVested = (vestingAmount * timeSinceCliff) / vestingDuration;
+                vestedAmount = lock.immediateAmount + timeVested;
+            }
+            
+            claimableAmount = vestedAmount - (lock.totalAmount - getUnlockedBalance(lock.user, lock.token));
+        }
+    }
+
+    /**
+     * @dev Get usage pool information
+     * @param poolId Usage pool ID
+     * @return totalUsageCount Total usage count in pool
+     * @return usedCount Used usage count
+     * @return remainingUsage Remaining usage count
+     * @return pricePerUsage Price per single usage
+     */
+    function getUsagePoolInfo(bytes32 poolId) external view returns (
+        uint256 totalUsageCount,
+        uint256 usedCount,
+        uint256 remainingUsage,
+        uint256 pricePerUsage
+    ) {
+        TokenLock storage pool = tokenLocks[poolId];
+        require(pool.streamType == StreamType.USAGE_POOL, "Not a usage pool");
+        
+        totalUsageCount = pool.usageCount;
+        usedCount = pool.usedCount;
+        remainingUsage = totalUsageCount - usedCount;
+        pricePerUsage = pool.streamRate; // streamRate stores price per usage for pools
+    }
 }

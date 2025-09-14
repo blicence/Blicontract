@@ -1,5 +1,5 @@
 [
-  "function burn(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8))",
+  "function burn(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8,uint256,bool))",
   "function constructTokenURI(tuple(uint256,uint256,string,address,string,string,int256,int256,string,string,address,uint32,uint32,uint256,uint8,uint8)) view returns (string)",
   "function constructTokenUriApi(tuple(uint256,uint256,string,address,string,string,int256,int256,string,string,address,uint32,uint32,uint256,uint8,uint8)) view returns (string)",
   "function constructTokenUriNUsage(tuple(uint256,uint256,string,address,string,string,int256,int256,string,string,address,uint32,uint32,uint256,uint8,uint8)) view returns (string)",
@@ -7,6 +7,6 @@
   "function generateDescription(tuple(uint256,uint256,string,address,string,string,int256,int256,string,string,address,uint32,uint32,uint256,uint8,uint8)) pure returns (string)",
   "function generateNFT(tuple(uint256,uint256,string,address,string,string,int256,int256,string,string,address,uint32,uint32,uint256,uint8,uint8)) view returns (string)",
   "function generateName(tuple(uint256,uint256,string,address,string,string,int256,int256,string,string,address,uint32,uint32,uint256,uint8,uint8)) pure returns (string)",
-  "function mint(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8))",
+  "function mint(tuple(address,uint256,uint256,uint256,address,address,uint32,uint32,uint256,uint8,uint8,uint256,bool))",
   "function uri(uint256) view returns (string)"
 ]

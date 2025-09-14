@@ -15,6 +15,7 @@
   "event Initialized(uint64)",
   "event OwnershipTransferred(address indexed,address indexed)",
   "event PlanInfoApiAdded(uint256 indexed,uint256,uint256)",
+  "event StreamSubscriptionCreated(uint256 indexed,uint256 indexed,address indexed,bytes32,uint256)",
   "event Upgraded(address indexed)",
   "function UPGRADE_INTERFACE_VERSION() view returns (string)",
   "function addPlanInfoApi(tuple(uint256,uint256,uint256))",
@@ -27,7 +28,11 @@
   "function proxiableUUID() view returns (bytes32)",
   "function renounceOwnership()",
   "function setProducerStorage(address)",
+  "function setStreamLockManager(address)",
+  "function streamLockManager() view returns (address)",
+  "function subscribeWithStream(uint256,uint256) returns (bytes32, uint256)",
   "function transferOwnership(address)",
   "function upgradeToAndCall(address,bytes) payable",
-  "function validateApiUsage(uint256,uint256) view returns (bool)"
+  "function validateApiUsage(uint256,uint256) view returns (bool)",
+  "function validateStreamApiUsage(uint256,uint256) returns (bool)"
 ]

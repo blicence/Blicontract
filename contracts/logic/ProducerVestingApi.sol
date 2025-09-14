@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Base64} from "./../libraries/Base64.sol";
 import {DataTypes} from "./../libraries/DataTypes.sol";
 import {IProducerStorage} from "./../interfaces/IProducerStorage.sol";
+import {IStreamLockManager} from "./../interfaces/IStreamLockManager.sol";
 import "../DelegateCall.sol";
 
 /**
@@ -21,6 +22,7 @@ contract ProducerVestingApi is
     DelegateCall
 {
     IProducerStorage public producerStorage;
+    IStreamLockManager public streamLockManager;
 
     event PlanInfoVestingAdded(
         uint256 indexed planId,
@@ -41,6 +43,14 @@ contract ProducerVestingApi is
         address indexed customer,
         uint256 claimedAmount,
         uint256 remainingAmount
+    );
+
+    event VestingStreamCreated(
+        uint256 indexed planId,
+        uint256 indexed customerPlanId,
+        address indexed customer,
+        bytes32 streamId,
+        uint256 cliffDate
     );
 
     function initialize() external initializer onlyProxy {
@@ -72,6 +82,10 @@ contract ProducerVestingApi is
 
     function setProducerStorage(address _producerStorage) external onlyOwner {
         producerStorage = IProducerStorage(_producerStorage);
+    }
+
+    function setStreamLockManager(address _streamLockManager) external onlyOwner {
+        streamLockManager = IStreamLockManager(_streamLockManager);
     }
 
     /**
@@ -219,5 +233,122 @@ contract ProducerVestingApi is
         flowRate = remainingAmount / _vestingDuration;
         
         return (startAmount, flowRate);
+    }
+
+    // ============ STREAM LOCK MANAGER INTEGRATION ============
+
+    /**
+     * @dev Create vesting stream for a plan
+     * @param _planId Plan ID to subscribe to
+     * @param _totalAmount Total amount to vest
+     * @param _vestingDuration Duration of vesting after cliff
+     * @return streamId Created vesting stream ID
+     * @return customerPlanId Created customer plan ID
+     */
+    function createVestingStream(
+        uint256 _planId,
+        uint256 _totalAmount,
+        uint256 _vestingDuration
+    ) external returns (bytes32 streamId, uint256 customerPlanId) {
+        require(address(streamLockManager) != address(0), "StreamLockManager not set");
+        
+        // Get plan information
+        DataTypes.Plan memory plan = producerStorage.getPlan(_planId);
+        DataTypes.PlanInfoVesting memory vestingInfo = producerStorage.getPlanInfoVesting(_planId);
+        
+        require(plan.planType == DataTypes.PlanTypes.vestingApi, "Plan must be vesting API type");
+        require(plan.status == DataTypes.Status.active, "Plan not active");
+        require(_totalAmount > 0, "Invalid total amount");
+        require(_vestingDuration > 0, "Invalid vesting duration");
+        require(vestingInfo.cliffDate > block.timestamp, "Cliff date must be in future");
+        
+        // Calculate immediate amount (specified in plan or default percentage)
+        uint256 immediateAmount = vestingInfo.startAmount;
+        if (immediateAmount == 0) {
+            immediateAmount = (_totalAmount * 25) / 100; // Default 25% immediate after cliff
+        }
+        
+        // Create customer plan first
+        customerPlanId = _createVestingCustomerPlan(_planId, msg.sender, _totalAmount, vestingInfo.cliffDate);
+        
+        // Create vesting stream
+        streamId = streamLockManager.createVestingStream(
+            msg.sender,                // user
+            plan.cloneAddress,         // recipient (producer)
+            plan.priceAddress,         // payment token
+            _totalAmount,              // total amount to vest
+            vestingInfo.cliffDate,     // cliff date
+            _vestingDuration,          // vesting duration
+            immediateAmount            // immediate amount after cliff
+        );
+        
+        // Link stream to customer plan
+        streamLockManager.linkStreamToCustomerPlan(customerPlanId, streamId);
+        
+        emit VestingStreamCreated(_planId, customerPlanId, msg.sender, streamId, vestingInfo.cliffDate);
+        
+        return (streamId, customerPlanId);
+    }
+
+    /**
+     * @dev Check vesting status and claimable amount
+     * @param _customerPlanId Customer plan ID
+     * @return isActive True if vesting is active
+     * @return claimableAmount Amount that can be claimed now
+     * @return totalVested Total amount vested so far
+     */
+    function getVestingStatus(
+        uint256 _customerPlanId
+    ) external view returns (
+        bool isActive,
+        uint256 claimableAmount,
+        uint256 totalVested
+    ) {
+        require(address(streamLockManager) != address(0), "StreamLockManager not set");
+        
+        // Get linked stream
+        bytes32 streamId = streamLockManager.getCustomerPlanStream(_customerPlanId);
+        require(streamId != bytes32(0), "No stream linked to customer plan");
+        
+        // Get vesting information
+        isActive = streamLockManager.isVestingActive(streamId);
+        (,totalVested, claimableAmount) = streamLockManager.getVestingInfo(streamId);
+        
+        return (isActive, claimableAmount, totalVested);
+    }
+
+    /**
+     * @dev Internal function to create customer plan for vesting
+     */
+    function _createVestingCustomerPlan(
+        uint256 _planId,
+        address _customer,
+        uint256 _totalAmount,
+        uint256 _cliffDate
+    ) internal returns (uint256 customerPlanId) {
+        
+        DataTypes.CustomerPlan memory customerPlan = DataTypes.CustomerPlan({
+            customerAdress: _customer,
+            planId: _planId,
+            custumerPlanId: 0, // Will be set by storage
+            producerId: 0, // Will be set by storage
+            cloneAddress: address(this),
+            priceAddress: address(0), // Will be set from plan info
+            startDate: uint32(block.timestamp),
+            endDate: uint32(_cliffDate + 365 days), // Default 1 year from cliff
+            remainingQuota: _totalAmount, // Use quota to track total vesting amount
+            status: DataTypes.Status.active,
+            planType: DataTypes.PlanTypes.vestingApi,
+            streamId: 0, // Initially no stream
+            hasActiveStream: false // Initially no active stream
+        });
+        
+        // Store customer plan
+        producerStorage.addCustomerPlan(customerPlan);
+        
+        // Generate customer plan ID for return
+        customerPlanId = uint256(keccak256(abi.encodePacked(_planId, _customer, address(this))));
+        
+        return customerPlanId;
     }
 }

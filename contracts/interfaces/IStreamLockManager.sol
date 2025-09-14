@@ -15,6 +15,13 @@ interface IStreamLockManager {
         ConsumerUsage        // Consumer hak kullanımı sırasında
     }
 
+    /// @dev Stream types for different payment models
+    enum StreamType {
+        REGULAR,        // Normal time-based streaming
+        VESTING,        // Cliff + vesting streaming  
+        USAGE_POOL      // Prepaid usage pools
+    }
+
     /// @dev Token lock structure
     struct TokenLock {
         address user;               // Token sahibi
@@ -27,6 +34,11 @@ interface IStreamLockManager {
         uint256 lastClaimTime;    // Son çekim zamanı
         bool isActive;            // Akış aktif mi?
         bytes32 lockId;           // Benzersiz lock ID
+        StreamType streamType;    // Stream türü
+        uint256 cliffDate;        // Vesting için cliff tarihi
+        uint256 usageCount;       // Usage pool için toplam kullanım sayısı
+        uint256 usedCount;        // Usage pool için kullanılan miktar
+        uint256 immediateAmount;  // Vesting için anında ödenen miktar
     }
 
     /// @dev Stream creation parameters
@@ -145,4 +157,52 @@ interface IStreamLockManager {
     ) external returns (bytes32 lockId);
 
     function updateStreamOnUsage(bytes32 lockId, uint256 usageAmount) external returns (bool success);
+
+    // Extended functions for plan integrations
+    function createVestingStream(
+        address user,
+        address recipient,
+        address token,
+        uint256 totalAmount,
+        uint256 cliffDate,
+        uint256 vestingDuration,
+        uint256 immediateAmount
+    ) external returns (bytes32 streamId);
+    
+    function createUsagePool(
+        address user,
+        address recipient,
+        address token,
+        uint256 totalAmount,
+        uint256 usageCount
+    ) external returns (bytes32 poolId);
+    
+    function consumeUsageFromPool(
+        bytes32 poolId,
+        uint256 usageAmount
+    ) external returns (bool success);
+    
+    function linkStreamToCustomerPlan(
+        uint256 customerPlanId,
+        bytes32 streamId
+    ) external;
+    
+    function getCustomerPlanStream(
+        uint256 customerPlanId
+    ) external view returns (bytes32 streamId);
+    
+    function isVestingActive(bytes32 lockId) external view returns (bool active);
+    
+    function getVestingInfo(bytes32 lockId) external view returns (
+        uint256 cliffDate,
+        uint256 vestedAmount,
+        uint256 claimableAmount
+    );
+    
+    function getUsagePoolInfo(bytes32 poolId) external view returns (
+        uint256 totalUsageCount,
+        uint256 usedCount,
+        uint256 remainingUsage,
+        uint256 pricePerUsage
+    );
 }
