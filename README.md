@@ -25,10 +25,19 @@ Factory → Producer Clones → StreamLockManager → Customer Plans → NFT Sub
 
 ## 📖 Documentation
 
+### Technical Documentation
 - [Turkish Workflow](doc/akis.md)
 - [English Workflow](doc/workflow.md)
 - [Contract Documentation](doc/contract/)
 - [Stream Implementation](STREAM_IMPLEMENTATION.md)
+
+### End-User Scenarios & Use Cases
+- **[End-User Scenarios](end-user-scenarios/)** - Comprehensive real-world scenarios
+  - [Platform Overview](end-user-scenarios/00-GENEL-BAKIS.md) - Basic concepts and terminology
+  - [Education Platform](end-user-scenarios/01-EGITIM-PLATFORMU-SENARYOSU.md) - Online education subscription model
+  - [Fitness Gym](end-user-scenarios/02-SPOR-SALONU-SENARYOSU.md) - Pay-per-visit gym membership
+  - [SaaS Platform](end-user-scenarios/03-SAAS-PLATFORMU-SENARYOSU.md) - Enterprise API access model
+  - [Comparison Analysis](end-user-scenarios/04-KARSILASTIRMA-VE-AVANTAJLAR.md) - Traditional vs Blicence systems
 
 ## 🚀 Quick Start
 
