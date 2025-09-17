@@ -50,6 +50,24 @@ task("evm", "Prints the configured EVM version", async (_, hre) => {
   console.log(hre.config.solidity.compilers[0].settings.evmVersion);
 });
 
+task("configure-contracts", "Configure contract dependencies (StreamLockManager, ProducerStorage)", async (_, hre) => {
+  console.log("🔧 Starting contract configuration...");
+  
+  // Run the configuration script
+  const { execSync } = await import("child_process");
+  const scriptPath = "./scripts/configure-contract-dependencies.ts";
+  
+  try {
+    execSync(`npx hardhat run ${scriptPath} --network ${hre.network.name}`, { 
+      stdio: "inherit",
+      cwd: process.cwd()
+    });
+  } catch (error) {
+    console.error("❌ Configuration script failed:", error);
+    throw error;
+  }
+});
+
 task(
   "balances",
   "Prints the list of accounts and their balances",
