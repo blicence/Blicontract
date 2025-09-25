@@ -46,8 +46,22 @@ networks: {
 
 ### 🎯 deploy-complete.ts (Recommended)
 Complete deployment pipeline with all steps automated:
-- Contract deployment with proxy patterns
+- **Smart Deployment Detection**: Checks for existing deployments in `deployments/latest-{network}.json`
+- **Skip Redundant Deployments**: If contracts already deployed, uses existing addresses
+- **Automatic Configuration**: Configures contract dependencies using saved addresses
+- Contract deployment with proxy patterns (UUPS)
 - Authorization setup
+- Contract verification (on non-localhost networks)
+- Test token deployment (on test networks)
+- Comprehensive validation and summary
+
+**Features:**
+- ✅ Production-ready with error handling
+- ✅ Network-aware (mainnet, testnets, localhost)
+- ✅ Reusable - won't redeploy if contracts exist
+- ✅ Saves deployment state for future use
+- ✅ Automatic contract verification
+- ✅ Full configuration pipeline
 - Test token deployment (optional)
 - Contract verification
 - Deployment artifact saving
@@ -68,21 +82,31 @@ Core deployment script with detailed configuration:
 ### Step 1: Pre-deployment Checks
 ```bash
 # Verify account balance
-npx hardhat balance --network mainnet
+npx hardhat balance --network fuji
 
-# Test deployment on testnet first
-npx hardhat run scripts/deploy-complete.ts --network sepolia
+# Test deployment on Fuji testnet first (recommended)
+npx hardhat run scripts/deploy-complete.ts --network fuji
+
+# Verify deployment worked
+cat deployments/latest-fuji.json
 ```
 
 ### Step 2: Contract Deployment
 ```bash
-# Deploy to mainnet
+# Deploy to mainnet (will skip if already deployed)
+npx hardhat run scripts/deploy-complete.ts --network mainnet
+
+# Or deploy fresh (delete latest-mainnet.json first)
+rm deployments/latest-mainnet.json
 npx hardhat run scripts/deploy-complete.ts --network mainnet
 ```
 
 ### Step 3: Post-deployment Verification
 ```bash
-# Verify deployed contracts
+# Check deployment artifacts
+cat deployments/latest-mainnet.json
+
+# Verify deployed contracts (automatic in deploy-complete.ts)
 npx hardhat verify --network mainnet <CONTRACT_ADDRESS>
 
 # Run integration tests
@@ -310,3 +334,13 @@ For deployment issues:
 ---
 
 🎉 **Ready for Production!** Your Blicontract platform is now deployed and ready for streaming subscriptions.
+cd /Users/muratonurkaradeniz/workspace/sade/code/clone/SADE-C/Blicontract && npx hardhat run scripts/deploy-complete.ts --network fuji
+sonrasında
+bu adresleri configure-contract-dependencies.ts ekleyip bağımlılıkları yükleyeceğiz.
+
+
+
+npx hardhat run --network fuji scripts/deploy-production.ts
+
+npx hardhat run scripts/configure-contract-dependencies.ts --network fuji
+

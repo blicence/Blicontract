@@ -57,26 +57,36 @@ npm run deploy:localhost
 
 ## 🌟 Production Deployment
 
-### Quick Production Deploy
+### Quick Production Deploy (Recommended)
 ```bash
-# Complete production deployment (recommended)
+# Complete automated deployment pipeline
 npm run production:deploy:mainnet
 
-# Test on sepolia first
-npm run production:deploy:sepolia
+# Test on Fuji testnet first (recommended)
+npm run production:deploy:fuji
 ```
+
+**✨ New Features:**
+- **Smart Deployment**: Automatically detects existing deployments and skips redeployment
+- **State Persistence**: Saves deployment addresses to JSON for reuse
+- **Full Automation**: Deployment + configuration in one command
+- **Network Aware**: Optimized for mainnet, testnets, and localhost
 
 ### Manual Production Deploy
 ```bash
 # Core deployment only
 npm run production:core --network mainnet
+
+# Configure existing contracts
+npm run production:configure --network mainnet
 ```
 
 ### Supported Networks
 - **Mainnet**: `npm run production:deploy:mainnet`
+- **Fuji** (Avalanche testnet): `npm run production:deploy:fuji` ⭐ **Recommended for testing**
+- **Sepolia** (Ethereum testnet): `npm run production:deploy:sepolia`
 - **Polygon**: `npm run production:deploy:polygon`
 - **Arbitrum**: `npm run production:deploy:arbitrum`
-- **Sepolia** (testnet): `npm run production:deploy:sepolia`
 
 📖 **[Complete Production Guide](PRODUCTION_DEPLOYMENT_GUIDE.md)**
 

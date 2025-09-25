@@ -1,4 +1,5 @@
 import { run } from "hardhat";
+import hre from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
 const { ethers, upgrades } = require("hardhat");
@@ -49,10 +50,15 @@ class ProductionDeployer {
         console.log("💰 Account balance:", ethers.formatEther(await this.deployer.provider.getBalance(this.deployer.address)));
         
         const network = await ethers.provider.getNetwork();
-        console.log("🌐 Network:", network.name, "| Chain ID:", network.chainId);
+        // Use config network name instead of provider name for consistency
+        const networkInfo = {
+            name: this.config.network,
+            chainId: Number(network.chainId) // Convert BigInt to number for JSON serialization
+        };
+        console.log("🌐 Network:", networkInfo.name, "| Chain ID:", networkInfo.chainId);
         
         this.deploymentResult.deployer = this.deployer.address;
-        this.deploymentResult.network = network;
+        this.deploymentResult.network = networkInfo;
         this.deploymentResult.deploymentTime = new Date().toISOString();
     }
 
@@ -322,7 +328,7 @@ class ProductionDeployer {
             fs.mkdirSync(deploymentPath, { recursive: true });
         }
         
-        const filename = `deployment-${this.config.network}-${Date.now()}.json`;
+        const filename = `deployment-${this.config.network}-${new Date().toISOString().split('T')[0]}.json`;
         const filepath = path.join(deploymentPath, filename);
         
         fs.writeFileSync(filepath, JSON.stringify(this.deploymentResult, null, 2));
@@ -387,18 +393,18 @@ const NETWORK_CONFIGS: Record<string, DeploymentConfig> = {
 };
 
 async function main() {
-    const networkName = process.env.HARDHAT_NETWORK || "localhost";
+    // For now, hardcode fuji network to test
+    const networkName = 'fuji';
+
     const config = NETWORK_CONFIGS[networkName] || NETWORK_CONFIGS.localhost;
-    
+
     console.log(`🌟 Starting Production Deployment for ${config.network}`);
-    
+
     const deployer = new ProductionDeployer(config);
     const result = await deployer.run();
-    
-    return result;
-}
 
-if (require.main === module) {
+    return result;
+}if (require.main === module) {
     main()
         .then(() => process.exit(0))
         .catch((error) => {

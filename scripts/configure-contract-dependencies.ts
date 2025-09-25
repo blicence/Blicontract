@@ -1,12 +1,14 @@
 import { ethers } from "hardhat";
 import hre from "hardhat";
+import * as fs from "fs";
+import * as path from "path";
 
 /**
  * Configure Contract Dependencies Script
  * Sets StreamLockManager and ProducerStorage addresses in all logic contracts
  */
 
-interface ContractAddresses {
+export interface ContractAddresses {
     factory: string;
     streamLockManager: string;
     producerStorage: string;
@@ -17,19 +19,31 @@ interface ContractAddresses {
     testUsdc?: string;
 }
 
-// Fuji Testnet deployed addresses (from DEPLOYED_CONTRACTS_FUJI_FINAL.md)
-const FUJI_ADDRESSES: ContractAddresses = {
-    factory: "0xf8Daed2087F7783a7E51CdfA46b3333bf8CcA217",
-    streamLockManager: "0x8d17E714c335C0BBE31A34e30927d081E028502b",
-    producerStorage: "0x6a8558eDCE62d39e19Fd862F80D948D29aE31476",
-    uriGenerator: "0xa634072802932dAc2ABaf9acA21164Dd21A147E4",
-    producerApi: "0x736DA33041Bb40f6Bb9EC6388365CC554F0d25d0",
-    producerVestingApi: "0x4782B5F2D823f3c340664902CF21C8977bed1dE0",
-    producerNUsage: "0x711054694937e2B2ba13a39Bf55AC13BD7CC9fBf",
-    testUsdc: "0x135dDd29e030fd7584f4edF6c2002Ff58eB32367"
-};
+// Load addresses from latest deployment JSON
+function loadAddressesFromLatest(networkName: string): ContractAddresses | null {
+    try {
+        const latestPath = path.join(__dirname, "..", "deployments", `latest-${networkName}.json`);
+        if (fs.existsSync(latestPath)) {
+            console.log(`📋 Loading addresses from: ${latestPath}`);
+            const deploymentData = JSON.parse(fs.readFileSync(latestPath, "utf8"));
+            return {
+                factory: deploymentData.factory,
+                streamLockManager: deploymentData.streamLockManager,
+                producerStorage: deploymentData.producerStorage,
+                uriGenerator: deploymentData.uriGenerator,
+                producerApi: deploymentData.producerApi,
+                producerVestingApi: deploymentData.producerVestingApi,
+                producerNUsage: deploymentData.producerNUsage,
+                testUsdc: deploymentData.testTokens?.usdc
+            };
+        }
+    } catch (error) {
+        console.warn(`⚠️  Could not load addresses from latest-${networkName}.json:`, error instanceof Error ? error.message : String(error));
+    }
+    return null;
+}
 
-async function configureContractDependencies(addresses: ContractAddresses) {
+export async function configureContractDependencies(addresses: ContractAddresses) {
     console.log("🔧 Starting Contract Dependencies Configuration");
     console.log("🌐 Network:", hre.network.name);
     console.log("=" .repeat(80));
@@ -299,13 +313,17 @@ async function validateConfigurations(contracts: any, addresses: ContractAddress
 async function main() {
     console.log("🚀 Starting Contract Dependencies Configuration Script");
     console.log("🌐 Network:", hre.network.name);
-    
-    if (hre.network.name === "fuji") {
-        console.log("🎯 Using Fuji Testnet addresses");
-        await configureContractDependencies(FUJI_ADDRESSES);
+
+    // Try to load latest deployment addresses for any network
+    const addresses = loadAddressesFromLatest(hre.network.name);
+
+    if (addresses) {
+        console.log("🎯 Using latest deployed addresses");
+        await configureContractDependencies(addresses);
     } else {
-        console.error("❌ This script is configured for Fuji testnet only");
-        console.error("   Available networks: fuji");
+        console.error("❌ No deployment found for network:", hre.network.name);
+        console.error("   Please run deployment first: npx hardhat run scripts/deploy-production.ts --network", hre.network.name);
+        console.error("   Or check if deployments/ directory exists with latest-{network}.json file");
         process.exit(1);
     }
 }
